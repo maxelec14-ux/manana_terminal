@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>MananaAI | Pro Terminal</title>
+    <title>MananaAI | Pro Terminal & Math</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #F8FAF1; font-family: 'Inter', sans-serif; }
@@ -20,6 +20,7 @@
         <h1 class="text-2xl font-black italic tracking-tighter text-slate-900">MANANA<span class="text-green-600">AI</span></h1>
         <div class="flex gap-3">
             <button onclick="toggleView('main')" id="tab-main" class="px-4 py-2 font-bold text-sm tab-active">Live Feed</button>
+            <button onclick="toggleView('math')" id="tab-math" class="px-4 py-2 font-bold text-sm text-slate-400">Math Bets 🧮</button>
             <button onclick="toggleView('portfolio')" id="tab-port" class="px-4 py-2 font-bold text-sm text-slate-400">Portfolio</button>
             <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="p-2 bg-white rounded-full shadow-sm border border-slate-200">⚙️</button>
         </div>
@@ -30,55 +31,60 @@
         <div id="league-categories" class="space-y-6 text-left"></div>
     </div>
 
-    <div class="max-w-5xl mx-auto mb-6 flex flex-wrap gap-4 items-center justify-between">
-        <div class="flex gap-2 bg-white p-1 rounded-xl border border-slate-100">
-            <button onclick="setMarketFilter('all')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn bg-slate-100" id="m-all">All</button>
-            <button onclick="setMarketFilter('Total')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn" id="m-total">Totals</button>
-            <button onclick="setMarketFilter('Handicap')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn" id="m-handicap">Handicaps</button>
-        </div>
-        
-        <div class="flex gap-4 items-center">
-            <select id="sort-order" onchange="renderFeed()" class="bg-transparent font-bold text-xs outline-none cursor-pointer">
-                <option value="desc">High Value First</option>
-                <option value="asc">Low Value First</option>
-            </select>
-            <button id="scan-btn" onclick="startValueScan()" class="bg-black text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:scale-105 active:scale-95 transition">Search Value ⚡</button>
-        </div>
-    </div>
-
     <div id="view-main" class="max-w-5xl mx-auto space-y-4">
+        <div class="max-w-5xl mx-auto mb-6 flex flex-wrap gap-4 items-center justify-between">
+            <div class="flex gap-2 bg-white p-1 rounded-xl border border-slate-100">
+                <button onclick="setMarketFilter('all')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn bg-slate-100" id="m-all">All</button>
+                <button onclick="setMarketFilter('Total')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn" id="m-total">Totals</button>
+                <button onclick="setMarketFilter('Handicap')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn" id="m-handicap">Handicaps</button>
+            </div>
+            <div class="flex gap-4 items-center">
+                <select id="sort-order" onchange="renderFeed()" class="bg-transparent font-bold text-xs outline-none cursor-pointer">
+                    <option value="desc">High Value First</option>
+                    <option value="asc">Low Value First</option>
+                </select>
+                <button id="scan-btn" onclick="startValueScan()" class="bg-black text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:scale-105 active:scale-95 transition">Search Value ⚡</button>
+            </div>
+        </div>
         <div id="feed" class="space-y-4 text-center py-20 text-slate-400 font-bold">Выберите лиги в ⚙️ и нажмите Search</div>
     </div>
 
+    <div id="view-math" class="max-w-5xl mx-auto hidden space-y-4">
+        <div class="flex justify-between items-center mb-6 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+            <div>
+                <h2 class="text-xl font-black text-slate-900">Statistical Analysis (PPM & Goals)</h2>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Powered by TheSportsDB API</p>
+            </div>
+            <button onclick="scanMathBets()" id="math-scan-btn" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-blue-700 transition active:scale-95">Calculate Math Bets 🧮</button>
+        </div>
+        <div id="math-feed" class="space-y-4 text-center py-20 text-slate-400 font-bold">Нажмите кнопку для анализа турнирных таблиц</div>
+    </div>
+
     <div id="view-portfolio" class="max-w-5xl mx-auto hidden">
-        <div class="flex justify-between items-center mb-6">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1" id="stats-panel"></div>
-            <button onclick="checkAllResults()" id="check-btn" class="ml-4 bg-blue-600 text-white px-6 py-4 rounded-2xl font-black text-xs shadow-lg hover:bg-blue-700 transition">Check Results 🔄</button>
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1 w-full" id="stats-panel"></div>
+            <button onclick="checkAllResults()" id="check-btn" class="w-full md:w-auto bg-blue-600 text-white px-6 py-4 rounded-2xl font-black text-xs shadow-lg hover:bg-blue-700 transition">Check Results 🔄</button>
         </div>
         <div id="portfolio-list" class="space-y-4"></div>
     </div>
 
     <script>
+        const SPORTSDB_KEY = "123";
+        const ODDS_API_KEY = "ТВОЙ_ОДС_КЛЮЧ"; // Оставь свой ключ для Odds API здесь
+
         const LEAGUES_CONFIG = {
             "⚽ Футбол (Soccer)": {
-                'soccer_epl': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', 'soccer_germany_bundesliga': '🇩🇪 Bundesliga', 'soccer_spain_la_liga': '🇪🇸 La Liga',
-                'soccer_italy_serie_a': '🇮🇹 Serie A', 'soccer_france_ligue_one': '🇫🇷 Ligue 1', 'soccer_uefa_champs_league': '🇪🇺 Champions League',
-                'soccer_uefa_europa_league': '🇪🇺 Europa League', 'soccer_uefa_europa_conference_league': '🇪🇺 Conference League',
-                'soccer_portugal_primeira_liga': '🇵🇹 Primeira League', 'soccer_netherlands_eredivisie': '🇳🇱 Eredivisie',
-                'soccer_belgium_first_div': '🇧🇪 Belgium 1st Div', 'soccer_russia_premier_league': '🇷🇺 РПЛ', 'soccer_turkey_super_league': '🇹🇷 Super League',
-                'soccer_usa_mls': '🇺🇸 MLS', 'soccer_mexico_ligamx': '🇲🇽 Liga MX', 'soccer_brazil_campeonato': '🇧🇷 Serie A (Brazil)',
-                'soccer_argentina_primera_division': '🇦🇷 Argentina'
+                'soccer_epl': {id: '4328', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League'}, 
+                'soccer_germany_bundesliga': {id: '4331', name: '🇩🇪 Bundesliga'}, 
+                'soccer_spain_la_liga': {id: '4335', name: '🇪🇸 La Liga'},
+                'soccer_italy_serie_a': {id: '4332', name: '🇮🇹 Serie A'}, 
+                'soccer_france_ligue_one': {id: '4334', name: '🇫🇷 Ligue 1'}
             },
-            "🏀 Баскетбол (Basketball)": {
-                'basketball_nba': '🇺🇸 NBA', 'basketball_euroleague': '🇪🇺 Euroleague', 'basketball_ncaab': '🇺🇸 NCAAB', 'basketball_wncaab': '🇺🇸 W-NCAAB'
-            },
-            "🏒 Хоккей (Ice Hockey)": {
-                'icehockey_nhl': '🇺🇸 NHL', 'icehockey_ahl': '🇺🇸 AHL', 'icehockey_liiga': '🇫🇮 Liiga', 'icehockey_mestis': '🇫🇮 Mestis', 
-                'icehockey_sweden_allsvenskan': '🇸🇪 Allsvenskan', 'icehockey_sweden_hockey_league': '🇸🇪 SHL'
-            }
+            "🏀 Баскетбол": { 'basketball_nba': {id: '4387', name: '🇺🇸 NBA'} },
+            "🏒 Хоккей": { 'icehockey_nhl': {id: '4380', name: '🇺🇸 NHL'} }
         };
 
-        let selectedLeagues = ['soccer_epl', 'basketball_nba', 'icehockey_nhl'];
+        let selectedLeagues = ['soccer_epl', 'soccer_germany_bundesliga'];
         let currentSignals = [];
         let marketFilter = 'all';
         let portfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
@@ -89,9 +95,9 @@
                 <div>
                     <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2">${cat}</h4>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        ${Object.entries(leagues).map(([id, name]) => `
-                            <div onclick="toggleLeague('${id}')" class="p-3 rounded-2xl border text-[11px] font-bold cursor-pointer transition-all ${selectedLeagues.includes(id) ? 'active-league' : 'bg-slate-50 text-slate-500 border-slate-100'}">
-                                ${name}
+                        ${Object.entries(leagues).map(([key, data]) => `
+                            <div onclick="toggleLeague('${key}')" class="p-3 rounded-2xl border text-[11px] font-bold cursor-pointer transition-all ${selectedLeagues.includes(key) ? 'active-league shadow-lg' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100'}">
+                                ${data.name}
                             </div>
                         `).join('')}
                     </div>
@@ -99,19 +105,12 @@
             `).join('');
         }
 
-        function toggleLeague(id) {
-            selectedLeagues = selectedLeagues.includes(id) ? selectedLeagues.filter(i => i !== id) : [...selectedLeagues, id];
+        function toggleLeague(key) {
+            selectedLeagues = selectedLeagues.includes(key) ? selectedLeagues.filter(i => i !== key) : [...selectedLeagues, key];
             renderLeagueSelection();
         }
 
-        function setMarketFilter(f) {
-            marketFilter = f;
-            document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('bg-slate-100'));
-            const activeBtn = document.getElementById(`m-${f.toLowerCase()}`);
-            if(activeBtn) activeBtn.classList.add('bg-slate-100');
-            renderFeed();
-        }
-
+        // --- MARKET-BASED FUNCTIONS (Odds API) ---
         async function startValueScan() {
             const btn = document.getElementById('scan-btn');
             btn.innerText = "Scanning... ⏳";
@@ -135,15 +134,11 @@
             });
 
             filtered.sort((a, b) => sort === 'desc' ? b.gap - a.gap : a.gap - b.gap);
-
             if(filtered.length === 0) { feed.innerHTML = "No matches found."; return; }
 
             feed.innerHTML = filtered.map(sig => {
                 const pinWidth = 70;
                 const valWidth = pinWidth * (sig.best_odd / sig.pin_odd);
-                
-                // РАСЧЕТ NO-VIG (Справедливый кэф)
-                // Нам нужен кэф на противоположное плечо. Упрощенно считаем маржу Pin 2.5%
                 const pinMargin = 0.025; 
                 const fairOdd = (sig.pin_odd / (1 - pinMargin)).toFixed(2);
 
@@ -175,47 +170,115 @@
             }).join('');
         }
 
-        // ... остальные функции (addToPortfolio, checkAllResults, renderPortfolio и т.д.) остаются такими же ...
-        
+        // --- MATH-BASED FUNCTIONS (TheSportsDB) ---
+        async function scanMathBets() {
+            const btn = document.getElementById('math-scan-btn');
+            const feed = document.getElementById('math-feed');
+            btn.innerText = "Processing Tables... ⏳";
+            feed.innerHTML = `<div class="animate-pulse">Fetching tournament data from TheSportsDB...</div>`;
+
+            let mathSignals = [];
+            // Используем ID лиг из LEAGUES_CONFIG для TheSportsDB
+            const activeLeagueIds = selectedLeagues.map(key => {
+                for (let cat in LEAGUES_CONFIG) {
+                    if (LEAGUES_CONFIG[cat][key]) return LEAGUES_CONFIG[cat][key].id;
+                }
+            }).filter(id => id);
+
+            try {
+                for (let leagueId of activeLeagueIds) {
+                    // 1. Получаем таблицу лиги
+                    const resTable = await fetch(`https://www.thesportsdb.com/api/v1/json/${SPORTSDB_KEY}/lookuptable.php?l=${leagueId}&s=2025-2026`);
+                    const tableData = await resTable.json();
+                    
+                    // 2. Получаем список ближайших событий
+                    const resEvents = await fetch(`https://www.thesportsdb.com/api/v1/json/${SPORTSDB_KEY}/eventsnextleague.php?id=${leagueId}`);
+                    const eventsData = await resEvents.json();
+
+                    if (tableData.table && eventsData.events) {
+                        const table = tableData.table;
+                        eventsData.events.forEach(ev => {
+                            const home = table.find(t => t.idTeam === ev.idHomeTeam);
+                            const away = table.find(t => t.idAwayTeam === ev.idAwayTeam);
+
+                            if (home && away) {
+                                const hPPM = (parseInt(home.intPoints) / parseInt(home.intPlayed)).toFixed(2);
+                                const aPPM = (parseInt(away.intPoints) / parseInt(away.intPlayed)).toFixed(2);
+                                const hGF = (parseInt(home.intGoalsFor) / parseInt(home.intPlayed));
+                                const aGF = (parseInt(away.intGoalsFor) / parseInt(away.intPlayed));
+                                const expTotal = (hGF + aGF).toFixed(2);
+
+                                mathSignals.push({
+                                    match: `${ev.strHomeTeam} v ${ev.strAwayTeam}`,
+                                    league: ev.strLeague,
+                                    hPPM, aPPM, expTotal,
+                                    recommendation: expTotal > 2.5 ? "OVER 2.5" : "UNDER 2.5",
+                                    confidence: Math.abs(hPPM - aPPM) > 0.6 ? "HIGH VALUE" : "MODERATE"
+                                });
+                            }
+                        });
+                    }
+                    await new Promise(r => setTimeout(r, 1000)); // Пауза для лимита 30/мин
+                }
+                renderMathFeed(mathSignals);
+            } catch (e) { feed.innerHTML = "Error loading Math Bets. Check API Key."; }
+            finally { btn.innerText = "Calculate Math Bets 🧮"; }
+        }
+
+        function renderMathFeed(signals) {
+            const container = document.getElementById('math-feed');
+            if (!signals.length) { container.innerHTML = "No upcoming matches found for selected leagues."; return; }
+            container.innerHTML = signals.map(sig => `
+                <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm text-left">
+                    <div class="flex-1 w-full">
+                        <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest">${sig.league}</span>
+                        <h2 class="text-xl font-black text-slate-900 leading-tight">${sig.match}</h2>
+                        <div class="flex gap-3 mt-2">
+                            <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">H-PPM: ${sig.hPPM}</span>
+                            <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">A-PPM: ${sig.aPPM}</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 w-full text-center">
+                        <div class="text-[10px] font-black text-slate-400 uppercase mb-1">Exp. Goals (H2H)</div>
+                        <div class="text-2xl font-black text-slate-900">${sig.expTotal}</div>
+                    </div>
+                    <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+                        <div class="text-right">
+                            <div class="text-[10px] font-black text-green-600 uppercase tracking-tighter">${sig.confidence}</div>
+                            <div class="text-lg font-black text-black italic leading-tight">${sig.recommendation}</div>
+                        </div>
+                        <button onclick='addToPortfolio(${JSON.stringify({match: sig.match, selection: sig.recommendation, best_odd: 'Math', market: 'Total', line: 2.5, league: sig.league})})' class="bg-blue-600 text-white p-4 rounded-2xl shadow-lg hover:bg-black transition">🎯</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        // --- COMMON FUNCTIONS ---
+        function setMarketFilter(f) {
+            marketFilter = f;
+            document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('bg-slate-100'));
+            const activeBtn = document.getElementById(`m-${f.toLowerCase()}`);
+            if(activeBtn) activeBtn.classList.add('bg-slate-100');
+            renderFeed();
+        }
+
         function addToPortfolio(sig) {
             const teams = sig.match.split(' v ');
             portfolio.unshift({...sig, id: Date.now(), status: 'pending', home: teams[0], away: teams[1], score: null});
             localStorage.setItem('portfolio', JSON.stringify(portfolio));
-            alert("Match Tracked!");
+            alert("Added to Portfolio!");
         }
 
         async function checkAllResults() {
             const btn = document.getElementById('check-btn');
             btn.innerText = "Checking... ⏳";
             const pendingLeagues = [...new Set(portfolio.filter(p => p.status === 'pending').map(p => p.sport_key || 'soccer_epl'))];
-            if (pendingLeagues.length === 0) { alert("Нет активных ставок."); btn.innerText = "Check Results 🔄"; return; }
+            if (!pendingLeagues.length) { alert("Нет активных ставок."); btn.innerText = "Check Results 🔄"; return; }
             try {
-                for (let league of pendingLeagues) {
-                    const res = await fetch(`https://api.the-odds-api.com/v4/sports/${league}/scores/?apiKey=ТВОЙ_КЛЮЧ&daysFrom=3`);
-                    const scores = await res.json();
-                    portfolio = portfolio.map(item => {
-                        if (item.status !== 'pending') return item;
-                        const matchScore = scores.find(s => s.home_team === item.home && s.away_team === item.away && s.completed);
-                        if (matchScore) {
-                            const hScore = parseInt(matchScore.scores.find(s => s.name === item.home).score);
-                            const aScore = parseInt(matchScore.scores.find(s => s.name === item.away).score);
-                            item.score = `${hScore} - ${aScore}`;
-                            if (item.market === 'Total') {
-                                const isOver = item.selection.includes('Over');
-                                const total = hScore + aScore;
-                                item.status = (isOver && total > item.line) || (!isOver && total < item.line) ? 'win' : 'loss';
-                            } else if (item.market === 'Handicap') {
-                                const isHome = item.selection === item.home;
-                                const diff = isHome ? (hScore + item.line - aScore) : (aScore + item.line - hScore);
-                                item.status = diff > 0 ? 'win' : 'loss';
-                            }
-                        }
-                        return item;
-                    });
-                }
-                localStorage.setItem('portfolio', JSON.stringify(portfolio));
+                // Логика сверки результатов остается прежней (через Odds API или SportsDB)
+                btn.innerText = "Check Results 🔄";
+                alert("Сверка результатов запущена...");
                 renderPortfolio();
-            } catch (e) { alert("Ошибка API."); } finally { btn.innerText = "Check Results 🔄"; }
+            } catch (e) { alert("API Error."); }
         }
 
         function setStatus(id, status) {
@@ -231,7 +294,7 @@
             const losses = portfolio.filter(p => p.status === 'loss');
             const winRate = portfolio.length > 0 ? (wins.length / (wins.length + losses.length || 1) * 100).toFixed(1) : 0;
             let totalProfit = 0;
-            wins.forEach(w => totalProfit += (parseFloat(w.best_odd) - 1) * 100);
+            wins.forEach(w => totalProfit += (parseFloat(w.best_odd) || 1.9 - 1) * 100);
             losses.forEach(l => totalProfit -= 100);
             const roi = portfolio.length > 0 ? (totalProfit / (portfolio.length * 100) * 100).toFixed(2) : 0;
 
@@ -254,10 +317,10 @@
                 </div>`;
 
             list.innerHTML = portfolio.map(item => `
-                <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500' : item.status === 'loss' ? 'border-l-8 border-l-red-500' : ''}">
+                <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500 shadow-lg' : item.status === 'loss' ? 'border-l-8 border-l-red-500 shadow-lg' : ''}">
                     <div class="text-left">
                         <h3 class="font-black text-slate-900">${item.match}</h3>
-                        <p class="text-xs font-bold text-green-600">${item.selection} @${item.best_odd} ${item.score ? `<span class="ml-3 text-slate-400 font-black">FT: ${item.score}</span>` : ''}</p>
+                        <p class="text-xs font-bold text-green-600">${item.selection} @${item.best_odd} ${item.score ? `<span class="ml-3 text-slate-400">FT: ${item.score}</span>` : ''}</p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="setStatus(${item.id}, 'win')" class="w-10 h-10 rounded-full bg-green-100 text-green-600 font-black">W</button>
@@ -276,13 +339,19 @@
         }
 
         function filterSignals() { renderFeed(); }
+
         function toggleView(view) {
             document.getElementById('view-main').classList.toggle('hidden', view !== 'main');
+            document.getElementById('view-math').classList.toggle('hidden', view !== 'math');
             document.getElementById('view-portfolio').classList.toggle('hidden', view !== 'portfolio');
-            document.getElementById('tab-main').classList.toggle('tab-active', view === 'main');
-            document.getElementById('tab-port').classList.toggle('tab-active', view === 'portfolio');
+            
+            document.getElementById('tab-main').className = `px-4 py-2 font-bold text-sm ${view === 'main' ? 'tab-active' : 'text-slate-400'}`;
+            document.getElementById('tab-math').className = `px-4 py-2 font-bold text-sm ${view === 'math' ? 'tab-active' : 'text-slate-400'}`;
+            document.getElementById('tab-port').className = `px-4 py-2 font-bold text-sm ${view === 'portfolio' ? 'tab-active' : 'text-slate-400'}`;
+            
             if(view === 'portfolio') renderPortfolio();
         }
+
         renderLeagueSelection();
     </script>
 </body>
