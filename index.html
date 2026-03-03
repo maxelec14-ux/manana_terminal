@@ -2,96 +2,194 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>MananaAI | Cloud Terminal</title>
+    <title>MananaAI | Pro Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #F8FAF1; font-family: sans-serif; }
-        .active-league { background: #00C076 !important; color: white !important; }
-        .card { background: white; border-radius: 20px; border: 1px solid #E2E8F0; transition: 0.2s; }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        body { background: #F8FAF1; font-family: 'Inter', sans-serif; }
+        .active-league { background: #00C076 !important; color: white !important; border-color: #00C076 !important; }
+        .card { transition: 0.2s; cursor: pointer; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .tab-active { border-bottom: 3px solid #00C076; color: #00C076; }
     </style>
 </head>
-<body class="p-6">
+<body class="p-4 md:p-8">
 
     <nav class="flex justify-between items-center max-w-5xl mx-auto mb-10">
-        <h1 class="text-2xl font-black italic">MANANA<span class="text-green-600">AI</span></h1>
-        <div class="flex gap-4">
-            <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="px-4 py-2 bg-slate-100 rounded-xl font-bold text-sm">Настройка лиг ⚙️</button>
-            <button id="scan-btn" onclick="startValueScan()" class="px-6 py-2 bg-black text-white rounded-xl font-bold text-sm shadow-lg shadow-black/20">Search Value ⚡</button>
+        <h1 class="text-2xl font-black italic tracking-tighter text-slate-900">MANANA<span class="text-green-600">AI</span></h1>
+        <div class="flex gap-3">
+            <button onclick="toggleView('main')" id="tab-main" class="px-4 py-2 font-bold text-sm tab-active">Live Feed</button>
+            <button onclick="toggleView('portfolio')" id="tab-port" class="px-4 py-2 font-bold text-sm text-slate-400">Portfolio</button>
+            <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="p-2 bg-white rounded-full shadow-sm border border-slate-200">⚙️</button>
         </div>
     </nav>
 
-    <div id="setup" class="max-w-5xl mx-auto mb-10 hidden bg-white p-6 rounded-3xl border border-slate-200">
-        <h3 class="font-black text-xs uppercase tracking-widest text-slate-400 mb-4">Выбор лиг для парсинга</h3>
+    <div id="setup" class="max-w-5xl mx-auto mb-8 hidden bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
         <div id="league-grid" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
     </div>
 
-    <main class="max-w-5xl mx-auto space-y-4" id="feed"></main>
+    <div id="view-main" class="max-w-5xl mx-auto space-y-4">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-black">Value Signals</h2>
+            <button id="scan-btn" onclick="startValueScan()" class="bg-black text-white px-8 py-3 rounded-2xl font-bold shadow-xl hover:scale-105 transition">Search Value ⚡</button>
+        </div>
+        <div id="feed" class="space-y-4 text-center py-20 text-slate-400">Выберите лиги и нажмите Search</div>
+    </div>
+
+    <div id="view-portfolio" class="max-w-5xl mx-auto hidden">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-black">My Portfolio</h2>
+            <div id="stats" class="bg-green-100 text-green-700 px-4 py-2 rounded-xl font-bold text-sm">Profit: +0.00%</div>
+        </div>
+        <div id="portfolio-list" class="space-y-4"></div>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-[40px] max-w-md w-full p-8 relative shadow-2xl">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-slate-300 hover:text-black text-2xl">✕</button>
+            <div id="modal-content"></div>
+        </div>
+    </div>
 
     <script>
-        const MY_LEAGUES = [
-            'soccer_epl','soccer_germany_bundesliga','soccer_spain_la_liga','soccer_italy_serie_a','soccer_france_ligue_one','soccer_uefa_champs_league','soccer_uefa_europa_league','soccer_uefa_europa_conference_league',
-            'soccer_portugal_primeira_liga','soccer_netherlands_eredivisie','soccer_belgium_first_div','soccer_russia_premier_league','soccer_turkey_super_league','soccer_usa_mls','soccer_mexico_ligamx','soccer_brazil_campeonato','soccer_argentina_primera_division',
-            'basketball_nba','basketball_euroleague','basketball_ncaab','basketball_wncaab',
-            'icehockey_nhl','icehockey_ahl','icehockey_liiga','icehockey_mestis','icehockey_sweden_allsvenskan','icehockey_sweden_hockey_league'
-        ];
+        const LEAGUES_DATA = {
+            'soccer_epl': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', 'soccer_germany_bundesliga': '🇩🇪 Bundesliga', 'soccer_spain_la_liga': '🇪🇸 La Liga',
+            'soccer_italy_serie_a': '🇮🇹 Serie A', 'soccer_france_ligue_one': '🇫🇷 Ligue 1', 'soccer_uefa_champs_league': '🇪🇺 Champions League',
+            'soccer_uefa_europa_league': '🇪🇺 Europa League', 'soccer_uefa_europa_conference_league': '🇪🇺 Conference League',
+            'soccer_portugal_primeira_liga': '🇵🇹 Portugal', 'soccer_netherlands_eredivisie': '🇳🇱 Netherlands',
+            'soccer_belgium_first_div': '🇧🇪 Belgium', 'soccer_russia_premier_league': '🇷🇺 RPL', 'soccer_turkey_super_league': '🇹🇷 Turkey',
+            'soccer_usa_mls': '🇺🇸 MLS', 'soccer_mexico_ligamx': '🇲🇽 Mexico', 'soccer_brazil_campeonato': '🇧🇷 Brazil',
+            'soccer_argentina_primera_division': '🇦🇷 Argentina', 'basketball_nba': '🇺🇸 NBA', 'basketball_euroleague': '🇪🇺 Euroleague',
+            'basketball_ncaab': '🇺🇸 NCAA', 'icehockey_nhl': '🇺🇸 NHL', 'icehockey_ahl': '🇺🇸 AHL', 'icehockey_liiga': '🇫🇮 Liiga',
+            'icehockey_sweden_hockey_league': '🇸🇪 SHL'
+        };
 
         let selectedLeagues = ['soccer_epl', 'basketball_nba', 'icehockey_nhl'];
+        let currentSignals = [];
+        let portfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
 
         function renderLeagues() {
             const grid = document.getElementById('league-grid');
-            grid.innerHTML = MY_LEAGUES.map(l => `
-                <div onclick="toggleLeague('${l}')" class="p-2 rounded-lg border text-[10px] font-bold cursor-pointer text-center ${selectedLeagues.includes(l) ? 'active-league' : 'bg-slate-50 text-slate-400'}">
-                    ${l.replace('soccer_', '').replace('icehockey_', '').toUpperCase()}
+            grid.innerHTML = Object.entries(LEAGUES_DATA).map(([id, name]) => `
+                <div onclick="toggleLeague('${id}')" class="p-3 rounded-2xl border text-[11px] font-bold cursor-pointer transition-all ${selectedLeagues.includes(id) ? 'active-league shadow-lg shadow-green-100' : 'bg-slate-50 text-slate-500 border-slate-100'}">
+                    ${name}
                 </div>
             `).join('');
         }
 
-        function toggleLeague(l) {
-            if(selectedLeagues.includes(l)) selectedLeagues = selectedLeagues.filter(i => i !== l);
-            else selectedLeagues.push(l);
+        function toggleLeague(id) {
+            selectedLeagues = selectedLeagues.includes(id) ? selectedLeagues.filter(i => i !== id) : [...selectedLeagues, id];
             renderLeagues();
         }
 
         async function startValueScan() {
             const btn = document.getElementById('scan-btn');
-            btn.innerText = "Сканирую... ⏳";
+            btn.innerText = "Scanning... ⏳";
             try {
                 const res = await fetch(`/api/fetch?leagues=${selectedLeagues.join(',')}`);
-                const data = await res.json();
-                renderFeed(data);
-            } catch(e) { alert("Ошибка API"); }
+                currentSignals = await res.json();
+                // Сортировка по GAP уже сделана в fetch.js, но на всякий случай тут тоже:
+                currentSignals.sort((a, b) => b.gap - a.gap);
+                renderFeed();
+            } catch(e) { alert("API Error"); }
             finally { btn.innerText = "Search Value ⚡"; }
         }
 
-       function renderFeed(items) {
-    const feed = document.getElementById('feed');
-    // Очищаем старые данные
-    feed.innerHTML = ""; 
-
-    if (!items || items.length === 0) { 
-        feed.innerHTML = "<p class='text-center text-slate-400 py-10'>Валуев не найдено. Попробуйте выбрать другие лиги.</p>"; 
-        return; 
-    }
-
-    feed.innerHTML = items.map(sig => `
-        <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center shadow-sm mb-4">
-            <div>
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${sig.league}</span>
-                <h2 class="text-xl font-black text-slate-900 leading-tight my-1">${sig.match}</h2>
-                <p class="text-sm font-bold text-blue-600">${sig.selection} (${sig.market} ${sig.line}) — ${sig.bookie}</p>
-            </div>
-            <div class="text-right">
-                <div class="text-xs font-black text-green-600 mb-2">+${sig.gap}% Value</div>
-                <div class="flex gap-2">
-                    <span class="bg-slate-100 px-4 py-2 rounded-2xl text-[11px] font-black text-slate-500">PIN: ${sig.pin_odd}</span>
-                    <span class="bg-green-500 text-white px-4 py-2 rounded-2xl text-[11px] font-black italic shadow-lg shadow-green-200">${sig.best_odd}</span>
+        function renderFeed() {
+            const feed = document.getElementById('feed');
+            if(currentSignals.length === 0) { feed.innerHTML = "No value bets found."; return; }
+            feed.innerHTML = currentSignals.map((sig, idx) => `
+                <div onclick="openModal(${idx})" class="card bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center shadow-sm">
+                    <div class="text-left">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${sig.league}</span>
+                        <h2 class="text-lg font-black text-slate-900">${sig.match}</h2>
+                        <p class="text-xs font-bold text-blue-600">${sig.selection} (${sig.market} ${sig.line})</p>
+                    </div>
+                    <div class="text-right flex items-center gap-6">
+                        <div>
+                            <div class="text-[10px] font-black text-green-600 uppercase">+${sig.gap}% Value</div>
+                            <div class="text-xl font-black italic">${sig.best_odd}</div>
+                        </div>
+                        <div class="text-slate-300">❯</div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    `).join('');
-}
+            `).join('');
+        }
 
+        function openModal(idx) {
+            const sig = currentSignals[idx];
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('modal-content').innerHTML = `
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b pb-4 block mb-4">${sig.league}</span>
+                <h2 class="text-2xl font-black mb-1">${sig.match}</h2>
+                <p class="text-blue-600 font-bold mb-6">${sig.selection} (${sig.market} ${sig.line})</p>
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-slate-50 p-4 rounded-2xl">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Best Price</p>
+                        <p class="text-xl font-black text-green-600">${sig.best_odd}</p>
+                        <p class="text-[10px] text-slate-400">${sig.bookie}</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Pinnacle</p>
+                        <p class="text-xl font-black text-slate-900">${sig.pin_odd}</p>
+                        <p class="text-[10px] text-slate-400">Fair price</p>
+                    </div>
+                </div>
+                <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="w-full bg-black text-white py-4 rounded-2xl font-black shadow-xl">Track this Bet 🎯</button>
+            `;
+        }
+
+        function addToPortfolio(sig) {
+            portfolio.unshift({...sig, id: Date.now(), status: 'pending'});
+            localStorage.setItem('portfolio', JSON.stringify(portfolio));
+            closeModal();
+            alert("Added to Portfolio!");
+        }
+
+        function setStatus(id, status) {
+            portfolio = portfolio.map(item => item.id === id ? {...item, status} : item);
+            localStorage.setItem('portfolio', JSON.stringify(portfolio));
+            renderPortfolio();
+        }
+
+        function renderPortfolio() {
+            const list = document.getElementById('portfolio-list');
+            list.innerHTML = portfolio.map(item => `
+                <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500' : item.status === 'loss' ? 'border-l-8 border-l-red-500' : ''}">
+                    <div>
+                        <h3 class="font-black text-slate-900">${item.match}</h3>
+                        <p class="text-xs font-bold text-slate-400">${item.selection} @${item.best_odd}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="setStatus(${item.id}, 'win')" class="w-10 h-10 rounded-full bg-green-100 text-green-600 font-black">W</button>
+                        <button onclick="setStatus(${item.id}, 'loss')" class="w-10 h-10 rounded-full bg-red-100 text-red-600 font-black">L</button>
+                        <button onclick="deleteBet(${item.id})" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400">✕</button>
+                    </div>
+                </div>
+            `).join('');
+            updateStats();
+        }
+
+        function deleteBet(id) {
+            portfolio = portfolio.filter(p => p.id !== id);
+            localStorage.setItem('portfolio', JSON.stringify(portfolio));
+            renderPortfolio();
+        }
+
+        function updateStats() {
+            const wins = portfolio.filter(p => p.status === 'win').length;
+            const losses = portfolio.filter(p => p.status === 'loss').length;
+            document.getElementById('stats').innerText = `Wins: ${wins} | Losses: ${losses}`;
+        }
+
+        function toggleView(view) {
+            document.getElementById('view-main').classList.toggle('hidden', view !== 'main');
+            document.getElementById('view-portfolio').classList.toggle('hidden', view !== 'portfolio');
+            document.getElementById('tab-main').classList.toggle('tab-active', view === 'main');
+            document.getElementById('tab-port').classList.toggle('tab-active', view === 'portfolio');
+            if(view === 'portfolio') renderPortfolio();
+        }
+
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
         renderLeagues();
     </script>
 </body>
