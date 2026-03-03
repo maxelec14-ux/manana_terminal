@@ -1,117 +1,31 @@
 <!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>MananaAI | Live Value Scanner</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background: #F8FAF1; font-family: 'Inter', sans-serif; }
-        .card { border-radius: 32px; background: white; border: 1px solid #eef2f6; transition: 0.3s; }
-        .card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.04); }
-        .value-tag { background: linear-gradient(90deg, #00C076, #00ad6a); color: white; padding: 4px 12px; border-radius: 12px; font-size: 10px; font-weight: 900; }
-    </style>
-</head>
-<body class="p-4 md:p-10">
-
-    <div class="max-w-5xl mx-auto">
-        <header class="flex justify-between items-end mb-12">
-            <div>
-                <h1 class="text-3xl font-black italic tracking-tighter text-slate-900">MANANA<span class="text-green-600">AI</span></h1>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1">Live Math Model 24/25</p>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="startAnalysis(39)" class="bg-white border border-slate-200 px-6 py-3 rounded-2xl font-black text-xs hover:bg-slate-50 transition active:scale-95">🏴󠁧󠁢󠁥󠁮󠁧󠁿 EPL</button>
-                <button onclick="startAnalysis(140)" class="bg-white border border-slate-200 px-6 py-3 rounded-2xl font-black text-xs hover:bg-slate-50 transition active:scale-95">🇪🇸 LA LIGA</button>
-            </div>
-        </header>
-
-        <div id="status" class="hidden mb-8 p-5 bg-black text-white rounded-[24px] font-bold text-[11px] uppercase tracking-widest text-center animate-pulse">
-            Синхронизация потока данных...
-        </div>
-
-        <div id="feed" class="space-y-6">
-            <div class="text-center py-32 border-4 border-dashed border-slate-100 rounded-[60px]">
-                <p class="text-slate-300 font-black uppercase italic tracking-widest text-sm">Выберите лигу для мгновенного расчета Value</p>
-            </div>
-        </div>
-    </div>
+<html>
+<body style="background:#111; color:#0f0; font-family:monospace; padding:20px;">
+    <h3>API SENSOR / DEBUG MODE</h3>
+    <button onclick="check()" style="padding:15px; background:#0f0; font-weight:bold; cursor:pointer;">ПРОВЕРИТЬ СВЯЗЬ 📡</button>
+    <div id="out" style="margin-top:20px; white-space:pre-wrap; border-top:1px solid #333; padding-top:20px;">Ожидание нажатия...</div>
 
     <script>
-        const API_KEY = "c54fa8c0a8699f6a039bbc5555669479";
-        const HEADERS = { "x-apisports-key": API_KEY };
-        const CURRENT_SEASON = 2024; // На март 2026 года это ID текущего играемого сезона 24/25
+        async function check() {
+            const out = document.getElementById('out');
+            const key = "c54fa8c0a8699f6a039bbc5555669479";
+            const url = "https://v3.football.api-sports.io/standings?league=39&season=2024";
 
-        async function startAnalysis(leagueId) {
-            const feed = document.getElementById('feed');
-            const status = document.getElementById('status');
-            
-            status.classList.remove('hidden');
-            feed.innerHTML = '';
+            out.innerText = "Отправка запроса на сервер...";
 
             try {
-                // 1. Получаем таблицу текущего сезона
-                const tableRes = await fetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=${CURRENT_SEASON}`, { headers: HEADERS });
-                const tableData = await tableRes.json();
+                const res = await fetch(url, {
+                    headers: { "x-apisports-key": key, "x-rapidapi-host": "v3.football.api-sports.io" }
+                });
+                const data = await res.json();
                 
-                if (!tableData.response?.[0]) throw new Error("API не вернул таблицу. Проверьте лимиты ключа.");
-                const standings = tableData.response[0].league.standings[0];
+                out.innerText = "СТАТУС ОТВЕТА: " + res.status + "\n\n" + 
+                                "ОШИБКИ API: " + JSON.stringify(data.errors) + "\n\n" +
+                                "КОЛИЧЕСТВО ДАННЫХ: " + data.results + "\n\n" +
+                                "ПОЛНЫЙ ОТВЕТ:\n" + JSON.stringify(data, null, 2);
 
-                // 2. Получаем ближайшие матчи
-                const matchRes = await fetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${CURRENT_SEASON}&next=12`, { headers: HEADERS });
-                const mData = await matchRes.json();
-                const fixtures = mData.response || [];
-
-                status.classList.add('hidden');
-
-                if (fixtures.length === 0) {
-                    feed.innerHTML = `<div class="text-center py-20 font-black text-slate-400 uppercase">Нет активных матчей в ближайшее время</div>`;
-                    return;
-                }
-
-                feed.innerHTML = fixtures.map(fix => {
-                    const h = standings.find(s => s.team.id === fix.teams.home.id);
-                    const a = standings.find(s => s.team.id === fix.teams.away.id);
-                    if (!h || !a) return '';
-
-                    const hPPM = (h.points / h.all.played).toFixed(2);
-                    const aPPM = (a.points / a.all.played).toFixed(2);
-                    
-                    // Расчет ожидаемых голов (xG-simple) на базе текущей формы 24/25
-                    const hScored = h.all.goals.for / h.all.played;
-                    const hConceded = h.all.goals.against / h.all.played;
-                    const aScored = a.all.goals.for / a.all.played;
-                    const aConceded = a.all.goals.against / a.all.played;
-
-                    const expGoals = ((hScored + aConceded) / 2 + (aScored + hConceded) / 2).toFixed(2);
-                    const ppmDiff = (hPPM - aPPM).toFixed(2);
-
-                    return `
-                    <div class="card p-8 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
-                        <div class="flex-1 text-left">
-                            <div class="flex items-center gap-3 mb-2">
-                                <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">${fix.league.name}</span>
-                                ${expGoals > 2.7 ? '<span class="value-tag italic">OVER VALUE</span>' : ''}
-                                ${Math.abs(ppmDiff) > 1.0 ? '<span class="value-tag italic" style="background:black">HANDICAP VALUE</span>' : ''}
-                            </div>
-                            <h2 class="text-2xl font-black text-slate-900 leading-none">${fix.teams.home.name} <span class="text-slate-300 mx-1 text-lg">vs</span> ${fix.teams.away.name}</h2>
-                            <div class="flex gap-4 mt-4">
-                                <div class="px-3 py-1 bg-slate-50 rounded-lg text-[10px] font-bold text-slate-500">PPM DIFF: <span class="text-slate-900">${ppmDiff}</span></div>
-                                <div class="px-3 py-1 bg-slate-50 rounded-lg text-[10px] font-bold text-slate-500">H-RANK: <span class="text-slate-900">#${h.rank}</span></div>
-                            </div>
-                        </div>
-                        <div class="text-right border-t md:border-t-0 md:border-l border-slate-50 pt-6 md:pt-0 md:pl-10 min-w-[160px]">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Expected Goals</p>
-                            <p class="text-5xl font-black italic text-slate-900 tracking-tighter">${expGoals}</p>
-                            <p class="text-[11px] font-black mt-2 ${expGoals > 2.5 ? 'text-green-600' : 'text-orange-500'} uppercase">
-                                ${expGoals > 2.5 ? 'Pick: Total Over 2.5' : 'Pick: Total Under 2.5'}
-                            </p>
-                        </div>
-                    </div>`;
-                }).join('');
-
-            } catch (err) {
-                status.style.background = "#ef4444";
-                status.innerText = "Ошибка: " + err.message;
+            } catch (e) {
+                out.innerText = "КРИТИЧЕСКАЯ ОШИБКА СЕТИ: " + e.message;
             }
         }
     </script>
