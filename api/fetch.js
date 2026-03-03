@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
     const { leagues } = req.query;
-    const API_KEY = 'f3478125e1684304dae1ac720ced58fe'; // <--- Проверь ключ!
+    const API_KEY = 'f3478125e1684304dae1ac720ced58fe'; // <--- Проверь, что вписал его сюда!
 
     try {
         const response = await fetch(`https://api.the-odds-api.com/v4/sports/${leagues}/odds/?apiKey=${API_KEY}&regions=eu,us&markets=totals,spreads&oddsFormat=decimal`);
@@ -23,7 +23,8 @@ export default async function handler(req, res) {
                         const pinOutcome = pinMarket.outcomes.find(o => o.name === outcome.name && o.point === outcome.point);
                         if (pinOutcome) {
                             const gap = (outcome.price / pinOutcome.price - 1) * 100;
-                            if (gap > 3) { // Только если выгода > 3%
+                            // Выводим только если выгода > 3%
+                            if (gap > 3) {
                                 signals.push({
                                     league: match.sport_title,
                                     match: `${match.home_team} v ${match.away_team}`,
