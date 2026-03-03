@@ -27,16 +27,14 @@
 
     <div id="setup" class="max-w-5xl mx-auto mb-8 hidden bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm space-y-6">
         <input type="text" id="global-search" oninput="filterSignals()" placeholder="Поиск лиги или команды..." class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-green-500 font-bold text-sm">
-        
-        <div id="league-categories" class="space-y-4 text-left">
-            </div>
+        <div id="league-categories" class="space-y-4 text-left"></div>
     </div>
 
     <div class="max-w-5xl mx-auto mb-6 flex flex-wrap gap-4 items-center justify-between">
         <div class="flex gap-2 bg-white p-1 rounded-xl border border-slate-100">
             <button onclick="setMarketFilter('all')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn bg-slate-100" id="m-all">All</button>
             <button onclick="setMarketFilter('Total')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn" id="m-total">Totals</button>
-            <button onclick="setMarketFilter('Handicap')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn" id="m-hcp">Handicaps</button>
+            <button onclick="setMarketFilter('Handicap')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn" id="m-handicap">Handicaps</button>
         </div>
         
         <div class="flex gap-4 items-center">
@@ -53,8 +51,7 @@
     </div>
 
     <div id="view-portfolio" class="max-w-5xl mx-auto hidden">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" id="stats-panel">
-            </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" id="stats-panel"></div>
         <div id="portfolio-list" class="space-y-4"></div>
     </div>
 
@@ -102,7 +99,9 @@
         function setMarketFilter(f) {
             marketFilter = f;
             document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('bg-slate-100'));
-            document.getElementById(`m-${f.toLowerCase()}`).classList.add('bg-slate-100');
+            // Исправлено: корректное ID для кнопки гандикапов
+            const activeBtn = document.getElementById(`m-${f.toLowerCase()}`);
+            if(activeBtn) activeBtn.classList.add('bg-slate-100');
             renderFeed();
         }
 
@@ -135,7 +134,6 @@
             feed.innerHTML = filtered.map(sig => {
                 const pinWidth = 70;
                 const valWidth = pinWidth * (sig.best_odd / sig.pin_odd);
-                
                 return `
                 <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
                     <div class="text-left flex-1 w-full">
@@ -143,12 +141,10 @@
                         <h2 class="text-xl font-black text-slate-900 leading-tight">${sig.match}</h2>
                         <p class="text-sm font-bold text-green-600">${sig.selection} (${sig.market} ${sig.line})</p>
                     </div>
-
                     <div class="flex-1 w-full max-w-xs space-y-2">
                         <div class="bar-container"><div class="bar-pin" style="width: ${pinWidth}%"></div></div>
                         <div class="bar-container"><div class="bar-val" style="width: ${valWidth}%"></div></div>
                     </div>
-                    
                     <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
                         <div class="text-right">
                             <div class="text-xl font-black text-green-600 leading-none">+${sig.gap}%</div>
@@ -156,8 +152,7 @@
                         </div>
                         <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="bg-slate-900 text-white px-6 py-4 rounded-2xl font-black text-xs hover:bg-green-600 transition shadow-lg">Track 🎯</button>
                     </div>
-                </div>
-                `;
+                </div>`;
             }).join('');
         }
 
@@ -176,12 +171,9 @@
         function renderPortfolio() {
             const list = document.getElementById('portfolio-list');
             const statsPanel = document.getElementById('stats-panel');
-            
             const wins = portfolio.filter(p => p.status === 'win');
             const losses = portfolio.filter(p => p.status === 'loss');
             const winRate = portfolio.length > 0 ? (wins.length / (wins.length + losses.length || 1) * 100).toFixed(1) : 0;
-            
-            // Расчет ROI (условно считаем ставку 100 единиц)
             let totalProfit = 0;
             wins.forEach(w => totalProfit += (parseFloat(w.best_odd) - 1) * 100);
             losses.forEach(l => totalProfit -= 100);
@@ -203,8 +195,7 @@
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
                     <p class="text-[10px] font-black text-slate-400 uppercase">W/L</p>
                     <p class="text-xl font-black text-slate-900">${wins.length} / ${losses.length}</p>
-                </div>
-            `;
+                </div>`;
 
             list.innerHTML = portfolio.map(item => `
                 <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500' : item.status === 'loss' ? 'border-l-8 border-l-red-500' : ''}">
@@ -217,8 +208,7 @@
                         <button onclick="setStatus(${item.id}, 'loss')" class="w-10 h-10 rounded-full bg-red-100 text-red-600 font-black hover:bg-red-600 hover:text-white transition">L</button>
                         <button onclick="deleteBet(${item.id})" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 font-bold">✕</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
         function deleteBet(id) {
