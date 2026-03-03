@@ -3,190 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MananaAI | Intelligence Suite</title>
+    <title>MananaAI | Analytics Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        
-        :root {
-            --bg-deep: #0A0F1E;
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --accent: #10B981;
-        }
-
-        body { 
-            background-color: var(--bg-deep); 
-            font-family: 'Inter', sans-serif; 
-            color: #F8FAFC; 
-            margin: 0;
-        }
-
-        .glass-card { 
-            background: var(--card-bg); 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-            border-radius: 28px; 
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .glass-card:hover { 
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .neon-glow { 
-            color: var(--accent); 
-            text-shadow: 0 0 20px rgba(16, 185, 129, 0.4); 
-        }
-
-        .status-badge {
-            font-size: 9px;
-            letter-spacing: 0.2em;
-            padding: 4px 12px;
-            border-radius: 100px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        /* Анимация загрузки */
-        .loader-dots:after {
-            content: '.';
-            animation: dots 1.5s steps(5, end) infinite;
-        }
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60% { content: '...'; }
-            80%, 100% { content: ''; }
-        }
+        body { background: #0A0F1E; font-family: 'Inter', sans-serif; color: #F8FAFC; }
+        .glass-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; }
+        .stat-box { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.03); }
+        input, select { background: #161B2D; border: 1px solid #2D3748; color: white; padding: 8px; border-radius: 8px; font-size: 12px; width: 100%; }
+        .neon-accent { color: #10B981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
     </style>
 </head>
-<body class="p-6 md:p-12">
+<body class="p-4 md:p-8">
 
-    <div class="max-w-4xl mx-auto">
-        <header class="flex flex-col md:flex-row justify-between items-center gap-6 mb-16">
-            <div class="text-center md:text-left">
-                <h1 class="text-5xl font-[900] italic tracking-tighter neon-glow">MANANA<span class="text-white">AI</span></h1>
-                <div class="flex items-center justify-center md:justify-start gap-3 mt-2">
-                    <span id="status-badge" class="status-badge font-bold text-slate-500 uppercase">System Standby</span>
-                </div>
-            </div>
-            
-            <button onclick="syncWithEdge()" id="sync-btn" class="group relative bg-emerald-500 hover:bg-emerald-400 text-white px-10 py-5 rounded-2xl font-black text-xs transition-all active:scale-95 shadow-2xl shadow-emerald-500/20 uppercase tracking-widest">
-                <span id="btn-text">Sync Intelligence ⚡</span>
+    <div class="max-w-7xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-[900] italic tracking-tighter neon-accent uppercase">Manana<span class="text-white">AI</span></h1>
+            <button onclick="updateData()" id="update-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold text-xs transition uppercase tracking-widest">
+                Update Data ⚡
             </button>
         </header>
 
-        <div id="main-feed" class="space-y-6">
-            <div class="glass-card p-24 text-center border-dashed border-2 border-slate-800">
-                <p class="text-slate-600 font-bold uppercase text-[10px] tracking-[0.5em]">Waiting for server handshake</p>
-                <p class="text-slate-700 text-[9px] mt-4 italic">Press sync to fetch matches via Vercel Edge</p>
+        <div class="glass-card p-6 mb-8 grid grid-cols-2 md:grid-cols-6 gap-4 items-end">
+            <div>
+                <label class="text-[9px] font-bold text-slate-500 uppercase block mb-1">League</label>
+                <select id="f-league" onchange="applyFilters()"><option value="all">All Leagues</option></select>
             </div>
+            <div>
+                <label class="text-[9px] font-bold text-slate-500 uppercase block mb-1">Date</label>
+                <input type="date" id="f-date" onchange="applyFilters()">
+            </div>
+            <div>
+                <label class="text-[9px] font-bold text-slate-500 uppercase block mb-1">Min PPM Diff</label>
+                <input type="number" id="f-ppm" step="0.1" value="0" oninput="applyFilters()">
+            </div>
+            <div>
+                <label class="text-[9px] font-bold text-slate-500 uppercase block mb-1">Min Total</label>
+                <input type="number" id="f-total" step="0.1" value="0" oninput="applyFilters()">
+            </div>
+            <div>
+                <label class="text-[9px] font-bold text-slate-500 uppercase block mb-1">Min Handicap</label>
+                <input type="number" id="f-handicap" step="0.25" value="0" oninput="applyFilters()">
+            </div>
+            <div class="text-[10px] text-slate-500 font-bold pb-2" id="match-count">0 Matches</div>
         </div>
 
-        <footer class="mt-20 text-center">
-            <p class="text-[8px] font-bold text-slate-700 uppercase tracking-[0.4em]">Powered by Vercel Serverless & MananaAI Core</p>
-        </footer>
+        <div id="feed" class="space-y-4 text-slate-500 text-center py-20 uppercase font-black tracking-[0.3em]">
+            Press Update Data to start analysis
+        </div>
     </div>
 
     <script>
-        async function syncWithEdge() {
-            const btn = document.getElementById('sync-btn');
-            const btnText = document.getElementById('btn-text');
-            const status = document.getElementById('status-badge');
-            const feed = document.getElementById('main-feed');
+        let RAW_DATA = [];
 
-            // Состояние загрузки
+        async function updateData() {
+            const btn = document.getElementById('update-btn');
+            const feed = document.getElementById('feed');
             btn.disabled = true;
-            btnText.innerHTML = 'Syncing<span class="loader-dots"></span>';
-            status.innerText = "Connecting to Edge...";
-            status.classList.add('text-emerald-500', 'animate-pulse');
-            
-            feed.innerHTML = `
-                <div class="py-32 text-center">
-                    <div class="inline-block w-8 h-8 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
-                    <p class="text-slate-500 font-black text-[10px] uppercase tracking-widest">Accessing Satellite Feed</p>
-                </div>
-            `;
+            feed.innerHTML = '<div class="animate-pulse">Analyzing European Data Streams...</div>';
 
             try {
-                // Запрос к нашему внутреннему API эндпоинту
-                const response = await fetch('/api/matches');
+                const res = await fetch('/api/matches');
+                const data = await res.json();
                 
-                if (!response.ok) throw new Error("API_UNREACHABLE");
-                
-                const data = await response.json();
+                if (data.error) throw new Error(data.error);
 
-                if (data.matches && data.matches.length > 0) {
-                    status.innerText = `Data Live: ${data.matches.length} Events`;
-                    status.classList.remove('animate-pulse');
-                    
-                    feed.innerHTML = data.matches.map(m => {
-                        // Математическая симуляция рейтинга на основе доступных данных матча
-                        const rating = (2.0 + Math.random() * 1.8).toFixed(2);
-                        const isHigh = rating > 2.5;
+                // Обработка данных
+                const processed = data.matches.map(m => {
+                    const leagueTable = data.standings[m.competition.code] || [];
+                    const hTeam = leagueTable.find(t => t.team.id === m.homeTeam.id) || null;
+                    const aTeam = leagueTable.find(t => t.team.id === m.awayTeam.id) || null;
 
-                        return `
-                        <div class="glass-card p-8 flex flex-col md:flex-row justify-between items-center gap-6">
-                            <div class="flex-1 text-center md:text-left">
-                                <div class="flex items-center justify-center md:justify-start gap-3 mb-3">
-                                    <span class="bg-emerald-500/10 text-emerald-500 text-[9px] font-black px-2 py-1 rounded uppercase tracking-tighter">
-                                        ${m.competition.name}
-                                    </span>
-                                    <span class="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
-                                        ${new Date(m.utcDate).toLocaleDateString()}
-                                    </span>
-                                </div>
-                                <h2 class="text-2xl font-[900] italic text-white tracking-tighter">
-                                    ${m.homeTeam.shortName} <span class="text-slate-800 mx-1">vs</span> ${m.awayTeam.shortName}
-                                </h2>
-                                <p class="text-[10px] text-slate-500 font-bold mt-2 uppercase tracking-widest">
-                                    Kickoff: ${new Date(m.utcDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                </p>
-                            </div>
+                    if (!hTeam || !aTeam) return null;
 
-                            <div class="flex items-center gap-12 border-t md:border-t-0 md:border-l border-white/5 pt-6 md:pt-0 md:pl-12 w-full md:w-auto justify-around md:justify-end">
-                                <div class="text-center">
-                                    <p class="text-[9px] font-black text-slate-600 uppercase mb-1 tracking-widest">AI Rating</p>
-                                    <p class="text-4xl font-[900] italic text-white tracking-tighter">${rating}</p>
-                                    <p class="text-[9px] font-black ${isHigh ? 'text-emerald-500' : 'text-amber-500'} uppercase mt-1">
-                                        Score ${isHigh ? 'Over' : 'Under'} 2.5
-                                    </p>
-                                </div>
-                                <div class="text-right hidden sm:block">
-                                    <div class="w-12 h-12 rounded-full border-2 border-white/5 flex items-center justify-center">
-                                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`;
-                    }).join('');
-                } else {
-                    status.innerText = "No Live Matches";
-                    feed.innerHTML = `
-                        <div class="glass-card p-20 text-center">
-                            <p class="text-slate-500 font-black uppercase text-xs">В базе данных на сегодня пусто</p>
-                            <p class="text-slate-700 text-[10px] mt-2 italic tracking-widest uppercase">Попробуйте обновить позже</p>
-                        </div>`;
-                }
+                    const hPPM = (hTeam.points / hTeam.playedGames).toFixed(2);
+                    const aPPM = (aTeam.points / aTeam.playedGames).toFixed(2);
+                    const hGF = (hTeam.goalsFor / hTeam.playedGames).toFixed(2);
+                    const hGA = (hTeam.goalsAgainst / hTeam.playedGames).toFixed(2);
+                    const aGF = (aTeam.goalsFor / aTeam.playedGames).toFixed(2);
+                    const aGA = (aTeam.goalsAgainst / aTeam.playedGames).toFixed(2);
+
+                    const expTotal = (parseFloat(hGF) + parseFloat(aGA) + parseFloat(aGF) + parseFloat(hGA)) / 2;
+                    const ppmDiff = (hPPM - aPPM).toFixed(2);
+                    const handicap = (ppmDiff * 0.75).toFixed(2);
+
+                    return {
+                        league: m.competition.name,
+                        code: m.competition.code,
+                        date: m.utcDate.split('T')[0],
+                        time: new Date(m.utcDate).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                        home: m.homeTeam.shortName,
+                        away: m.awayTeam.shortName,
+                        hPPM, aPPM, hGF, hGA, aGF, aGA,
+                        ppmDiff: Math.abs(ppmDiff),
+                        expTotal: expTotal.toFixed(2),
+                        handicap: handicap,
+                        oddsH: (1 / (0.33 + (ppmDiff * 0.2))).toFixed(2),
+                        oddsA: (1 / (0.33 - (ppmDiff * 0.2))).toFixed(2)
+                    };
+                }).filter(i => i !== null);
+
+                RAW_DATA = processed;
+                updateLeagueDropdown();
+                applyFilters();
 
             } catch (err) {
-                status.innerText = "Handshake Error";
-                status.classList.replace('text-emerald-500', 'text-rose-500');
-                feed.innerHTML = `
-                    <div class="glass-card p-12 border-rose-500/20 text-center">
-                        <p class="text-rose-500 font-black uppercase text-xs mb-2">Ошибка соединения с эндпоинтом</p>
-                        <p class="text-slate-500 text-[10px] leading-relaxed">
-                            Убедитесь, что файл <span class="text-white font-bold">api/matches.js</span> загружен в папку <span class="text-white font-bold">api</span> на Vercel.<br>
-                            Проверьте логи в панели управления Vercel на наличие ошибок 500.
-                        </p>
-                    </div>
-                `;
-                console.error("Vercel Edge Error:", err);
+                feed.innerHTML = `<div class="text-rose-500 font-bold">Error: ${err.message}</div>`;
             } finally {
                 btn.disabled = false;
-                btnText.innerText = 'Sync Intelligence ⚡';
             }
+        }
+
+        function applyFilters() {
+            const league = document.getElementById('f-league').value;
+            const date = document.getElementById('f-date').value;
+            const ppm = parseFloat(document.getElementById('f-ppm').value);
+            const total = parseFloat(document.getElementById('f-total').value);
+            const handi = parseFloat(document.getElementById('f-handicap').value);
+
+            const filtered = RAW_DATA.filter(m => {
+                return (league === 'all' || m.code === league) &&
+                       (!date || m.date === date) &&
+                       (m.ppmDiff >= ppm) &&
+                       (parseFloat(m.expTotal) >= total) &&
+                       (Math.abs(m.handicap) >= handi);
+            });
+
+            document.getElementById('match-count').innerText = `${filtered.length} Matches`;
+            render(filtered);
+        }
+
+        function render(matches) {
+            const feed = document.getElementById('feed');
+            if (matches.length === 0) {
+                feed.innerHTML = '<div class="py-10 text-slate-700">No matches match filters</div>';
+                return;
+            }
+
+            feed.innerHTML = matches.map(m => `
+                <div class="glass-card p-6 flex flex-col lg:flex-row gap-6 items-center">
+                    <div class="flex-1 w-full">
+                        <div class="flex items-center gap-2 mb-2 text-[10px] font-bold text-emerald-500">
+                            <span class="bg-emerald-500/10 px-2 py-0.5 rounded uppercase">${m.league}</span>
+                            <span class="text-slate-500 tracking-widest">${m.date} | ${m.time}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xl font-black italic tracking-tighter text-white">
+                            <div class="w-[45%] text-right">${m.home}</div>
+                            <div class="text-slate-800 text-sm mx-4 uppercase font-normal">vs</div>
+                            <div class="w-[45%] text-left">${m.away}</div>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-2 mt-4">
+                            <div class="stat-box">
+                                <div class="text-[8px] text-slate-500 uppercase mb-1">PPM</div>
+                                <div class="text-xs font-bold">${m.hPPM} <span class="text-slate-600">|</span> ${m.aPPM}</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="text-[8px] text-slate-500 uppercase mb-1">Avg GF</div>
+                                <div class="text-xs font-bold text-emerald-400">${m.hGF} <span class="text-slate-600">|</span> ${m.aGF}</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="text-[8px] text-slate-500 uppercase mb-1">Avg GA</div>
+                                <div class="text-xs font-bold text-rose-400">${m.hGA} <span class="text-slate-600">|</span> ${m.aGA}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-row lg:flex-col gap-4 w-full lg:w-48 lg:border-l border-slate-800 lg:pl-6 justify-around">
+                        <div class="text-center">
+                            <div class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Exp. Total</div>
+                            <div class="text-3xl font-black italic text-emerald-500">${m.expTotal}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">AI Handicap</div>
+                            <div class="text-2xl font-black italic text-white">${m.handicap > 0 ? '-' : '+'}${Math.abs(m.handicap)}</div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-row lg:flex-col gap-4 w-full lg:w-32 lg:border-l border-slate-800 lg:pl-6 justify-around">
+                        <div class="text-center">
+                            <div class="text-[9px] font-bold text-slate-500 uppercase">H Odds</div>
+                            <div class="text-sm font-black text-white">@${m.oddsH}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-[9px] font-bold text-slate-500 uppercase">A Odds</div>
+                            <div class="text-sm font-black text-white">@${m.oddsA}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateLeagueDropdown() {
+            const select = document.getElementById('f-league');
+            const leagues = [...new Set(RAW_DATA.map(m => m.league))];
+            const codes = [...new Set(RAW_DATA.map(m => m.code))];
+            
+            let options = '<option value="all">All Leagues</option>';
+            leagues.forEach((l, i) => {
+                options += `<option value="${codes[i]}">${l}</option>`;
+            });
+            select.innerHTML = options;
         }
     </script>
 </body>
