@@ -1,31 +1,112 @@
 <!DOCTYPE html>
-<html>
-<body style="background:#111; color:#0f0; font-family:monospace; padding:20px;">
-    <h3>API SENSOR / DEBUG MODE</h3>
-    <button onclick="check()" style="padding:15px; background:#0f0; font-weight:bold; cursor:pointer;">ПРОВЕРИТЬ СВЯЗЬ 📡</button>
-    <div id="out" style="margin-top:20px; white-space:pre-wrap; border-top:1px solid #333; padding-top:20px;">Ожидание нажатия...</div>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>MananaAI | Real-Time 2025</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #F8FAF1; font-family: 'Inter', sans-serif; }
+        .card { border-radius: 28px; background: white; border: 1px solid #eef2f6; transition: 0.3s; }
+        .tag-live { background: #00C076; color: white; padding: 2px 8px; border-radius: 8px; font-size: 9px; font-weight: 900; }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
+            <h1 class="text-2xl font-black italic tracking-tighter">MANANA<span class="text-green-600">AI</span></h1>
+            <button onclick="analyze2025(39)" class="bg-black text-white px-8 py-3 rounded-2xl font-bold text-xs hover:shadow-xl transition active:scale-95">🏴󠁧󠁢󠁥󠁮󠁧󠁿 СКАН EPL 2025</button>
+        </header>
+
+        <div id="status" class="hidden mb-6 p-4 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100 font-bold text-[10px] uppercase tracking-widest text-center">
+            Анализ текущей формы команд...
+        </div>
+
+        <div id="feed" class="space-y-4">
+            <div class="text-center py-20 text-slate-300 font-bold italic uppercase tracking-widest">Нажмите скан для получения Live данных 2025</div>
+        </div>
+    </div>
 
     <script>
-        async function check() {
-            const out = document.getElementById('out');
-            const key = "c54fa8c0a8699f6a039bbc5555669479";
-            const url = "https://v3.football.api-sports.io/standings?league=39&season=2024";
+        const API_KEY = "c54fa8c0a8699f6a039bbc5555669479";
+        const HEADERS = { "x-apisports-key": API_KEY };
 
-            out.innerText = "Отправка запроса на сервер...";
+        async function analyze2025(leagueId) {
+            const feed = document.getElementById('feed');
+            const status = document.getElementById('status');
+            status.classList.remove('hidden');
+            feed.innerHTML = '<div class="py-20 text-center animate-pulse font-black text-slate-400">СОБИРАЕМ ДАННЫЕ СЕЗОНА 2025...</div>';
 
             try {
-                const res = await fetch(url, {
-                    headers: { "x-apisports-key": key, "x-rapidapi-host": "v3.football.api-sports.io" }
-                });
-                const data = await res.json();
-                
-                out.innerText = "СТАТУС ОТВЕТА: " + res.status + "\n\n" + 
-                                "ОШИБКИ API: " + JSON.stringify(data.errors) + "\n\n" +
-                                "КОЛИЧЕСТВО ДАННЫХ: " + data.results + "\n\n" +
-                                "ПОЛНЫЙ ОТВЕТ:\n" + JSON.stringify(data, null, 2);
+                // 1. Берем ПОСЛЕДНИЕ 50 матчей лиги, чтобы понять форму команд (т.к. таблица пуста)
+                const lastRes = await fetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&last=50`, { headers: HEADERS });
+                const lastData = await lastRes.json();
+                const lastFixtures = lastData.response || [];
 
-            } catch (e) {
-                out.innerText = "КРИТИЧЕСКАЯ ОШИБКА СЕТИ: " + e.message;
+                // 2. Берем БЛИЖАЙШИЕ матчи для прогноза
+                const nextRes = await fetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&next=10`, { headers: HEADERS });
+                const nextData = await nextRes.json();
+                const nextFixtures = nextData.response || [];
+
+                if (nextFixtures.length === 0) {
+                    throw new Error("Будущие матчи сезона 2025 еще не добавлены в API.");
+                }
+
+                // 3. Расчет статистики для каждой команды вручную
+                const stats = {};
+                lastFixtures.forEach(f => {
+                    [f.teams.home, f.teams.away].forEach(t => {
+                        if (!stats[t.id]) stats[t.id] = { goals: 0, matches: 0, points: 0 };
+                    });
+
+                    // Считаем голы и очки (Home)
+                    stats[f.teams.home.id].goals += f.goals.home || 0;
+                    stats[f.teams.home.id].matches += 1;
+                    if (f.goals.home > f.goals.away) stats[f.teams.home.id].points += 3;
+                    else if (f.goals.home === f.goals.away) stats[f.teams.home.id].points += 1;
+
+                    // Считаем голы и очки (Away)
+                    stats[f.teams.away.id].goals += f.goals.away || 0;
+                    stats[f.teams.away.id].matches += 1;
+                    if (f.goals.away > f.goals.home) stats[f.teams.away.id].points += 3;
+                    else if (f.goals.away === f.goals.home) stats[f.teams.away.id].points += 1;
+                });
+
+                // 4. Отрисовка прогнозов
+                status.classList.add('hidden');
+                feed.innerHTML = nextFixtures.map(fix => {
+                    const h = stats[fix.teams.home.id] || { goals: 0, matches: 1, points: 0 };
+                    const a = stats[fix.teams.away.id] || { goals: 0, matches: 1, points: 0 };
+
+                    const hGPG = (h.goals / h.matches).toFixed(2);
+                    const aGPG = (a.goals / a.matches).toFixed(2);
+                    const exp = (parseFloat(hGPG) + parseFloat(aGPG)).toFixed(2);
+
+                    return `
+                    <div class="card p-6 flex justify-between items-center shadow-sm">
+                        <div class="text-left">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="tag-live">SEASON 2025</span>
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${fix.league.name}</span>
+                            </div>
+                            <h2 class="text-xl font-black text-slate-900">${fix.teams.home.name} vs ${fix.teams.away.name}</h2>
+                            <p class="text-[10px] font-bold text-slate-400 mt-2 uppercase">Form GPG: ${hGPG} / ${aGPG}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Math Expected</p>
+                            <p class="text-4xl font-black italic text-slate-900">${exp}</p>
+                            <p class="text-[10px] font-black ${exp > 2.5 ? 'text-green-500' : 'text-amber-500'} uppercase mt-1">
+                                ${exp > 2.5 ? 'Pick: Over 2.5' : 'Pick: Under 2.5'}
+                            </p>
+                        </div>
+                    </div>`;
+                }).join('');
+
+            } catch (err) {
+                status.style.background = "#ef4444";
+                status.style.color = "white";
+                status.innerText = err.message;
+                feed.innerHTML = '';
             }
         }
     </script>
