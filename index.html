@@ -2,91 +2,98 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>MananaAI | Final Fix</title>
+    <title>MananaAI | Data Sync Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #F8FAF1; font-family: 'Inter', sans-serif; }
-        .active-league { background: #00C076 !important; color: white !important; border-color: #00C076 !important; }
-        .card { transition: 0.2s; border-radius: 24px; }
+        .card { transition: 0.2s; border-radius: 28px; border: 1px solid #e2e8f0; background: white; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05); }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-10">
 
-    <nav class="flex justify-between items-center max-w-4xl mx-auto mb-8">
-        <h1 class="text-2xl font-black italic tracking-tighter">MANANA<span class="text-green-600">AI</span></h1>
-        <div id="league-select" class="flex gap-2">
-            <button onclick="runScan('4396')" class="px-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50">League 1</button>
-            <button onclick="runScan('4328')" class="px-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50">Premier League</button>
+    <nav class="max-w-4xl mx-auto mb-10 flex justify-between items-center">
+        <h1 class="text-3xl font-black tracking-tighter italic">MANANA<span class="text-green-600">AI</span></h1>
+        <div class="flex gap-2">
+            <button onclick="fetchData('4396')" class="px-6 py-3 bg-slate-900 text-white rounded-2xl font-bold text-xs hover:bg-slate-800 transition">🏴󠁧󠁢󠁥󠁮󠁧󠁿 League 1</button>
+            <button onclick="fetchData('4328')" class="px-6 py-3 bg-blue-600 text-white rounded-2xl font-bold text-xs hover:bg-blue-700 transition">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</button>
         </div>
     </nav>
 
-    <div id="feed" class="max-w-4xl mx-auto space-y-4">
-        <div class="text-center py-20 text-slate-400 font-bold">Нажми на лигу выше, чтобы загрузить матчи</div>
+    <div id="status-bar" class="max-w-4xl mx-auto mb-6 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest"></div>
+    <div id="main-feed" class="max-w-4xl mx-auto space-y-4">
+        <div class="text-center py-20 border-4 border-dashed border-slate-100 rounded-[50px]">
+            <p class="text-slate-300 font-black text-xl uppercase italic">Выберите лигу для анализа</p>
+        </div>
     </div>
 
     <script>
         const API_KEY = "3";
 
-        async function runScan(leagueId) {
-            const feed = document.getElementById('feed');
-            feed.innerHTML = `<div class="text-center font-bold text-blue-600 animate-pulse">Загрузка данных из JSON...</div>`;
+        async function fetchData(leagueId) {
+            const feed = document.getElementById('main-feed');
+            const statusBar = document.getElementById('status-bar');
+            
+            feed.innerHTML = `<div class="text-center py-20 font-black text-blue-600 animate-pulse uppercase">Синхронизация с базой данных...</div>`;
+            statusBar.innerText = "Загрузка...";
 
             try {
-                // 1. Загружаем таблицу (статистику)
-                const resT = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/lookuptable.php?l=${leagueId}&s=2025-2026`);
-                const tData = await resT.json();
-                const table = tData.table;
+                // 1. Получаем таблицу (Season 2025-2026)
+                const tableRes = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/lookuptable.php?l=${leagueId}&s=2025-2026`);
+                const tableData = await tableRes.json();
+                const table = tableData.table;
 
-                // 2. Загружаем расписание (те самые 15 матчей)
-                const resM = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/eventsnextleague.php?id=${leagueId}`);
-                const mData = await resM.json();
-                const events = mData.events;
+                // 2. Получаем матчи
+                const eventsRes = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/eventsnextleague.php?id=${leagueId}`);
+                const eventsData = await eventsRes.json();
+                const events = eventsData.events;
 
-                if (!events || !table) {
-                    feed.innerHTML = `<div class="p-8 bg-red-50 text-red-500 rounded-3xl font-bold text-center">Данные для этой лиги временно недоступны</div>`;
-                    return;
+                if (!table || !events) {
+                    throw new Error("Не удалось получить данные. Проверьте ID лиги.");
                 }
+
+                statusBar.innerText = `Найдено матчей: ${events.length} | Команд в таблице: ${table.length}`;
 
                 let html = '';
                 events.forEach(ev => {
-                    // Ищем команды по ID (как в твоем JSON: idHomeTeam и idAwayTeam)
+                    // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Прямое сопоставление по ID из твоего JSON
                     const home = table.find(t => t.idTeam === ev.idHomeTeam);
                     const away = table.find(t => t.idTeam === ev.idAwayTeam);
 
                     if (home && away) {
-                        const hP = Math.max(parseInt(home.intPlayed), 1);
-                        const aP = Math.max(parseInt(away.intPlayed), 1);
+                        const hP = Math.max(parseInt(home.intPlayed || 1), 1);
+                        const aP = Math.max(parseInt(away.intPlayed || 1), 1);
                         
-                        // Считаем математику (PPM и Ожидаемые голы)
-                        const hPPM = (parseInt(home.intPoints) / hP).toFixed(2);
-                        const aPPM = (parseInt(away.intPoints) / aP).toFixed(2);
-                        const hGF = (parseInt(home.intGoalsFor) / hP);
-                        const aGF = (parseInt(away.intGoalsFor) / aP);
+                        // Математика (Основа)
+                        const hPPM = (parseInt(home.intPoints || 0) / hP).toFixed(2);
+                        const aPPM = (parseInt(away.intPoints || 0) / aP).toFixed(2);
+                        const hGF = (parseInt(home.intGoalsFor || 0) / hP);
+                        const aGF = (parseInt(away.intGoalsFor || 0) / aP);
                         const expTotal = (hGF + aGF).toFixed(2);
 
                         html += `
-                        <div class="card bg-white p-6 border border-slate-100 shadow-sm flex justify-between items-center">
-                            <div>
-                                <div class="text-[10px] font-black text-slate-400 uppercase mb-1">${ev.dateEvent} | ${ev.strTime}</div>
-                                <h2 class="text-lg font-black text-slate-900">${ev.strEvent}</h2>
-                                <div class="flex gap-3 mt-2">
-                                    <span class="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded">H-PPM: ${hPPM}</span>
-                                    <span class="text-[10px] font-bold bg-slate-100 px-2 py-1 rounded">A-PPM: ${aPPM}</span>
+                        <div class="card p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div class="text-center md:text-left flex-1">
+                                <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest">${ev.strLeague} | ${ev.dateEvent}</span>
+                                <h2 class="text-xl font-black text-slate-900 mt-1">${ev.strHomeTeam} <span class="text-slate-300">vs</span> ${ev.strAwayTeam}</h2>
+                                <div class="flex gap-2 mt-2 justify-center md:justify-start">
+                                    <span class="text-[10px] font-bold bg-slate-50 text-slate-500 px-2 py-1 rounded">H-PPM: ${hPPM}</span>
+                                    <span class="text-[10px] font-bold bg-slate-50 text-slate-500 px-2 py-1 rounded">A-PPM: ${aPPM}</span>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <div class="text-[9px] font-bold text-slate-400 uppercase">Exp. Goals</div>
-                                <div class="text-2xl font-black text-blue-600">${expTotal}</div>
-                                <div class="text-[10px] font-black ${expTotal > 2.5 ? 'text-green-500' : 'text-amber-500'}">${expTotal > 2.5 ? 'OVER 2.5' : 'UNDER 2.5'}</div>
+                            <div class="text-center md:text-right border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-8 min-w-[120px]">
+                                <p class="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Expect. Goals</p>
+                                <p class="text-3xl font-black italic text-blue-600">${expTotal}</p>
+                                <p class="text-[11px] font-black mt-1 ${expTotal > 2.5 ? 'text-green-500' : 'text-amber-500'} uppercase">${expTotal > 2.5 ? 'Pick: OVER 2.5' : 'Pick: UNDER 2.5'}</p>
                             </div>
                         </div>`;
                     }
                 });
 
-                feed.innerHTML = html || `<div class="text-center font-bold text-slate-400">Матчи найдены, но данные в таблице отсутствуют.</div>`;
+                feed.innerHTML = html || `<div class="p-10 text-center font-bold text-slate-400 border-2 border-dashed rounded-[40px]">Матчи найдены, но возникла ошибка сопоставления ID.</div>`;
 
-            } catch (e) {
-                feed.innerHTML = `<div class="p-8 text-red-500 font-bold">Ошибка: ${e.message}</div>`;
+            } catch (err) {
+                feed.innerHTML = `<div class="p-10 bg-red-50 text-red-600 rounded-[40px] font-bold text-center border border-red-100">${err.message}</div>`;
             }
         }
     </script>
