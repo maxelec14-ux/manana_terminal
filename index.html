@@ -2,208 +2,133 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>MananaAI | Pro Scanner 2026</title>
+    <title>MananaAI | Final Recovery Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { background: #F8FAF1; font-family: 'Inter', sans-serif; }
-        .card { border-radius: 30px; background: white; border: 1px solid #EEF2F6; transition: 0.3s; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 30px 60px -12px rgba(0,0,0,0.05); }
-        .stat-box { background: #F9FAFB; padding: 10px; border-radius: 18px; text-align: center; }
-        .value-badge { background: #00C076; color: white; padding: 2px 8px; border-radius: 8px; font-size: 9px; font-weight: 900; }
-        input, select { border: 1px solid #E2E8F0; border-radius: 12px; padding: 8px 12px; font-size: 12px; font-weight: 700; outline: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap');
+        body { background: #F4F7F5; font-family: 'Inter', sans-serif; }
+        .match-card { border-radius: 24px; background: white; border: 1px solid #E5E7EB; transition: 0.2s; }
+        .match-card:hover { border-color: #10B981; transform: scale(1.01); }
     </style>
 </head>
 <body class="p-4 md:p-10">
 
-    <div class="max-w-6xl mx-auto">
-        <header class="flex justify-between items-center mb-10">
+    <div class="max-w-5xl mx-auto">
+        <header class="flex justify-between items-end mb-8">
             <div>
-                <h1 class="text-3xl font-[900] italic text-slate-900">MANANA<span class="text-emerald-500">AI</span></h1>
-                <p id="api-log" class="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Ready for scan</p>
+                <h1 class="text-3xl font-[900] italic text-slate-900 tracking-tighter">MANANA<span class="text-emerald-500">AI</span></h1>
+                <p id="debug-log" class="text-[10px] font-bold text-rose-500 uppercase tracking-widest mt-1">System Standby</p>
             </div>
-            <button onclick="runGlobalUpdate()" id="btn-sync" class="bg-slate-900 hover:bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black text-xs transition active:scale-95 shadow-lg shadow-slate-200">
-                UPDATE INTELLIGENCE ⚡
+            <button onclick="hardResetUpdate()" id="btn-sync" class="bg-emerald-500 text-white px-8 py-4 rounded-2xl font-black text-xs shadow-lg active:scale-95 transition-all">
+                FORCE UPDATE ⚡
             </button>
         </header>
 
-        <div class="bg-white p-6 rounded-[35px] shadow-sm mb-8 grid grid-cols-2 md:grid-cols-4 gap-4 border border-slate-100">
-            <div class="flex flex-col gap-1">
-                <label class="text-[9px] font-black text-slate-400 uppercase ml-1">League Filter</label>
-                <select id="f-league" onchange="applyFilters()"><option value="all">All Available</option></select>
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Min PPM Diff</label>
-                <input type="number" id="f-ppm" step="0.1" value="0" oninput="applyFilters()">
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Min Exp. Total</label>
-                <input type="number" id="f-total" step="0.1" value="0" oninput="applyFilters()">
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Sort by Date</label>
-                <input type="date" id="f-date" onchange="applyFilters()">
-            </div>
-        </div>
-
-        <div id="main-feed" class="space-y-6">
-            <div class="text-center py-40 border-4 border-dashed border-slate-200 rounded-[60px]">
-                <p class="text-slate-300 font-black uppercase italic tracking-widest">Connect to Football-Data API...</p>
+        <div id="feed" class="space-y-4">
+            <div class="text-center py-20 bg-white rounded-[40px] border-2 border-dashed border-slate-200">
+                <p class="text-slate-400 font-bold uppercase text-sm tracking-widest">Нажмите Force Update для глубокого сканирования</p>
             </div>
         </div>
     </div>
 
     <script>
         const API_KEY = '1996fa1ffdf0410195fd5b86af739300';
-        const LEAGUES = ['PL', 'PD', 'BL1', 'SA', 'FL1', 'DED', 'PPL', 'CL'];
-        let DATA_STORE = [];
+        const LEAGUES = ['PL', 'PD', 'BL1', 'SA', 'FL1', 'CL']; // Самые стабильные лиги
+        let STORE = [];
 
-        async function runGlobalUpdate() {
-            const log = document.getElementById('api-log');
+        async function hardResetUpdate() {
+            const log = document.getElementById('debug-log');
+            const feed = document.getElementById('feed');
             const btn = document.getElementById('btn-sync');
-            const feed = document.getElementById('main-feed');
-            
-            btn.disabled = true;
-            DATA_STORE = [];
-            feed.innerHTML = '<div class="py-20 text-center animate-pulse font-black text-slate-400 uppercase">Scanning European Leagues...</div>';
 
-            // Генерируем даты: сегодня + 10 дней
-            const dateStart = new Date().toISOString().split('T')[0];
-            const dateEnd = new Date(Date.now() + 864000000).toISOString().split('T')[0];
+            btn.disabled = true;
+            log.className = "text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1";
+            feed.innerHTML = '<div class="text-center py-20 animate-bounce font-black text-slate-400">CONNECTING...</div>';
+            STORE = [];
 
             for (const code of LEAGUES) {
-                log.innerText = `Fetching ${code} Standings...`;
+                log.innerText = `Scanning League: ${code}...`;
                 try {
-                    // 1. Standings
+                    // Запрос 1: Таблица (для PPM и голов)
                     const sRes = await fetch(`https://api.football-data.org/v4/competitions/${code}/standings`, { headers: {'X-Auth-Token': API_KEY}});
+                    if (sRes.status === 403) { log.innerText = `Error: ${code} no access (403)`; continue; }
                     const sData = await sRes.json();
-                    if (!sData.standings?.[0]) continue;
-
+                    
                     const table = {};
-                    sData.standings[0].table.forEach(t => {
-                        table[t.team.id] = {
-                            ppm: (t.points / t.playedGames || 0).toFixed(2),
-                            gf: (t.goalsFor / t.playedGames || 0).toFixed(2),
-                            ga: (t.goalsAgainst / t.playedGames || 0).toFixed(2),
-                            rank: t.position
-                        };
-                    });
+                    if (sData.standings?.[0]) {
+                        sData.standings[0].table.forEach(t => {
+                            table[t.team.id] = {
+                                ppm: (t.points / t.playedGames || 0).toFixed(2),
+                                gf: (t.goalsFor / t.playedGames || 0).toFixed(2),
+                                ga: (t.goalsAgainst / t.playedGames || 0).toFixed(2)
+                            };
+                        });
+                    }
 
-                    log.innerText = `Fetching ${code} Matches (${dateStart} - ${dateEnd})...`;
-                    // 2. Matches
-                    const mRes = await fetch(`https://api.football-data.org/v4/competitions/${code}/matches?dateFrom=${dateStart}&dateTo=${dateEnd}`, { headers: {'X-Auth-Token': API_KEY}});
+                    // Запрос 2: Ближайшие матчи (без фильтра по дате, просто 10 следующих)
+                    const mRes = await fetch(`https://api.football-data.org/v4/competitions/${code}/matches?status=SCHEDULED`, { headers: {'X-Auth-Token': API_KEY}});
                     const mData = await mRes.json();
 
                     if (mData.matches?.length > 0) {
-                        mData.matches.forEach(m => {
-                            const h = table[m.homeTeam.id];
-                            const a = table[m.awayTeam.id];
-                            if (h && a) {
-                                const expT = ((parseFloat(h.gf) + parseFloat(a.ga)) / 2 + (parseFloat(a.gf) + parseFloat(h.ga)) / 2).toFixed(2);
-                                DATA_STORE.push({
-                                    league: sData.competition.name,
-                                    date: m.utcDate.split('T')[0],
-                                    time: m.utcDate.split('T')[1].substring(0,5),
-                                    home: m.homeTeam.shortName,
-                                    away: m.awayTeam.shortName,
-                                    hPPM: h.ppm, aPPM: a.ppm,
-                                    hGF: h.gf, hGA: h.ga,
-                                    aGF: a.gf, aGA: a.ga,
-                                    hRank: h.rank, aRank: a.rank,
-                                    expTotal: expT,
-                                    ppmDiff: (h.ppm - a.ppm).toFixed(2),
-                                    handicap: ((h.ppm - a.ppm) * 0.8).toFixed(2)
-                                });
-                            }
+                        mData.matches.slice(0, 10).forEach(m => {
+                            const h = table[m.homeTeam.id] || { ppm: 0, gf: 0, ga: 0 };
+                            const a = table[m.awayTeam.id] || { ppm: 0, gf: 0, ga: 0 };
+                            
+                            const expT = (parseFloat(h.gf) + parseFloat(a.ga) + parseFloat(a.gf) + parseFloat(h.ga)) / 2;
+                            
+                            STORE.push({
+                                league: sData.competition.name,
+                                date: new Date(m.utcDate).toLocaleDateString(),
+                                teams: `${m.homeTeam.shortName} vs ${m.awayTeam.shortName}`,
+                                hStats: h, aStats: a,
+                                expTotal: expT.toFixed(2),
+                                diff: (h.ppm - a.ppm).toFixed(2)
+                            });
                         });
-                        log.innerText = `${code}: Found ${mData.matches.length} matches.`;
-                    } else {
-                        log.innerText = `${code}: No matches in this period.`;
+                        log.innerText = `Success: Found ${mData.matches.length} matches in ${code}`;
                     }
                     
-                    await new Promise(r => setTimeout(r, 6000)); // Безопасная пауза 6 сек (лимит 10 зап/мин)
+                    await new Promise(r => setTimeout(r, 6500)); // Ждем 6.5 сек для соблюдения лимита
+
                 } catch (e) {
-                    log.innerText = `Limit reached. Waiting for next cycle...`;
-                    await new Promise(r => setTimeout(r, 2000));
+                    log.innerText = `Limit reached. Skipping ${code}...`;
                 }
             }
 
-            log.innerText = `Scan Complete. Total: ${DATA_STORE.length} matches.`;
-            updateLeaguesDropdown();
-            render(DATA_STORE);
+            log.innerText = `Scan Complete. Total: ${STORE.length}`;
+            render();
             btn.disabled = false;
         }
 
-        function render(data) {
-            const feed = document.getElementById('main-feed');
-            if (data.length === 0) {
-                feed.innerHTML = '<div class="text-center py-20 font-black text-slate-300">NO MATCHES FOUND. TRY UPDATING OR CHANGING FILTERS.</div>';
+        function render() {
+            const feed = document.getElementById('feed');
+            if (STORE.length === 0) {
+                feed.innerHTML = '<div class="p-20 text-center font-black text-rose-400 uppercase">API вернул 0 матчей. Проверьте ключ или лимиты лиг.</div>';
                 return;
             }
 
-            feed.innerHTML = data.map(m => `
-                <div class="card p-8 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-2">
-                            <span class="value-badge">${m.league}</span>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase italic">${m.date} | ${m.time} UTC</span>
-                        </div>
-                        <h2 class="text-2xl font-[900] text-slate-900 mb-4 tracking-tighter">${m.home} <span class="text-slate-300 mx-1">vs</span> ${m.away}</h2>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            <div class="stat-box">
-                                <p class="text-[8px] font-black text-slate-400 uppercase mb-1">PPM Diff</p>
-                                <p class="text-xs font-[900] ${m.ppmDiff > 0 ? 'text-emerald-500' : 'text-rose-500'}">${m.ppmDiff}</p>
-                            </div>
-                            <div class="stat-box">
-                                <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Avg Goals H</p>
-                                <p class="text-xs font-[900] text-slate-700">${m.hGF} / ${m.hGA}</p>
-                            </div>
-                            <div class="stat-box">
-                                <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Avg Goals A</p>
-                                <p class="text-xs font-[900] text-slate-700">${m.aGF} / ${m.aGA}</p>
-                            </div>
-                            <div class="stat-box">
-                                <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Class Rank</p>
-                                <p class="text-xs font-[900] text-slate-400">#${m.hRank} vs #${m.aRank}</p>
-                            </div>
-                        </div>
+            feed.innerHTML = STORE.map(m => `
+                <div class="match-card p-6 flex justify-between items-center shadow-sm">
+                    <div>
+                        <span class="text-[9px] font-black bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase">${m.league}</span>
+                        <h2 class="text-xl font-black text-slate-900 mt-2">${m.teams}</h2>
+                        <p class="text-[10px] font-bold text-slate-400 mt-1 italic">${m.date}</p>
                     </div>
-
-                    <div class="flex gap-8 border-l border-slate-50 pl-8 min-w-[300px] justify-between">
+                    <div class="flex gap-10 items-center">
                         <div class="text-center">
-                            <p class="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-tighter">Exp. Total</p>
-                            <p class="text-4xl font-[900] italic text-slate-900">${m.expTotal}</p>
-                            <span class="text-[9px] font-black ${m.expTotal > 2.5 ? 'text-emerald-500' : 'text-amber-500'} uppercase">Total ${m.expTotal > 2.5 ? 'Over' : 'Under'} 2.5</span>
+                            <p class="text-[8px] font-black text-slate-400 uppercase">PPM Diff</p>
+                            <p class="text-lg font-black ${m.diff > 0 ? 'text-emerald-500' : 'text-rose-500'}">${m.diff}</p>
                         </div>
-                        <div class="text-center">
-                            <p class="text-[10px] font-black text-slate-400 uppercase mb-1 tracking-tighter">AH Line</p>
-                            <p class="text-4xl font-[900] italic text-slate-900">${m.handicap > 0 ? '-' : '+'}${Math.abs(m.handicap)}</p>
-                            <span class="text-[9px] font-black text-white bg-slate-900 px-2 py-0.5 rounded italic">MATH VALUE</span>
+                        <div class="text-right">
+                            <p class="text-[8px] font-black text-slate-400 uppercase">Exp. Total</p>
+                            <p class="text-3xl font-[900] italic text-slate-900">${m.expTotal}</p>
+                            <p class="text-[9px] font-black ${m.expTotal > 2.5 ? 'text-emerald-500' : 'text-orange-400'} uppercase">
+                                ${m.expTotal > 2.5 ? 'Pick: Over 2.5' : 'Pick: Under 2.5'}
+                            </p>
                         </div>
                     </div>
                 </div>
             `).join('');
-        }
-
-        function applyFilters() {
-            const league = document.getElementById('f-league').value;
-            const ppm = parseFloat(document.getElementById('f-ppm').value) || 0;
-            const total = parseFloat(document.getElementById('f-total').value) || 0;
-            const date = document.getElementById('f-date').value;
-
-            const filtered = DATA_STORE.filter(m => {
-                return (league === 'all' || m.league === league) &&
-                       (Math.abs(m.ppmDiff) >= ppm) &&
-                       (parseFloat(m.expTotal) >= total) &&
-                       (!date || m.date === date);
-            });
-            render(filtered);
-        }
-
-        function updateLeaguesDropdown() {
-            const s = document.getElementById('f-league');
-            const unique = [...new Set(DATA_STORE.map(m => m.league))];
-            s.innerHTML = '<option value="all">All Available</option>' + unique.map(l => `<option value="${l}">${l}</option>`).join('');
         }
     </script>
 </body>
