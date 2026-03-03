@@ -64,9 +64,9 @@
                 'soccer_epl': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', 'soccer_germany_bundesliga': '🇩🇪 Bundesliga', 'soccer_spain_la_liga': '🇪🇸 La Liga',
                 'soccer_italy_serie_a': '🇮🇹 Serie A', 'soccer_france_ligue_one': '🇫🇷 Ligue 1', 'soccer_uefa_champs_league': '🇪🇺 Champions League',
                 'soccer_uefa_europa_league': '🇪🇺 Europa League', 'soccer_uefa_europa_conference_league': '🇪🇺 Conference League',
-                'soccer_portugal_primeira_liga': '🇵🇹 Primeira Liga', 'soccer_netherlands_eredivisie': '🇳🇱 Eredivisie',
-                'soccer_belgium_first_div': '🇧🇪 Belgium 1st Div', 'soccer_russia_premier_league': '🇷🇺 РПЛ (Russia)', 'soccer_turkey_super_league': '🇹🇷 Super League',
-                'soccer_usa_mls': '🇺🇸 MLS (USA)', 'soccer_mexico_ligamx': '🇲🇽 Liga MX', 'soccer_brazil_campeonato': '🇧🇷 Serie A (Brazil)',
+                'soccer_portugal_primeira_liga': '🇵🇹 Primeira League', 'soccer_netherlands_eredivisie': '🇳🇱 Eredivisie',
+                'soccer_belgium_first_div': '🇧🇪 Belgium 1st Div', 'soccer_russia_premier_league': '🇷🇺 РПЛ', 'soccer_turkey_super_league': '🇹🇷 Super League',
+                'soccer_usa_mls': '🇺🇸 MLS', 'soccer_mexico_ligamx': '🇲🇽 Liga MX', 'soccer_brazil_campeonato': '🇧🇷 Serie A (Brazil)',
                 'soccer_argentina_primera_division': '🇦🇷 Argentina'
             },
             "🏀 Баскетбол (Basketball)": {
@@ -90,7 +90,7 @@
                     <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2">${cat}</h4>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                         ${Object.entries(leagues).map(([id, name]) => `
-                            <div onclick="toggleLeague('${id}')" class="p-3 rounded-2xl border text-[11px] font-bold cursor-pointer transition-all ${selectedLeagues.includes(id) ? 'active-league shadow-lg shadow-green-100' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100'}">
+                            <div onclick="toggleLeague('${id}')" class="p-3 rounded-2xl border text-[11px] font-bold cursor-pointer transition-all ${selectedLeagues.includes(id) ? 'active-league' : 'bg-slate-50 text-slate-500 border-slate-100'}">
                                 ${name}
                             </div>
                         `).join('')}
@@ -141,6 +141,12 @@
             feed.innerHTML = filtered.map(sig => {
                 const pinWidth = 70;
                 const valWidth = pinWidth * (sig.best_odd / sig.pin_odd);
+                
+                // РАСЧЕТ NO-VIG (Справедливый кэф)
+                // Нам нужен кэф на противоположное плечо. Упрощенно считаем маржу Pin 2.5%
+                const pinMargin = 0.025; 
+                const fairOdd = (sig.pin_odd / (1 - pinMargin)).toFixed(2);
+
                 return `
                 <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
                     <div class="text-left flex-1 w-full">
@@ -154,7 +160,10 @@
                     </div>
                     <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
                         <div class="text-right flex items-center gap-4">
-                            <span class="text-sm font-bold text-pink-500 bg-pink-50 px-2 py-1 rounded-lg">${sig.pin_odd}</span>
+                            <div class="flex flex-col items-end">
+                                <span class="text-sm font-bold text-pink-500 bg-pink-50 px-2 py-0.5 rounded-lg">${sig.pin_odd}</span>
+                                <span class="text-[9px] font-black text-red-500 mt-1 uppercase">No-Vig: ${fairOdd}</span>
+                            </div>
                             <div>
                                 <div class="text-xl font-black text-green-600 leading-none">+${sig.gap}%</div>
                                 <div class="text-2xl font-black text-black italic leading-tight">${sig.best_odd}</div>
@@ -166,17 +175,11 @@
             }).join('');
         }
 
+        // ... остальные функции (addToPortfolio, checkAllResults, renderPortfolio и т.д.) остаются такими же ...
+        
         function addToPortfolio(sig) {
-            // Сохраняем названия команд отдельно для проверки счета
             const teams = sig.match.split(' v ');
-            portfolio.unshift({
-                ...sig, 
-                id: Date.now(), 
-                status: 'pending', 
-                home: teams[0], 
-                away: teams[1],
-                score: null
-            });
+            portfolio.unshift({...sig, id: Date.now(), status: 'pending', home: teams[0], away: teams[1], score: null});
             localStorage.setItem('portfolio', JSON.stringify(portfolio));
             alert("Match Tracked!");
         }
@@ -184,33 +187,19 @@
         async function checkAllResults() {
             const btn = document.getElementById('check-btn');
             btn.innerText = "Checking... ⏳";
-            
-            // Берем уникальные лиги из портфолио, где есть 'pending'
             const pendingLeagues = [...new Set(portfolio.filter(p => p.status === 'pending').map(p => p.sport_key || 'soccer_epl'))];
-            
-            if (pendingLeagues.length === 0) {
-                alert("Нет активных ставок для проверки.");
-                btn.innerText = "Check Results 🔄";
-                return;
-            }
-
+            if (pendingLeagues.length === 0) { alert("Нет активных ставок."); btn.innerText = "Check Results 🔄"; return; }
             try {
-                // В этом примере используем одну лигу для теста, в идеале нужно циклом по всем
-                // Но для экономии лимитов проверим те, что есть
                 for (let league of pendingLeagues) {
                     const res = await fetch(`https://api.the-odds-api.com/v4/sports/${league}/scores/?apiKey=ТВОЙ_КЛЮЧ&daysFrom=3`);
                     const scores = await res.json();
-                    
                     portfolio = portfolio.map(item => {
                         if (item.status !== 'pending') return item;
-                        
                         const matchScore = scores.find(s => s.home_team === item.home && s.away_team === item.away && s.completed);
                         if (matchScore) {
                             const hScore = parseInt(matchScore.scores.find(s => s.name === item.home).score);
                             const aScore = parseInt(matchScore.scores.find(s => s.name === item.away).score);
                             item.score = `${hScore} - ${aScore}`;
-                            
-                            // Простейшая логика проверки (для Totals и Handicap)
                             if (item.market === 'Total') {
                                 const isOver = item.selection.includes('Over');
                                 const total = hScore + aScore;
@@ -226,11 +215,7 @@
                 }
                 localStorage.setItem('portfolio', JSON.stringify(portfolio));
                 renderPortfolio();
-            } catch (e) {
-                alert("Ошибка при проверке результатов. Проверьте API ключ.");
-            } finally {
-                btn.innerText = "Check Results 🔄";
-            }
+            } catch (e) { alert("Ошибка API."); } finally { btn.innerText = "Check Results 🔄"; }
         }
 
         function setStatus(id, status) {
@@ -269,17 +254,14 @@
                 </div>`;
 
             list.innerHTML = portfolio.map(item => `
-                <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500 shadow-lg shadow-green-50' : item.status === 'loss' ? 'border-l-8 border-l-red-500 shadow-lg shadow-red-50' : ''}">
+                <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500' : item.status === 'loss' ? 'border-l-8 border-l-red-500' : ''}">
                     <div class="text-left">
                         <h3 class="font-black text-slate-900">${item.match}</h3>
-                        <p class="text-xs font-bold text-green-600">
-                            ${item.selection} @${item.best_odd} 
-                            ${item.score ? `<span class="ml-3 text-slate-400 font-black tracking-widest">FT: ${item.score}</span>` : ''}
-                        </p>
+                        <p class="text-xs font-bold text-green-600">${item.selection} @${item.best_odd} ${item.score ? `<span class="ml-3 text-slate-400 font-black">FT: ${item.score}</span>` : ''}</p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="setStatus(${item.id}, 'win')" class="w-10 h-10 rounded-full bg-green-100 text-green-600 font-black hover:bg-green-600 hover:text-white transition">W</button>
-                        <button onclick="setStatus(${item.id}, 'loss')" class="w-10 h-10 rounded-full bg-red-100 text-red-600 font-black hover:bg-red-600 hover:text-white transition">L</button>
+                        <button onclick="setStatus(${item.id}, 'win')" class="w-10 h-10 rounded-full bg-green-100 text-green-600 font-black">W</button>
+                        <button onclick="setStatus(${item.id}, 'loss')" class="w-10 h-10 rounded-full bg-red-100 text-red-600 font-black">L</button>
                         <button onclick="deleteBet(${item.id})" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 font-bold">✕</button>
                     </div>
                 </div>`).join('');
@@ -294,7 +276,6 @@
         }
 
         function filterSignals() { renderFeed(); }
-
         function toggleView(view) {
             document.getElementById('view-main').classList.toggle('hidden', view !== 'main');
             document.getElementById('view-portfolio').classList.toggle('hidden', view !== 'portfolio');
@@ -302,7 +283,6 @@
             document.getElementById('tab-port').classList.toggle('tab-active', view === 'portfolio');
             if(view === 'portfolio') renderPortfolio();
         }
-
         renderLeagueSelection();
     </script>
 </body>
