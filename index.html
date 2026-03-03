@@ -2,45 +2,60 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>MananaAI | Auto-Sync Terminal</title>
+    <title>MananaAI | Pro Terminal V3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #F8FAF1; font-family: 'Inter', sans-serif; }
         .card { transition: 0.3s; border-radius: 28px; background: white; border: 1px solid #eef2f6; margin-bottom: 12px; }
-        .active-league { background: #00C076 !important; color: white !important; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.03); }
+        .active-btn { background: #00C076 !important; color: white !important; border-color: #00C076 !important; }
+        #status-bar { transition: 0.5s; }
+        .animate-fade { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
     <nav class="max-w-5xl mx-auto mb-10 flex justify-between items-center">
-        <h1 class="text-2xl font-black italic tracking-tighter">MANANA<span class="text-green-600">AI</span></h1>
+        <h1 class="text-2xl font-black italic tracking-tighter text-slate-900">MANANA<span class="text-green-600">AI</span></h1>
         <div id="league-selector" class="flex gap-2">
-            <button onclick="runAnalysis(39)" id="L-39" class="px-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 transition">🏴󠁧󠁢󠁥󠁮󠁧󠁿 EPL</button>
-            <button onclick="runAnalysis(140)" id="L-140" class="px-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 transition">🇪🇸 La Liga</button>
+            <button onclick="runAnalysis(39)" id="btn-39" class="px-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 transition">🏴󠁧󠁢󠁥󠁮󠁧󠁿 EPL</button>
+            <button onclick="runAnalysis(140)" id="btn-140" class="px-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 transition">🇪🇸 La Liga</button>
+            <button onclick="runAnalysis(78)" id="btn-78" class="px-4 py-2 bg-white border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 transition">🇩🇪 Bund.</button>
         </div>
     </nav>
 
     <div class="max-w-5xl mx-auto">
-        <div id="status-bar" class="mb-6 hidden p-4 bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest animate-pulse">
-            Синхронизация с API...
+        <div id="status-bar" class="mb-6 hidden p-4 bg-blue-600 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest shadow-lg">
+            Инициализация...
         </div>
 
-        <div id="debug-zone" class="mb-8 hidden bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+        <div id="debug-zone" class="mb-8 hidden bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden animate-fade">
+            <div class="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Standings Check</span>
+                <span id="season-label" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg"></span>
+            </div>
             <table class="w-full text-left text-[11px]">
-                <thead class="bg-slate-50 text-slate-400 font-black uppercase">
-                    <tr><th class="p-4">Команда</th><th class="p-4 text-center">Игр</th><th class="p-4 text-center">Очки</th><th class="p-4 text-right">PPM</th></tr>
+                <thead class="text-slate-400 font-black uppercase">
+                    <tr>
+                        <th class="p-4">Команда</th>
+                        <th class="p-4 text-center">Игр</th>
+                        <th class="p-4 text-center">Очки</th>
+                        <th class="p-4 text-right">PPM</th>
+                    </tr>
                 </thead>
                 <tbody id="standings-body"></tbody>
             </table>
         </div>
 
-        <div id="feed" class="space-y-4 text-center py-20 text-slate-300 font-black uppercase italic">
-            Нажмите на лигу выше для старта
+        <div id="feed" class="space-y-4 text-center py-20 text-slate-300 font-black uppercase italic tracking-[0.2em]">
+            Выберите лигу для анализа данных
         </div>
     </div>
 
     <script>
         const API_KEY = "c54fa8c0a8699f6a039bbc5555669479";
+        const BASE_URL = "https://v3.football.api-sports.io";
         const HEADERS = { "x-apisports-key": API_KEY };
 
         async function runAnalysis(leagueId) {
@@ -48,40 +63,68 @@
             const status = document.getElementById('status-bar');
             const debugZone = document.getElementById('debug-zone');
             
+            // Сброс UI
             status.classList.remove('hidden');
-            status.innerText = `Поиск активного сезона для ID:${leagueId}...`;
+            status.style.background = "#2563eb"; 
+            status.innerText = `[1/3] Синхронизация лиги ${leagueId}...`;
             
-            try {
-                // 1. АВТО-ДЕТЕКТ СЕЗОНА
-                const leagueRes = await fetch(`https://v3.football.api-sports.io/leagues?id=${leagueId}`, { headers: HEADERS });
-                const leagueData = await leagueRes.json();
-                const currentSeason = leagueData.response[0].seasons.find(s => s.current).year;
-                
-                status.innerText = `Сезон ${currentSeason} подтвержден. Загрузка данных...`;
+            // Подсветка кнопок
+            document.querySelectorAll('#league-selector button').forEach(b => b.classList.remove('active-btn'));
+            document.getElementById(`btn-${leagueId}`).classList.add('active-btn');
 
-                // 2. ЗАГРУЗКА ТАБЛИЦЫ
-                const tableRes = await fetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=${currentSeason}`, { headers: HEADERS });
+            try {
+                // ШАГ 1: Авто-детект сезона
+                const leagueRes = await fetch(`${BASE_URL}/leagues?id=${leagueId}`, { headers: HEADERS });
+                const leagueData = await leagueRes.json();
+                
+                if (!leagueData.response || leagueData.response.length === 0) {
+                    const apiError = leagueData.errors && Object.keys(leagueData.errors).length > 0 
+                                     ? JSON.stringify(leagueData.errors) 
+                                     : "Лига не поддерживается или неверный ключ";
+                    throw new Error(apiError);
+                }
+
+                const currentSeasonObj = leagueData.response[0].seasons.find(s => s.current);
+                if (!currentSeasonObj) throw new Error("В API нет активного сезона для этой лиги.");
+                
+                const currentSeason = currentSeasonObj.year;
+                document.getElementById('season-label').innerText = `Season: ${currentSeason}`;
+                status.innerText = `[2/3] Сезон ${currentSeason} активен. Загрузка таблицы...`;
+
+                // ШАГ 2: Загрузка таблицы
+                const tableRes = await fetch(`${BASE_URL}/standings?league=${leagueId}&season=${currentSeason}`, { headers: HEADERS });
                 const tableData = await tableRes.json();
+                
+                if (!tableData.response?.[0]?.league?.standings?.[0]) {
+                    throw new Error("Таблица лиги пуста. Попробуйте другую лигу.");
+                }
+
                 const standings = tableData.response[0].league.standings[0];
 
-                // Рендер таблицы (Debug)
+                // Рендер таблицы (Debug первых 5 команд)
                 document.getElementById('standings-body').innerHTML = standings.slice(0, 5).map(s => `
                     <tr class="border-t border-slate-50">
-                        <td class="p-4 font-bold"><img src="${s.team.logo}" class="inline w-4 mr-2"> ${s.team.name}</td>
-                        <td class="p-4 text-center">${s.all.played}</td>
+                        <td class="p-4 font-bold flex items-center gap-2">
+                            <img src="${s.team.logo}" class="w-4 h-4"> ${s.team.name}
+                        </td>
+                        <td class="p-4 text-center text-slate-500">${s.all.played}</td>
                         <td class="p-4 text-center font-black">${s.points}</td>
-                        <td class="p-4 text-right text-blue-600 font-bold">${(s.points / s.all.played).toFixed(2)}</td>
+                        <td class="p-4 text-right text-blue-600 font-bold">${(s.points / Math.max(s.all.played, 1)).toFixed(2)}</td>
                     </tr>
-                `).join('') + `<tr><td colspan="4" class="p-2 text-center text-[9px] text-slate-300 font-bold">Показаны топ-5 для проверки данных</td></tr>`;
+                `).join('') + `<tr><td colspan="4" class="p-2 text-center text-[8px] text-slate-300 font-bold uppercase">Данные получены успешно</td></tr>`;
                 debugZone.classList.remove('hidden');
 
-                // 3. ЗАГРУЗКА МАТЧЕЙ И МАТЕМАТИКА
-                const matchRes = await fetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=10`, { headers: HEADERS });
+                status.innerText = `[3/3] Расчет математических ожиданий...`;
+
+                // ШАГ 3: Загрузка матчей
+                const matchRes = await fetch(`${BASE_URL}/fixtures?league=${leagueId}&next=12`, { headers: HEADERS });
                 const matchData = await matchRes.json();
                 const fixtures = matchData.response || [];
 
                 if (fixtures.length === 0) {
-                    feed.innerHTML = "В API нет ближайших матчей для этой лиги.";
+                    feed.innerHTML = `<div class="p-10 bg-white rounded-[32px] border border-slate-100 font-bold text-slate-400">
+                        Матчи не найдены. В этой лиге сейчас перерыв?
+                    </div>`;
                 } else {
                     feed.innerHTML = fixtures.map(fix => {
                         const home = standings.find(s => s.team.id === fix.teams.home.id);
@@ -89,23 +132,32 @@
                         
                         if (!home || !away) return '';
 
-                        const hPPM = (home.points / home.all.played).toFixed(2);
-                        const aPPM = (away.points / away.all.played).toFixed(2);
-                        const exp = ((home.all.goals.for / home.all.played + away.all.goals.against / away.all.played + away.all.goals.for / away.all.played + home.all.goals.against / home.all.played) / 2).toFixed(2);
+                        const hPPM = (home.points / Math.max(home.all.played, 1)).toFixed(2);
+                        const aPPM = (away.points / Math.max(away.all.played, 1)).toFixed(2);
+                        
+                        // Формула Math Expectancy для Тотала
+                        const exp = ((home.all.goals.for / home.all.played + away.all.goals.against / away.all.played + 
+                                      away.all.goals.for / away.all.played + home.all.goals.against / home.all.played) / 2).toFixed(2);
 
                         return `
-                        <div class="card p-6 flex justify-between items-center">
+                        <div class="card p-6 flex justify-between items-center shadow-sm animate-fade">
                             <div class="text-left">
-                                <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest">${fix.league.name}</span>
-                                <h2 class="text-xl font-black text-slate-900">${fix.teams.home.name} v ${fix.teams.away.name}</h2>
-                                <div class="flex gap-2 mt-2 font-bold text-[10px] text-slate-400 uppercase">
-                                    <span>PPM H: ${hPPM}</span> • <span>PPM A: ${aPPM}</span>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest">${fix.league.name}</span>
+                                    <span class="text-[9px] font-bold text-slate-300 underline">${new Date(fix.fixture.date).toLocaleDateString()}</span>
+                                </div>
+                                <h2 class="text-lg font-black text-slate-900">${fix.teams.home.name} v ${fix.teams.away.name}</h2>
+                                <div class="flex gap-3 mt-2 text-[10px] font-bold uppercase tracking-tighter">
+                                    <span class="text-slate-400">H-PPM: <span class="text-slate-700">${hPPM}</span></span>
+                                    <span class="text-slate-400">A-PPM: <span class="text-slate-700">${aPPM}</span></span>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-[10px] font-black text-slate-400 uppercase">Exp. Goals</p>
-                                <p class="text-3xl font-black italic text-slate-900">${exp}</p>
-                                <p class="text-[10px] font-black ${exp > 2.5 ? 'text-green-500' : 'text-amber-500'} uppercase">Pick: ${exp > 2.5 ? 'Over 2.5' : 'Under 2.5'}</p>
+                            <div class="text-right border-l border-slate-50 pl-6">
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Exp. Goals</p>
+                                <p class="text-3xl font-black italic text-slate-900 leading-none">${exp}</p>
+                                <p class="text-[10px] font-black ${exp > 2.5 ? 'text-green-500' : 'text-amber-500'} mt-2 uppercase">
+                                    ${exp > 2.5 ? 'Pick: OVER 2.5' : 'Pick: UNDER 2.5'}
+                                </p>
                             </div>
                         </div>`;
                     }).join('');
@@ -114,8 +166,12 @@
                 status.classList.add('hidden');
 
             } catch (err) {
+                console.error("Critical Error:", err);
                 status.innerText = "ОШИБКА: " + err.message;
-                status.style.background = "#ef4444";
+                status.style.background = "#ef4444"; 
+                feed.innerHTML = `<div class="p-10 text-slate-400 font-bold uppercase italic border-2 border-dashed border-slate-100 rounded-[32px]">
+                    ${err.message}
+                </div>`;
             }
         }
     </script>
