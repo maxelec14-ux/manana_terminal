@@ -1,173 +1,43 @@
 <!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>MananaAI | Diagnostic Mode</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background: #F8FAF1; font-family: 'Inter', sans-serif; }
-        .active-league { background: #00C076 !important; color: white !important; border-color: #00C076 !important; }
-        .card { transition: 0.3s; border-radius: 32px; background: white; border: 1px solid #eef2f6; }
-        .table-row { border-bottom: 1px solid #f1f5f9; transition: 0.2s; }
-        .table-row:hover { background: #f8fafc; }
-    </style>
-</head>
-<body class="p-4 md:p-8">
-
-    <nav class="flex justify-between items-center max-w-5xl mx-auto mb-10">
-        <h1 class="text-2xl font-black italic tracking-tighter text-slate-900">MANANA<span class="text-green-600">AI</span></h1>
-        <div class="flex gap-4">
-            <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="p-2 bg-white rounded-full shadow-sm border border-slate-100">⚙️ Настройка лиг</button>
-        </div>
-    </nav>
-
-    <div id="setup" class="max-w-5xl mx-auto mb-8 hidden bg-white p-6 rounded-[32px] border border-slate-100 shadow-xl">
-        <div class="flex flex-wrap gap-2" id="league-tags">
-            <button onclick="toggleLeague(39)" id="L-39" class="px-4 py-2 rounded-2xl border text-[11px] font-bold active-league">🏴󠁧󠁢󠁥󠁮󠁧󠁿 EPL (39)</button>
-            <button onclick="toggleLeague(140)" id="L-140" class="px-4 py-2 rounded-2xl border text-[11px] font-bold active-league">🇪🇸 La Liga (140)</button>
-        </div>
-    </div>
-
-    <div class="max-w-5xl mx-auto mb-10 flex flex-col md:flex-row justify-between items-end gap-6">
-        <div>
-            <h2 class="text-4xl font-black text-slate-900 leading-tight">Diagnostic Terminal</h2>
-            <p class="text-slate-400 font-bold text-xs mt-2 uppercase tracking-widest">Проверка связи и расчет Value</p>
-        </div>
-        <button id="scan-btn" onclick="runGlobalScan()" class="bg-black text-white px-12 py-5 rounded-[24px] font-black shadow-2xl hover:bg-blue-600 transition-all active:scale-95">СКАНИРОВАТЬ ⚡</button>
-    </div>
-
-    <div id="debug-table-container" class="max-w-5xl mx-auto mb-10 hidden bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden">
-        <div class="p-6 bg-slate-50 border-bottom flex justify-between items-center">
-            <h3 class="font-black text-slate-800 uppercase text-xs tracking-widest">Контрольная таблица лиги</h3>
-            <span id="current-league-name" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full"></span>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead>
-                    <tr class="text-slate-400 text-[10px] uppercase font-black italic">
-                        <th class="p-4">Поз</th>
-                        <th class="p-4">Команда</th>
-                        <th class="p-4">Игр</th>
-                        <th class="p-4">Очки</th>
-                        <th class="p-4">Заб/Проп</th>
-                        <th class="p-4">PPM</th>
-                    </tr>
-                </thead>
-                <tbody id="standings-body"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="view-main" class="max-w-5xl mx-auto space-y-6">
-        <div id="feed" class="text-center py-20 text-slate-300 font-black uppercase italic tracking-widest">Ожидание команды...</div>
-    </div>
+<html>
+<body>
+    <button onclick="checkAPI()" style="padding: 20px; background: black; color: white; font-weight: bold;">УЗНАТЬ РЕАЛЬНЫЙ СЕЗОН 🔍</button>
+    <pre id="output" style="background: #eee; padding: 20px; margin-top: 20px;"></pre>
 
     <script>
-        const API_KEY = "c54fa8c0a8699f6a039bbc5555669479";
-        const BASE_URL = "https://v3.football.api-sports.io";
-        let activeLeagues = [39]; // Начнем с одной для теста
+        async function checkAPI() {
+            const out = document.getElementById('output');
+            const key = "c54fa8c0a8699f6a039bbc5555669479";
+            const leagueId = 39; // EPL
 
-        function toggleLeague(id) {
-            activeLeagues = [id]; // В режиме теста переключаемся на одну лигу
-            document.querySelectorAll('#league-tags button').forEach(b => b.classList.remove('active-league'));
-            document.getElementById(`L-${id}`).classList.add('active-league');
-        }
-
-        async function runGlobalScan() {
-            const feed = document.getElementById('feed');
-            const tableContainer = document.getElementById('debug-table-container');
-            const tbody = document.getElementById('standings-body');
-            const btn = document.getElementById('scan-btn');
-            
-            feed.innerHTML = `<div class="py-20 animate-pulse text-blue-600 font-black uppercase tracking-widest">Запрос данных...</div>`;
-            tableContainer.classList.add('hidden');
-            btn.disabled = true;
+            out.innerText = "Запрос к API...";
 
             try {
-                const leagueId = activeLeagues[0];
-                const season = 2025; // Пробуем 2025. Если будет пусто, в консоли увидим ответ.
-
-                // 1. ЗАПРОС ТАБЛИЦЫ
-                const tableRes = await fetch(`${BASE_URL}/standings?league=${leagueId}&season=${season}`, {
-                    headers: { "x-apisports-key": API_KEY }
+                // ПРОВЕРЯЕМ: Какие сезоны вообще есть для этой лиги в API?
+                const res = await fetch(`https://v3.football.api-sports.io/leagues?id=${leagueId}`, {
+                    headers: { "x-apisports-key": key }
                 });
-                const tableData = await tableRes.json();
+                const data = await res.json();
                 
-                if (!tableData.response || tableData.response.length === 0) {
-                    throw new Error(`Данные таблицы для лиги ${leagueId} и сезона ${season} не найдены в API.`);
-                }
+                if (data.response && data.response.length > 0) {
+                    const seasons = data.response[0].seasons;
+                    const lastSeason = seasons[seasons.length - 1];
+                    const currentSeason = seasons.find(s => s.current) || lastSeason;
 
-                const leagueInfo = tableData.response[0].league;
-                const standings = leagueInfo.standings[0];
-
-                // Отрисовка дебаг-таблицы
-                document.getElementById('current-league-name').innerText = leagueInfo.name;
-                tbody.innerHTML = standings.map(s => `
-                    <tr class="table-row">
-                        <td class="p-4 font-black text-slate-400">${s.rank}</td>
-                        <td class="p-4 flex items-center gap-3 font-bold text-slate-900">
-                            <img src="${s.team.logo}" class="w-5 h-5"> ${s.team.name}
-                        </td>
-                        <td class="p-4 font-bold">${s.all.played}</td>
-                        <td class="p-4 font-black text-green-600">${s.points}</td>
-                        <td class="p-4 text-slate-500">${s.all.goals.for}:${s.all.goals.against}</td>
-                        <td class="p-4 font-black text-blue-500">${(s.points / Math.max(s.all.played, 1)).toFixed(2)}</td>
-                    </tr>
-                `).join('');
-                tableContainer.classList.remove('hidden');
-
-                // 2. ЗАПРОС МАТЧЕЙ
-                const matchRes = await fetch(`${BASE_URL}/fixtures?league=${leagueId}&next=10`, {
-                    headers: { "x-apisports-key": API_KEY }
-                });
-                const matchData = await matchRes.json();
-                const fixtures = matchData.response || [];
-
-                if (fixtures.length === 0) {
-                    feed.innerHTML = `<div class="py-20 text-amber-500 font-bold uppercase">Таблица загружена успешно ✅ Но ближайших матчей в API пока нет.</div>`;
+                    out.innerText = "РЕЗУЛЬТАТ ПРОВЕРКИ:\n" + 
+                                  "====================\n" +
+                                  "Лига: " + data.response[0].league.name + "\n" +
+                                  "Последний доступный год в API: " + lastSeason.year + "\n" +
+                                  "Текущий активный сезон (current: true): " + currentSeason.year + "\n" +
+                                  "Матчи в этом сезоне доступны: " + (currentSeason.coverage.fixtures.events ? "ДА" : "НЕТ") + "\n\n" +
+                                  "ИНСТРУКЦИЯ:\n" +
+                                  "Используй в коде season = " + currentSeason.year;
                 } else {
-                    renderAnalysis(fixtures, standings);
+                    out.innerText = "Ошибка: API не вернул данные по лиге. Проверь ключ.";
                 }
-
-            } catch (err) {
-                feed.innerHTML = `<div class="p-10 text-red-500 font-bold bg-white rounded-3xl border border-red-50 text-center uppercase">
-                    Ошибка: ${err.message}
-                </div>`;
-            } finally {
-                btn.disabled = false;
+            } catch (e) {
+                out.innerText = "Ошибка сети: " + e.message;
             }
-        }
-
-        function renderAnalysis(fixtures, standings) {
-            const feed = document.getElementById('feed');
-            let html = '';
-            
-            fixtures.forEach(fix => {
-                const home = standings.find(s => s.team.id === fix.teams.home.id);
-                const away = standings.find(s => s.team.id === fix.teams.away.id);
-
-                if (home && away) {
-                    const hPPM = (home.points / home.all.played).toFixed(2);
-                    const aPPM = (away.points / away.all.played).toFixed(2);
-                    const exp = ((home.all.goals.for / home.all.played + away.all.goals.against / away.all.played + away.all.goals.for / away.all.played + home.all.goals.against / home.all.played) / 2).toFixed(2);
-
-                    html += `
-                    <div class="card p-8 flex flex-col md:flex-row justify-between items-center gap-6">
-                        <div class="text-left flex-1">
-                            <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest">${fix.league.name}</span>
-                            <h2 class="text-2xl font-black text-slate-900 mt-1">${fix.teams.home.name} vs ${fix.teams.away.name}</h2>
-                        </div>
-                        <div class="text-right min-w-[150px]">
-                            <p class="text-[10px] font-black text-slate-400 uppercase">Exp. Goals</p>
-                            <p class="text-4xl font-black italic text-slate-900">${exp}</p>
-                            <p class="text-[11px] font-black ${exp > 2.5 ? 'text-green-500' : 'text-amber-500'} uppercase mt-1">
-                                ${exp > 2.5 ? 'Pick: OVER 2.5' : 'Pick: UNDER 2.5'}
-                            </p>
-                        </div>
-                    </div>`;
-                }
-            });
-            feed.innerHTML = html;
         }
     </script>
 </body>
