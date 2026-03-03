@@ -29,11 +29,7 @@
     </div>
 
     <div id="view-main" class="max-w-5xl mx-auto space-y-4">
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex gap-2 bg-white p-1 rounded-xl border border-slate-100">
-                <button onclick="setMarketFilter('all')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn bg-slate-100" id="m-all">All</button>
-                <button onclick="setMarketFilter('Total')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn" id="m-total">Totals</button>
-            </div>
+        <div class="flex justify-end mb-6">
             <button id="scan-btn" onclick="startValueScan()" class="bg-black text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:scale-105 transition">Search Value ⚡</button>
         </div>
         <div id="feed" class="space-y-4 text-center py-20 text-slate-400 font-bold">Выберите лиги в ⚙️ и нажмите Search</div>
@@ -43,7 +39,7 @@
         <div class="flex justify-between items-center mb-6 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
             <div>
                 <h2 class="text-xl font-black text-slate-900">Statistical Engine</h2>
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Analysis based on League Table & PPM</p>
+                <p id="math-status" class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Ready for Analysis</p>
             </div>
             <button onclick="scanMathBets()" id="math-scan-btn" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-blue-700 transition">Calculate Math Bets 🧮</button>
         </div>
@@ -56,7 +52,7 @@
     </div>
 
     <script>
-        const API_KEY_SPORTSDB = "3"; // Публичный ключ с расширенным доступом
+        const API_KEY_SPORTSDB = "3"; 
 
         const LEAGUES_CONFIG = {
             "⚽ Футбол (Англия)": {
@@ -70,16 +66,10 @@
                 'soccer_italy_serie_a': {id: '4332', name: '🇮🇹 Serie A'}, 
                 'soccer_france_ligue_one': {id: '4334', name: '🇫🇷 Ligue 1'},
                 'soccer_russia_premier_league': {id: '4355', name: '🇷🇺 РПЛ'}
-            },
-            "🏀 Спорт (США)": { 
-                'basketball_nba': {id: '4387', name: '🇺🇸 NBA'},
-                'icehockey_nhl': {id: '4380', name: '🇺🇸 NHL'}
             }
         };
 
         let selectedLeagues = ['soccer_epl', 'soccer_england_league1'];
-        let currentSignals = [];
-        let marketFilter = 'all';
         let portfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
 
         function renderLeagueSelection() {
@@ -103,73 +93,47 @@
             renderLeagueSelection();
         }
 
-        // --- MARKET SCAN ---
-        async function startValueScan() {
-            const btn = document.getElementById('scan-btn');
-            btn.innerText = "Scanning... ⏳";
-            try {
-                const res = await fetch(`/api/fetch?leagues=${selectedLeagues.join(',')}`);
-                currentSignals = await res.json();
-                renderFeed();
-            } catch(e) { console.error(e); }
-            finally { btn.innerText = "Search Value ⚡"; }
-        }
-
-        function renderFeed() {
-            const feed = document.getElementById('feed');
-            const search = document.getElementById('global-search').value.toLowerCase();
-            let filtered = currentSignals.filter(sig => (marketFilter === 'all' || sig.market === marketFilter) && (sig.match.toLowerCase().includes(search)));
-            if(!filtered.length) { feed.innerHTML = "No matches found."; return; }
-            feed.innerHTML = filtered.map(sig => `
-                <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center shadow-sm">
-                    <div class="text-left">
-                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${sig.league}</span>
-                        <h2 class="text-xl font-black text-slate-900 leading-tight">${sig.match}</h2>
-                        <p class="text-sm font-bold text-green-600">${sig.selection} (${sig.market} ${sig.line})</p>
-                    </div>
-                    <div class="text-right flex items-center gap-6">
-                        <div>
-                            <span class="text-xs font-bold text-pink-500 bg-pink-50 px-2 py-0.5 rounded-lg">${sig.pin_odd}</span>
-                            <div class="text-2xl font-black italic">${sig.best_odd}</div>
-                        </div>
-                        <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="bg-black text-white p-4 rounded-2xl hover:bg-green-600 transition shadow-lg">🎯</button>
-                    </div>
-                </div>`).join('');
-        }
-
-        // --- MATH SCAN (THE SPORTS DB) ---
         async function scanMathBets() {
             const btn = document.getElementById('math-scan-btn');
             const feed = document.getElementById('math-feed');
+            const statusLabel = document.getElementById('math-status');
+            
             btn.innerText = "Processing... ⏳";
-            feed.innerHTML = `<div class="animate-pulse text-blue-600 font-black tracking-widest">Accessing Sports Database...</div>`;
-
+            feed.innerHTML = "";
             let mathSignals = [];
+
             const activeIds = selectedLeagues.map(key => {
                 for (let cat in LEAGUES_CONFIG) if (LEAGUES_CONFIG[cat][key]) return LEAGUES_CONFIG[cat][key].id;
             }).filter(id => id);
 
-            if (!activeIds.length) { feed.innerHTML = "Выберите лиги в настройках ⚙️"; btn.innerText = "Calculate Math Bets 🧮"; return; }
-
             try {
                 for (let leagueId of activeIds) {
-                    // 1. Пытаемся взять таблицу (2025-2026 или 2024-2025)
+                    statusLabel.innerText = `Checking League ID: ${leagueId}...`;
+                    
+                    // 1. Запрос матчей
+                    let resEvents = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/eventsnextleague.php?id=${leagueId}`);
+                    let eventsData = await resEvents.json();
+
+                    if (!eventsData.events) {
+                        console.log(`No events for ${leagueId}`);
+                        continue;
+                    }
+
+                    // 2. Запрос таблицы
                     let resTable = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/lookuptable.php?l=${leagueId}&s=2025-2026`);
                     let tableData = await resTable.json();
+                    
                     if (!tableData.table) {
                         resTable = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/lookuptable.php?l=${leagueId}&s=2024-2025`);
                         tableData = await resTable.json();
                     }
 
-                    // 2. Берем ближайшие матчи
-                    let resEvents = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/eventsnextleague.php?id=${leagueId}`);
-                    let eventsData = await resEvents.json();
-
-                    if (tableData.table && eventsData.events) {
-                        const table = tableData.table;
+                    if (tableData.table) {
                         eventsData.events.forEach(ev => {
-                            const home = table.find(t => t.idTeam === ev.idHomeTeam);
-                            const away = table.find(t => t.idAwayTeam === ev.idAwayTeam);
+                            // Ищем команду по ID, это надежнее чем по названию
+                            const home = tableData.table.find(t => t.idTeam === ev.idHomeTeam);
+                            const away = tableData.table.find(t => t.idAwayTeam === ev.idAwayTeam);
+
                             if (home && away) {
                                 const hPPM = (parseFloat(home.intPoints || 0) / Math.max(parseInt(home.intPlayed || 1), 1)).toFixed(2);
                                 const aPPM = (parseFloat(away.intPoints || 0) / Math.max(parseInt(away.intPlayed || 1), 1)).toFixed(2);
@@ -187,16 +151,26 @@
                             }
                         });
                     }
-                    await new Promise(r => setTimeout(r, 600)); 
+                    await new Promise(r => setTimeout(r, 300));
                 }
-                renderMathFeed(mathSignals);
-            } catch (e) { feed.innerHTML = "Ошибка API или соединения."; console.error(e); }
-            finally { btn.innerText = "Calculate Math Bets 🧮"; }
+                
+                if (mathSignals.length === 0) {
+                    feed.innerHTML = `<div class="text-slate-400">Матчи найдены в базе, но не удалось сопоставить их с турнирной таблицей.</div>`;
+                } else {
+                    renderMathFeed(mathSignals);
+                    statusLabel.innerText = `Analysis Complete: ${mathSignals.length} matches`;
+                }
+
+            } catch (e) {
+                feed.innerHTML = "Connection Error.";
+                console.error(e);
+            } finally {
+                btn.innerText = "Calculate Math Bets 🧮";
+            }
         }
 
         function renderMathFeed(signals) {
             const container = document.getElementById('math-feed');
-            if (!signals.length) { container.innerHTML = "Ближайших матчей для выбранных лиг не найдено."; return; }
             container.innerHTML = signals.map(sig => `
                 <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center shadow-sm text-left">
                     <div class="flex-1">
@@ -211,47 +185,24 @@
                             <div class="text-[10px] font-black text-slate-400 uppercase">Exp. Goals: ${sig.expTotal}</div>
                             <div class="text-lg font-black italic leading-tight">${sig.recommendation}</div>
                         </div>
-                        <button onclick='addToPortfolio(${JSON.stringify({match: sig.match, selection: sig.recommendation, best_odd: 'MATH'})})' class="bg-blue-600 text-white p-4 rounded-2xl hover:bg-black transition shadow-lg">🎯</button>
+                        <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="bg-blue-600 text-white p-4 rounded-2xl hover:bg-black transition shadow-lg">🎯</button>
                     </div>
                 </div>`).join('');
         }
 
-        // --- PORTFOLIO & UI ---
         function addToPortfolio(sig) {
             portfolio.unshift({...sig, id: Date.now(), status: 'pending'});
             localStorage.setItem('portfolio', JSON.stringify(portfolio));
-            alert("Added to Tracker!");
+            alert("Added!");
         }
-
-        function renderPortfolio() {
-            const list = document.getElementById('portfolio-list');
-            const stats = document.getElementById('stats-panel');
-            const wins = portfolio.filter(p => p.status === 'win').length;
-            stats.innerHTML = `<div class="bg-white p-4 rounded-2xl border text-center shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase">Win Rate</p><p class="text-xl font-black text-green-600">${portfolio.length > 0 ? (wins/portfolio.length*100).toFixed(0) : 0}%</p></div>`;
-            list.innerHTML = portfolio.map(item => `
-                <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500' : item.status === 'loss' ? 'border-l-8 border-l-red-500' : ''}">
-                    <div><h3 class="font-black text-slate-900">${item.match}</h3><p class="text-xs font-bold text-green-600">${item.selection} @${item.best_odd}</p></div>
-                    <div class="flex gap-2">
-                        <button onclick="setStatus(${item.id}, 'win')" class="w-8 h-8 rounded-full bg-green-100 text-green-600 font-black">W</button>
-                        <button onclick="setStatus(${item.id}, 'loss')" class="w-8 h-8 rounded-full bg-red-100 text-red-600 font-black">L</button>
-                        <button onclick="deleteBet(${item.id})" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 font-bold">✕</button>
-                    </div>
-                </div>`).join('');
-        }
-
-        function setStatus(id, s) { portfolio = portfolio.map(p => p.id === id ? {...p, status: s} : p); localStorage.setItem('portfolio', JSON.stringify(portfolio)); renderPortfolio(); }
-        function deleteBet(id) { portfolio = portfolio.filter(p => p.id !== id); localStorage.setItem('portfolio', JSON.stringify(portfolio)); renderPortfolio(); }
 
         function toggleView(view) {
             ['main', 'math', 'portfolio'].forEach(v => {
                 document.getElementById(`view-${v}`).classList.toggle('hidden', v !== view);
                 document.getElementById(`tab-${v === 'portfolio' ? 'port' : v}`).className = `px-4 py-2 font-bold text-sm ${v === view ? 'tab-active' : 'text-slate-400'}`;
             });
-            if(view === 'portfolio') renderPortfolio();
         }
 
-        function setMarketFilter(f) { marketFilter = f; renderFeed(); }
-        function filterSignals() { renderFeed(); }
         renderLeagueSelection();
     </script>
 </body>
