@@ -52,12 +52,12 @@
     </div>
 
     <script>
-        const API_KEY_SPORTSDB = "3"; // Публичный ключ для тестов
+        const API_KEY_SPORTSDB = "3"; 
 
         const LEAGUES_CONFIG = {
             "⚽ Футбол (Англия)": {
                 'soccer_epl': {id: '4328', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League'}, 
-                'soccer_england_league1': {id: '4396', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 League One'}, // Ваша лига из JSON
+                'soccer_england_league1': {id: '4396', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 League One'},
                 'soccer_england_championship': {id: '4329', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship'}
             },
             "⚽ Футбол (Европа)": {
@@ -108,39 +108,38 @@
 
             try {
                 for (let leagueId of activeIds) {
-                    statusLabel.innerText = `Загрузка матчей Лиги ID: ${leagueId}...`;
+                    statusLabel.innerText = `Лига ID: ${leagueId} - Поиск матчей...`;
                     
-                    // 1. Получаем список матчей
                     let resEvents = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/eventsnextleague.php?id=${leagueId}`);
                     let eventsData = await resEvents.json();
 
                     if (!eventsData || !eventsData.events) continue;
 
-                    // 2. Получаем таблицу (сначала текущий сезон, потом прошлый как запасной)
-                    let resTable = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/lookuptable.php?l=${leagueId}&s=2025-2026`);
-                    let tableData = await resTable.json();
+                    statusLabel.innerText = `Лига ID: ${leagueId} - Загрузка статистики...`;
+                    let table = null;
+                    const seasons = ["2025-2026", "2024-2025", "2023-2024"];
                     
-                    if (!tableData || !tableData.table) {
-                        resTable = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/lookuptable.php?l=${leagueId}&s=2024-2025`);
-                        tableData = await resTable.json();
+                    for (let s of seasons) {
+                        let resT = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/lookuptable.php?l=${leagueId}&s=${s}`);
+                        let tData = await resT.json();
+                        if (tData && tData.table && tData.table.length > 0) {
+                            table = tData.table;
+                            break;
+                        }
                     }
 
-                    if (tableData && tableData.table) {
-                        const table = tableData.table;
+                    if (table) {
                         eventsData.events.forEach(ev => {
-                            // Гибкий поиск: по ID (надежно) или по точному имени (запасной вариант)
-                            const home = table.find(t => t.idTeam === ev.idHomeTeam || t.strTeam === ev.strHomeTeam);
-                            const away = table.find(t => t.idTeam === ev.idAwayTeam || t.strTeam === ev.strAwayTeam);
+                            const home = table.find(t => t.idTeam === ev.idHomeTeam || t.strTeam === ev.strHomeTeam || ev.strHomeTeam.includes(t.strTeam));
+                            const away = table.find(t => t.idTeam === ev.idAwayTeam || t.strTeam === ev.strAwayTeam || ev.strAwayTeam.includes(t.strTeam));
 
                             if (home && away) {
-                                const hPlayed = Math.max(parseInt(home.intPlayed || 1), 1);
-                                const aPlayed = Math.max(parseInt(away.intPlayed || 1), 1);
-                                
-                                const hPPM = (parseFloat(home.intPoints || 0) / hPlayed).toFixed(2);
-                                const aPPM = (parseFloat(away.intPoints || 0) / aPlayed).toFixed(2);
-                                
-                                const hGF = (parseFloat(home.intGoalsFor || 0) / hPlayed);
-                                const aGF = (parseFloat(away.intGoalsFor || 0) / aPlayed);
+                                const hP = Math.max(parseInt(home.intPlayed || 1), 1);
+                                const aP = Math.max(parseInt(away.intPlayed || 1), 1);
+                                const hPPM = (parseFloat(home.intPoints || 0) / hP).toFixed(2);
+                                const aPPM = (parseFloat(away.intPoints || 0) / aP).toFixed(2);
+                                const hGF = (parseFloat(home.intGoalsFor || 0) / hP);
+                                const aGF = (parseFloat(away.intGoalsFor || 0) / aP);
                                 const expTotal = (hGF + aGF).toFixed(2);
 
                                 mathSignals.push({
@@ -157,14 +156,14 @@
                 }
                 
                 if (mathSignals.length === 0) {
-                    feed.innerHTML = `<div class="text-slate-400 font-bold">Матчи найдены, но данные команд (PPM) для расчёта временно недоступны.</div>`;
+                    feed.innerHTML = `<div class="text-slate-400 font-bold p-10 border-2 border-dashed border-slate-100 rounded-[40px]">Матчи найдены, но данные команд для расчёта (PPM) в этой лиге пока недоступны.</div>`;
                 } else {
                     renderMathFeed(mathSignals);
-                    statusLabel.innerText = `Успешно проанализировано: ${mathSignals.length} матчей`;
+                    statusLabel.innerText = `Анализ завершен: ${mathSignals.length} матчей`;
                 }
 
             } catch (e) {
-                feed.innerHTML = "Ошибка подключения к API.";
+                feed.innerHTML = "Ошибка связи с сервером.";
                 console.error(e);
             } finally {
                 btn.innerText = "Calculate Math Bets 🧮";
@@ -179,7 +178,7 @@
                         <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest">${sig.league}</span>
                         <h2 class="text-xl font-black text-slate-900 leading-tight">${sig.match}</h2>
                         <div class="flex gap-2 mt-1">
-                            <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 rounded">PPM H: ${sig.hPPM} / A: ${sig.aPPM}</span>
+                            <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 rounded">PPM H: ${sig.hPPM} | A: ${sig.aPPM}</span>
                         </div>
                     </div>
                     <div class="text-right flex items-center gap-6">
