@@ -2,14 +2,18 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>MananaAI | Pro Terminal</title>
+    <title>MananaAI | Cloud Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #F8FAF1; font-family: 'Inter', sans-serif; }
         .active-league { background: #00C076 !important; color: white !important; border-color: #00C076 !important; }
-        .card { transition: 0.2s; cursor: pointer; }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .card { transition: 0.2s; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,0.06); }
         .tab-active { border-bottom: 3px solid #00C076; color: #00C076; }
+        /* Стили для визуальных линий кэфов */
+        .bar-container { height: 4px; background: #EDF2F7; border-radius: 2px; width: 100px; position: relative; overflow: hidden; }
+        .bar-pin { height: 100%; background: #FF007A; transition: 0.3s; }
+        .bar-val { height: 100%; background: #00C076; transition: 0.3s; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -24,13 +28,12 @@
     </nav>
 
     <div id="setup" class="max-w-5xl mx-auto mb-8 hidden bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
-        <div id="league-grid" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
+        <div id="league-grid" class="grid grid-cols-2 md:grid-cols-4 gap-2 text-left"></div>
     </div>
 
     <div id="view-main" class="max-w-5xl mx-auto space-y-4">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-3xl font-black">Value Signals</h2>
-            <button id="scan-btn" onclick="startValueScan()" class="bg-black text-white px-8 py-3 rounded-2xl font-bold shadow-xl hover:scale-105 transition">Search Value ⚡</button>
+        <div class="flex justify-end mb-6">
+            <button id="scan-btn" onclick="startValueScan()" class="bg-black text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:scale-105 active:scale-95 transition">Search Value ⚡</button>
         </div>
         <div id="feed" class="space-y-4 text-center py-20 text-slate-400">Выберите лиги и нажмите Search</div>
     </div>
@@ -87,8 +90,6 @@
             try {
                 const res = await fetch(`/api/fetch?leagues=${selectedLeagues.join(',')}`);
                 currentSignals = await res.json();
-                // Сортировка по GAP уже сделана в fetch.js, но на всякий случай тут тоже:
-                currentSignals.sort((a, b) => b.gap - a.gap);
                 renderFeed();
             } catch(e) { alert("API Error"); }
             finally { btn.innerText = "Search Value ⚡"; }
@@ -96,23 +97,41 @@
 
         function renderFeed() {
             const feed = document.getElementById('feed');
-            if(currentSignals.length === 0) { feed.innerHTML = "No value bets found."; return; }
-            feed.innerHTML = currentSignals.map((sig, idx) => `
-                <div onclick="openModal(${idx})" class="card bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center shadow-sm">
-                    <div class="text-left">
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${sig.league}</span>
-                        <h2 class="text-lg font-black text-slate-900">${sig.match}</h2>
-                        <p class="text-xs font-bold text-blue-600">${sig.selection} (${sig.market} ${sig.line})</p>
-                    </div>
-                    <div class="text-right flex items-center gap-6">
-                        <div>
-                            <div class="text-[10px] font-black text-green-600 uppercase">+${sig.gap}% Value</div>
-                            <div class="text-xl font-black italic">${sig.best_odd}</div>
+            if(currentSignals.length === 0) { feed.innerHTML = "No signals found."; return; }
+            feed.innerHTML = currentSignals.map((sig, idx) => {
+                // Рассчитываем ширину линий для визуализации (Pinnacle берем за 70%)
+                const pinWidth = 70;
+                const valWidth = pinWidth * (sig.best_odd / sig.pin_odd);
+                
+                return `
+                <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center shadow-sm relative overflow-hidden">
+                    <div class="text-left flex-1 cursor-pointer" onclick="openModal(${idx})">
+                        <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">${sig.league}</span>
+                        <h2 class="text-lg font-black text-slate-900 leading-tight">${sig.match}</h2>
+                        <p class="text-sm font-bold text-green-600 mb-2">${sig.selection} (${sig.market} ${sig.line})</p>
+                        
+                        <div class="flex flex-col gap-1 mt-3">
+                            <div class="flex items-center gap-2">
+                                <div class="bar-container"><div class="bar-pin" style="width: ${pinWidth}%"></div></div>
+                                <span class="text-[8px] font-bold text-slate-400">PIN</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="bar-container"><div class="bar-val" style="width: ${valWidth}%"></div></div>
+                                <span class="text-[8px] font-bold text-green-600">VALUE</span>
+                            </div>
                         </div>
-                        <div class="text-slate-300">❯</div>
+                    </div>
+                    
+                    <div class="flex items-center gap-6">
+                        <div class="text-right">
+                            <div class="text-lg font-black text-green-600 leading-none">+${sig.gap}%</div>
+                            <div class="text-2xl font-black text-black italic">${sig.best_odd}</div>
+                        </div>
+                        <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="bg-slate-900 text-white px-5 py-3 rounded-2xl font-black text-xs hover:bg-green-600 transition shadow-lg">Track 🎯</button>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function openModal(idx) {
@@ -121,20 +140,19 @@
             document.getElementById('modal-content').innerHTML = `
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b pb-4 block mb-4">${sig.league}</span>
                 <h2 class="text-2xl font-black mb-1">${sig.match}</h2>
-                <p class="text-blue-600 font-bold mb-6">${sig.selection} (${sig.market} ${sig.line})</p>
-                <div class="grid grid-cols-2 gap-4 mb-8">
+                <p class="text-green-600 font-bold mb-6">${sig.selection} (${sig.market} ${sig.line})</p>
+                <div class="grid grid-cols-2 gap-4 mb-8 text-left">
                     <div class="bg-slate-50 p-4 rounded-2xl">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Best Price</p>
-                        <p class="text-xl font-black text-green-600">${sig.best_odd}</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Best Price</p>
+                        <p class="text-xl font-black text-black">${sig.best_odd}</p>
                         <p class="text-[10px] text-slate-400">${sig.bookie}</p>
                     </div>
                     <div class="bg-slate-50 p-4 rounded-2xl">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Pinnacle</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Pinnacle</p>
                         <p class="text-xl font-black text-slate-900">${sig.pin_odd}</p>
-                        <p class="text-[10px] text-slate-400">Fair price</p>
                     </div>
                 </div>
-                <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="w-full bg-black text-white py-4 rounded-2xl font-black shadow-xl">Track this Bet 🎯</button>
+                <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="w-full bg-black text-white py-4 rounded-2xl font-black shadow-xl">Add to Track List 🎯</button>
             `;
         }
 
@@ -142,7 +160,8 @@
             portfolio.unshift({...sig, id: Date.now(), status: 'pending'});
             localStorage.setItem('portfolio', JSON.stringify(portfolio));
             closeModal();
-            alert("Added to Portfolio!");
+            alert("Match Tracked!");
+            if(!document.getElementById('view-portfolio').classList.contains('hidden')) renderPortfolio();
         }
 
         function setStatus(id, status) {
@@ -154,14 +173,14 @@
         function renderPortfolio() {
             const list = document.getElementById('portfolio-list');
             list.innerHTML = portfolio.map(item => `
-                <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500' : item.status === 'loss' ? 'border-l-8 border-l-red-500' : ''}">
-                    <div>
+                <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500 shadow-lg shadow-green-50' : item.status === 'loss' ? 'border-l-8 border-l-red-500 shadow-lg shadow-red-50' : ''}">
+                    <div class="text-left">
                         <h3 class="font-black text-slate-900">${item.match}</h3>
-                        <p class="text-xs font-bold text-slate-400">${item.selection} @${item.best_odd}</p>
+                        <p class="text-xs font-bold text-green-600">${item.selection} @${item.best_odd}</p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="setStatus(${item.id}, 'win')" class="w-10 h-10 rounded-full bg-green-100 text-green-600 font-black">W</button>
-                        <button onclick="setStatus(${item.id}, 'loss')" class="w-10 h-10 rounded-full bg-red-100 text-red-600 font-black">L</button>
+                        <button onclick="setStatus(${item.id}, 'win')" class="w-10 h-10 rounded-full bg-green-100 text-green-600 font-black hover:bg-green-600 hover:text-white transition">W</button>
+                        <button onclick="setStatus(${item.id}, 'loss')" class="w-10 h-10 rounded-full bg-red-100 text-red-600 font-black hover:bg-red-600 hover:text-white transition">L</button>
                         <button onclick="deleteBet(${item.id})" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400">✕</button>
                     </div>
                 </div>
@@ -170,15 +189,17 @@
         }
 
         function deleteBet(id) {
-            portfolio = portfolio.filter(p => p.id !== id);
-            localStorage.setItem('portfolio', JSON.stringify(portfolio));
-            renderPortfolio();
+            if(confirm("Delete this match?")) {
+                portfolio = portfolio.filter(p => p.id !== id);
+                localStorage.setItem('portfolio', JSON.stringify(portfolio));
+                renderPortfolio();
+            }
         }
 
         function updateStats() {
             const wins = portfolio.filter(p => p.status === 'win').length;
             const losses = portfolio.filter(p => p.status === 'loss').length;
-            document.getElementById('stats').innerText = `Wins: ${wins} | Losses: ${losses}`;
+            document.getElementById('stats').innerText = `Profit Stats — W: ${wins} | L: ${losses}`;
         }
 
         function toggleView(view) {
