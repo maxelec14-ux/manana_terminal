@@ -24,7 +24,6 @@
     </nav>
 
     <div id="setup" class="max-w-5xl mx-auto mb-8 hidden bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm space-y-6">
-        <input type="text" id="global-search" placeholder="Поиск лиги или команды..." class="w-full p-4 bg-slate-50 rounded-2xl border-none font-bold text-sm shadow-inner">
         <div id="league-categories" class="space-y-6 text-left"></div>
     </div>
 
@@ -32,31 +31,24 @@
         <div class="flex justify-between items-center mb-6 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
             <div>
                 <h2 class="text-xl font-black text-slate-900">Statistical Engine</h2>
-                <p id="math-status" class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Forced Calendar Scan Mode</p>
+                <p id="math-status" class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Smart Fetch: Next & Recent</p>
             </div>
-            <button onclick="scanMathBets()" id="math-scan-btn" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-blue-700 transition">Scan Full Week 🚀</button>
+            <button onclick="scanMathBets()" id="math-scan-btn" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-blue-700 transition">Smart Scan 🚀</button>
         </div>
         <div id="math-feed" class="grid gap-4">
-            <div class="text-center py-20 text-slate-400 font-bold">Выберите лиги в ⚙️ и нажмите Scan</div>
+            <div class="text-center py-20 text-slate-400 font-bold">Нажмите Smart Scan для анализа</div>
         </div>
     </div>
 
     <div id="view-main" class="max-w-5xl mx-auto"></div>
-    <div id="view-portfolio" class="max-w-5xl mx-auto hidden"></div>
 
     <script>
         const API_KEY = "3"; 
-        const LEAGUES_CONFIG = {
-            "⚽ Англия": {
-                'soccer_epl': {id: '4328', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League'}, 
-                'soccer_england_league1': {id: '4396', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 League One'},
-                'soccer_england_championship': {id: '4329', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship'}
-            },
-            "⚽ Европа": {
-                'soccer_germany_bundesliga': {id: '4331', name: '🇩🇪 Bundesliga'}, 
-                'soccer_spain_la_liga': {id: '4335', name: '🇪🇸 La Liga'},
-                'soccer_italy_serie_a': {id: '4332', name: '🇮🇹 Serie A'}
-            }
+        const LEAGUES = {
+            'soccer_epl': {id: '4328', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League'}, 
+            'soccer_england_league1': {id: '4396', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 League One'},
+            'soccer_england_championship': {id: '4329', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship'},
+            'soccer_germany_bundesliga': {id: '4331', name: '🇩🇪 Bundesliga'}
         };
 
         let selectedLeagues = ['soccer_epl', 'soccer_england_league1'];
@@ -66,120 +58,98 @@
             const feed = document.getElementById('math-feed');
             const statusLabel = document.getElementById('math-status');
             
-            btn.innerText = "Scanning... ⏳";
-            feed.innerHTML = `<div class="p-10 text-center animate-pulse font-black text-blue-600">СКАНИРУЕМ ДАТЫ И ТАБЛИЦЫ...</div>`;
+            btn.innerText = "Analyzing... ⏳";
+            feed.innerHTML = `<div class="p-10 text-center animate-pulse font-black text-blue-600 text-sm">ПОИСК ДОСТУПНЫХ ДАННЫХ...</div>`;
             
             let mathSignals = [];
-            const activeIds = selectedLeagues.map(key => {
-                for (let cat in LEAGUES_CONFIG) if (LEAGUES_CONFIG[cat][key]) return LEAGUES_CONFIG[cat][key].id;
-            }).filter(id => id);
+            const activeIds = selectedLeagues.map(key => LEAGUES[key].id);
 
             try {
-                // 1. Сначала загружаем таблицы для всех выбранных лиг (Season Fallback)
-                let leagueDataMap = {};
                 for (let id of activeIds) {
-                    statusLabel.innerText = `Загрузка таблицы Лиги ${id}...`;
+                    statusLabel.innerText = `Лига ${id}: Сбор данных...`;
+                    
+                    // 1. Загрузка таблицы (Season Fallback)
                     let table = null;
                     for (let s of ["2025-2026", "2024-2025"]) {
                         let resT = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/lookuptable.php?l=${id}&s=${s}`);
                         let tData = await resT.json();
-                        if (tData.table && tData.table.length > 0) { table = tData.table; break; }
+                        if (tData.table) { table = tData.table; break; }
                     }
-                    if (table) leagueDataMap[id] = table;
-                }
+                    if (!table) continue;
 
-                // 2. Сканируем события на сегодня и следующие 3 дня
-                const today = new Date();
-                for (let i = 0; i < 4; i++) {
-                    const date = new Date(today.getTime() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                    statusLabel.innerText = `Проверка матчей на ${date}...`;
+                    // 2. Сбор матчей: Сначала Будущие, если пусто — Прошедшие (для теста)
+                    let matches = [];
+                    let resNext = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/eventsnextleague.php?id=${id}`);
+                    let dataNext = await resNext.json();
                     
-                    let resDay = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/eventsday.php?d=${date}&s=Soccer`);
-                    let dayData = await resDay.json();
-
-                    if (dayData.events) {
-                        dayData.events.forEach(ev => {
-                            // Фильтруем: только те лиги, которые мы выбрали и для которых есть таблица
-                            if (activeIds.includes(ev.idLeague) && leagueDataMap[ev.idLeague]) {
-                                const table = leagueDataMap[ev.idLeague];
-                                const home = table.find(t => t.idTeam === ev.idHomeTeam || t.strTeam === ev.strHomeTeam);
-                                const away = table.find(t => t.idTeam === ev.idAwayTeam || t.strTeam === ev.strAwayTeam);
-
-                                if (home && away) {
-                                    const hP = Math.max(parseInt(home.intPlayed || 1), 1);
-                                    const aP = Math.max(parseInt(away.intPlayed || 1), 1);
-                                    const hGF = (parseFloat(home.intGoalsFor || 0) / hP);
-                                    const aGF = (parseFloat(away.intGoalsFor || 0) / aP);
-                                    const expT = (hGF + aGF).toFixed(2);
-
-                                    mathSignals.push({
-                                        match: `${ev.strHomeTeam} v ${ev.strAwayTeam}`,
-                                        league: ev.strLeague,
-                                        hPPM: (parseFloat(home.intPoints || 0) / hP).toFixed(2),
-                                        aPPM: (parseFloat(away.intPoints || 0) / aP).toFixed(2),
-                                        expTotal: expT,
-                                        recommendation: expT > 2.5 ? "OVER 2.5" : "UNDER 2.5",
-                                        time: ev.strTime,
-                                        date: ev.dateEvent
-                                    });
-                                }
-                            }
-                        });
+                    if (dataNext.events) {
+                        matches = dataNext.events;
+                    } else {
+                        // Fallback: берем последние 5 игр, чтобы показать работу движка
+                        let resPast = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/eventspastleague.php?id=${id}`);
+                        let dataPast = await resPast.json();
+                        if (dataPast.events) matches = dataPast.events.slice(0, 5);
                     }
-                    await new Promise(r => setTimeout(r, 200)); 
+
+                    matches.forEach(ev => {
+                        const home = table.find(t => t.idTeam === ev.idHomeTeam || t.strTeam === ev.strHomeTeam);
+                        const away = table.find(t => t.idTeam === ev.idAwayTeam || t.strTeam === ev.strAwayTeam);
+
+                        if (home && away) {
+                            const hP = Math.max(parseInt(home.intPlayed || 1), 1);
+                            const aP = Math.max(parseInt(away.intPlayed || 1), 1);
+                            const hGF = (parseFloat(home.intGoalsFor || 0) / hP);
+                            const aGF = (parseFloat(away.intGoalsFor || 0) / aP);
+                            const expT = (hGF + aGF).toFixed(2);
+
+                            mathSignals.push({
+                                match: `${ev.strHomeTeam} v ${ev.strAwayTeam}`,
+                                league: ev.strLeague,
+                                hPPM: (parseFloat(home.intPoints || 0) / hP).toFixed(2),
+                                aPPM: (parseFloat(away.intPoints || 0) / aP).toFixed(2),
+                                expTotal: expT,
+                                recommendation: expT > 2.5 ? "OVER 2.5" : "UNDER 2.5",
+                                status: ev.strStatus || 'Scheduled'
+                            });
+                        }
+                    });
                 }
 
-                renderMathFeed(mathSignals);
-                statusLabel.innerText = `Найдено: ${mathSignals.length} матчей на 4 дня`;
-
+                if (mathSignals.length === 0) {
+                    feed.innerHTML = `<div class="p-10 border-2 border-dashed rounded-[40px] text-slate-400">API не отдает матчи для выбранных лиг. Попробуйте сменить лиги.</div>`;
+                } else {
+                    feed.innerHTML = mathSignals.map(sig => `
+                        <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center shadow-sm">
+                            <div class="text-left">
+                                <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest">${sig.league} | ${sig.status}</span>
+                                <h2 class="text-xl font-black text-slate-900 leading-tight">${sig.match}</h2>
+                                <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase">PPM: H ${sig.hPPM} / A ${sig.aPPM}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Exp. Goals</p>
+                                <p class="text-2xl font-black italic text-blue-600">${sig.expTotal}</p>
+                                <p class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 rounded inline-block uppercase mt-1">${sig.recommendation}</p>
+                            </div>
+                        </div>`).join('');
+                }
+                statusLabel.innerText = `Найдено записей: ${mathSignals.length}`;
             } catch (e) {
-                feed.innerHTML = `<div class="text-red-500 font-bold p-10">Ошибка API: ${e.message}</div>`;
+                feed.innerHTML = `<div class="p-10 text-red-500">Ошибка: ${e.message}</div>`;
             } finally {
-                btn.innerText = "Scan Full Week 🚀";
+                btn.innerText = "Smart Scan 🚀";
             }
-        }
-
-        function renderMathFeed(signals) {
-            const container = document.getElementById('math-feed');
-            if (signals.length === 0) {
-                container.innerHTML = `<div class="text-slate-400 font-bold p-10 border-2 border-dashed border-slate-100 rounded-[40px]">Матчей на ближайшие 4 дня не найдено. Попробуйте выбрать больше лиг.</div>`;
-                return;
-            }
-            // Сортировка по дате
-            signals.sort((a,b) => new Date(a.date) - new Date(b.date));
-            
-            container.innerHTML = signals.map(sig => `
-                <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center shadow-sm">
-                    <div class="text-left">
-                        <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest">${sig.league} | ${sig.date}</span>
-                        <h2 class="text-xl font-black text-slate-900 leading-tight">${sig.match}</h2>
-                        <div class="flex gap-2 mt-1">
-                            <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 rounded uppercase">PPM: H ${sig.hPPM} / A ${sig.aPPM}</span>
-                        </div>
-                    </div>
-                    <div class="text-right flex items-center gap-6">
-                        <div>
-                            <div class="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Exp. Goals: ${sig.expTotal}</div>
-                            <div class="text-xl font-black italic text-blue-600">${sig.recommendation}</div>
-                        </div>
-                    </div>
-                </div>`).join('');
         }
 
         function renderLeagueSelection() {
             const container = document.getElementById('league-categories');
-            container.innerHTML = Object.entries(LEAGUES_CONFIG).map(([cat, leagues]) => `
-                <div>
-                    <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">${cat}</h4>
-                    <div class="grid grid-cols-2 gap-2">
-                        ${Object.entries(leagues).map(([key, data]) => `
-                            <div onclick="toggleLeague('${key}')" class="p-3 rounded-2xl border text-[11px] font-bold cursor-pointer transition-all ${selectedLeagues.includes(key) ? 'active-league shadow-md' : 'bg-slate-50 text-slate-500 border-slate-100'}">
-                                ${data.name}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `).join('');
+            container.innerHTML = `
+                <div class="grid grid-cols-2 gap-2">
+                    ${Object.entries(LEAGUES).map(([key, data]) => `
+                        <div onclick="toggleLeague('${key}')" class="p-3 rounded-2xl border text-[11px] font-bold cursor-pointer transition-all ${selectedLeagues.includes(key) ? 'active-league' : 'bg-slate-50 text-slate-500'}">
+                            ${data.name}
+                        </div>
+                    `).join('')}
+                </div>`;
         }
 
         function toggleLeague(key) {
@@ -189,7 +159,6 @@
 
         function toggleView(view) {
             document.getElementById('view-math').classList.toggle('hidden', view !== 'math');
-            document.getElementById('tab-math').className = `px-4 py-2 font-bold text-sm ${view === 'math' ? 'tab-active' : 'text-slate-400'}`;
         }
 
         renderLeagueSelection();
