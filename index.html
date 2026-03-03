@@ -2,113 +2,288 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>MananaAI | Real-Time 2025</title>
+    <title>MananaAI | Pro Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #F8FAF1; font-family: 'Inter', sans-serif; }
-        .card { border-radius: 28px; background: white; border: 1px solid #eef2f6; transition: 0.3s; }
-        .tag-live { background: #00C076; color: white; padding: 2px 8px; border-radius: 8px; font-size: 9px; font-weight: 900; }
+        .active-league { background: #00C076 !important; color: white !important; border-color: #00C076 !important; }
+        .card { transition: 0.2s; }
+        .tab-active { border-bottom: 3px solid #00C076; color: #00C076; }
+        .bar-container { height: 8px; background: #EDF2F7; border-radius: 4px; width: 100%; position: relative; overflow: hidden; }
+        .bar-pin { height: 100%; background: #FF007A; transition: 0.3s; }
+        .bar-val { height: 100%; background: #00C076; transition: 0.3s; }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="p-4 md:p-8">
 
-    <div class="max-w-4xl mx-auto">
-        <header class="flex justify-between items-center mb-10">
-            <h1 class="text-2xl font-black italic tracking-tighter">MANANA<span class="text-green-600">AI</span></h1>
-            <button onclick="analyze2025(39)" class="bg-black text-white px-8 py-3 rounded-2xl font-bold text-xs hover:shadow-xl transition active:scale-95">🏴󠁧󠁢󠁥󠁮󠁧󠁿 СКАН EPL 2025</button>
-        </header>
-
-        <div id="status" class="hidden mb-6 p-4 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100 font-bold text-[10px] uppercase tracking-widest text-center">
-            Анализ текущей формы команд...
+    <nav class="flex justify-between items-center max-w-5xl mx-auto mb-6">
+        <h1 class="text-2xl font-black italic tracking-tighter text-slate-900">MANANA<span class="text-green-600">AI</span></h1>
+        <div class="flex gap-3">
+            <button onclick="toggleView('main')" id="tab-main" class="px-4 py-2 font-bold text-sm tab-active">Live Feed</button>
+            <button onclick="toggleView('portfolio')" id="tab-port" class="px-4 py-2 font-bold text-sm text-slate-400">Portfolio</button>
+            <button onclick="document.getElementById('setup').classList.toggle('hidden')" class="p-2 bg-white rounded-full shadow-sm border border-slate-200">⚙️</button>
         </div>
+    </nav>
 
-        <div id="feed" class="space-y-4">
-            <div class="text-center py-20 text-slate-300 font-bold italic uppercase tracking-widest">Нажмите скан для получения Live данных 2025</div>
+    <div id="setup" class="max-w-5xl mx-auto mb-8 hidden bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm space-y-6">
+        <input type="text" id="global-search" oninput="filterSignals()" placeholder="Поиск лиги или команды..." class="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-green-500 font-bold text-sm shadow-inner">
+        <div id="league-categories" class="space-y-6 text-left"></div>
+    </div>
+
+    <div class="max-w-5xl mx-auto mb-6 flex flex-wrap gap-4 items-center justify-between">
+        <div class="flex gap-2 bg-white p-1 rounded-xl border border-slate-100">
+            <button onclick="setMarketFilter('all')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn bg-slate-100" id="m-all">All</button>
+            <button onclick="setMarketFilter('Total')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn" id="m-total">Totals</button>
+            <button onclick="setMarketFilter('Handicap')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn" id="m-handicap">Handicaps</button>
+        </div>
+        
+        <div class="flex gap-4 items-center">
+            <select id="sort-order" onchange="renderFeed()" class="bg-transparent font-bold text-xs outline-none cursor-pointer">
+                <option value="desc">High Value First</option>
+                <option value="asc">Low Value First</option>
+            </select>
+            <button id="scan-btn" onclick="startValueScan()" class="bg-black text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:scale-105 active:scale-95 transition">Search Value ⚡</button>
         </div>
     </div>
 
+    <div id="view-main" class="max-w-5xl mx-auto space-y-4">
+        <div id="feed" class="space-y-4 text-center py-20 text-slate-400 font-bold">Выберите лиги в ⚙️ и нажмите Search</div>
+    </div>
+
+    <div id="view-portfolio" class="max-w-5xl mx-auto hidden">
+        <div class="flex justify-between items-center mb-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1" id="stats-panel"></div>
+            <button onclick="checkAllResults()" id="check-btn" class="ml-4 bg-blue-600 text-white px-6 py-4 rounded-2xl font-black text-xs shadow-lg hover:bg-blue-700 transition">Check Results 🔄</button>
+        </div>
+        <div id="portfolio-list" class="space-y-4"></div>
+    </div>
+
     <script>
-        const API_KEY = "c54fa8c0a8699f6a039bbc5555669479";
-        const HEADERS = { "x-apisports-key": API_KEY };
+        const LEAGUES_CONFIG = {
+            "⚽ Футбол (Soccer)": {
+                'soccer_epl': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', 'soccer_germany_bundesliga': '🇩🇪 Bundesliga', 'soccer_spain_la_liga': '🇪🇸 La Liga',
+                'soccer_italy_serie_a': '🇮🇹 Serie A', 'soccer_france_ligue_one': '🇫🇷 Ligue 1', 'soccer_uefa_champs_league': '🇪🇺 Champions League',
+                'soccer_uefa_europa_league': '🇪🇺 Europa League', 'soccer_uefa_europa_conference_league': '🇪🇺 Conference League',
+                'soccer_portugal_primeira_liga': '🇵🇹 Primeira League', 'soccer_netherlands_eredivisie': '🇳🇱 Eredivisie',
+                'soccer_belgium_first_div': '🇧🇪 Belgium 1st Div', 'soccer_russia_premier_league': '🇷🇺 РПЛ', 'soccer_turkey_super_league': '🇹🇷 Super League',
+                'soccer_usa_mls': '🇺🇸 MLS', 'soccer_mexico_ligamx': '🇲🇽 Liga MX', 'soccer_brazil_campeonato': '🇧🇷 Serie A (Brazil)',
+                'soccer_argentina_primera_division': '🇦🇷 Argentina'
+            },
+            "🏀 Баскетбол (Basketball)": {
+                'basketball_nba': '🇺🇸 NBA', 'basketball_euroleague': '🇪🇺 Euroleague', 'basketball_ncaab': '🇺🇸 NCAAB', 'basketball_wncaab': '🇺🇸 W-NCAAB'
+            },
+            "🏒 Хоккей (Ice Hockey)": {
+                'icehockey_nhl': '🇺🇸 NHL', 'icehockey_ahl': '🇺🇸 AHL', 'icehockey_liiga': '🇫🇮 Liiga', 'icehockey_mestis': '🇫🇮 Mestis', 
+                'icehockey_sweden_allsvenskan': '🇸🇪 Allsvenskan', 'icehockey_sweden_hockey_league': '🇸🇪 SHL'
+            }
+        };
 
-        async function analyze2025(leagueId) {
-            const feed = document.getElementById('feed');
-            const status = document.getElementById('status');
-            status.classList.remove('hidden');
-            feed.innerHTML = '<div class="py-20 text-center animate-pulse font-black text-slate-400">СОБИРАЕМ ДАННЫЕ СЕЗОНА 2025...</div>';
+        let selectedLeagues = ['soccer_epl', 'basketball_nba', 'icehockey_nhl'];
+        let currentSignals = [];
+        let marketFilter = 'all';
+        let portfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
 
-            try {
-                // 1. Берем ПОСЛЕДНИЕ 50 матчей лиги, чтобы понять форму команд (т.к. таблица пуста)
-                const lastRes = await fetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&last=50`, { headers: HEADERS });
-                const lastData = await lastRes.json();
-                const lastFixtures = lastData.response || [];
-
-                // 2. Берем БЛИЖАЙШИЕ матчи для прогноза
-                const nextRes = await fetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&next=10`, { headers: HEADERS });
-                const nextData = await nextRes.json();
-                const nextFixtures = nextData.response || [];
-
-                if (nextFixtures.length === 0) {
-                    throw new Error("Будущие матчи сезона 2025 еще не добавлены в API.");
-                }
-
-                // 3. Расчет статистики для каждой команды вручную
-                const stats = {};
-                lastFixtures.forEach(f => {
-                    [f.teams.home, f.teams.away].forEach(t => {
-                        if (!stats[t.id]) stats[t.id] = { goals: 0, matches: 0, points: 0 };
-                    });
-
-                    // Считаем голы и очки (Home)
-                    stats[f.teams.home.id].goals += f.goals.home || 0;
-                    stats[f.teams.home.id].matches += 1;
-                    if (f.goals.home > f.goals.away) stats[f.teams.home.id].points += 3;
-                    else if (f.goals.home === f.goals.away) stats[f.teams.home.id].points += 1;
-
-                    // Считаем голы и очки (Away)
-                    stats[f.teams.away.id].goals += f.goals.away || 0;
-                    stats[f.teams.away.id].matches += 1;
-                    if (f.goals.away > f.goals.home) stats[f.teams.away.id].points += 3;
-                    else if (f.goals.away === f.goals.home) stats[f.teams.away.id].points += 1;
-                });
-
-                // 4. Отрисовка прогнозов
-                status.classList.add('hidden');
-                feed.innerHTML = nextFixtures.map(fix => {
-                    const h = stats[fix.teams.home.id] || { goals: 0, matches: 1, points: 0 };
-                    const a = stats[fix.teams.away.id] || { goals: 0, matches: 1, points: 0 };
-
-                    const hGPG = (h.goals / h.matches).toFixed(2);
-                    const aGPG = (a.goals / a.matches).toFixed(2);
-                    const exp = (parseFloat(hGPG) + parseFloat(aGPG)).toFixed(2);
-
-                    return `
-                    <div class="card p-6 flex justify-between items-center shadow-sm">
-                        <div class="text-left">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="tag-live">SEASON 2025</span>
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${fix.league.name}</span>
+        function renderLeagueSelection() {
+            const container = document.getElementById('league-categories');
+            container.innerHTML = Object.entries(LEAGUES_CONFIG).map(([cat, leagues]) => `
+                <div>
+                    <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2">${cat}</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        ${Object.entries(leagues).map(([id, name]) => `
+                            <div onclick="toggleLeague('${id}')" class="p-3 rounded-2xl border text-[11px] font-bold cursor-pointer transition-all ${selectedLeagues.includes(id) ? 'active-league' : 'bg-slate-50 text-slate-500 border-slate-100'}">
+                                ${name}
                             </div>
-                            <h2 class="text-xl font-black text-slate-900">${fix.teams.home.name} vs ${fix.teams.away.name}</h2>
-                            <p class="text-[10px] font-bold text-slate-400 mt-2 uppercase">Form GPG: ${hGPG} / ${aGPG}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Math Expected</p>
-                            <p class="text-4xl font-black italic text-slate-900">${exp}</p>
-                            <p class="text-[10px] font-black ${exp > 2.5 ? 'text-green-500' : 'text-amber-500'} uppercase mt-1">
-                                ${exp > 2.5 ? 'Pick: Over 2.5' : 'Pick: Under 2.5'}
-                            </p>
-                        </div>
-                    </div>`;
-                }).join('');
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
 
-            } catch (err) {
-                status.style.background = "#ef4444";
-                status.style.color = "white";
-                status.innerText = err.message;
-                feed.innerHTML = '';
+        function toggleLeague(id) {
+            selectedLeagues = selectedLeagues.includes(id) ? selectedLeagues.filter(i => i !== id) : [...selectedLeagues, id];
+            renderLeagueSelection();
+        }
+
+        function setMarketFilter(f) {
+            marketFilter = f;
+            document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('bg-slate-100'));
+            const activeBtn = document.getElementById(`m-${f.toLowerCase()}`);
+            if(activeBtn) activeBtn.classList.add('bg-slate-100');
+            renderFeed();
+        }
+
+        async function startValueScan() {
+            const btn = document.getElementById('scan-btn');
+            btn.innerText = "Scanning... ⏳";
+            try {
+                const res = await fetch(`/api/fetch?leagues=${selectedLeagues.join(',')}`);
+                currentSignals = await res.json();
+                renderFeed();
+            } catch(e) { alert("API Error."); }
+            finally { btn.innerText = "Search Value ⚡"; }
+        }
+
+        function renderFeed() {
+            const feed = document.getElementById('feed');
+            const sort = document.getElementById('sort-order').value;
+            const search = document.getElementById('global-search').value.toLowerCase();
+
+            let filtered = currentSignals.filter(sig => {
+                const matchesMarket = marketFilter === 'all' || sig.market === marketFilter;
+                const matchesSearch = sig.match.toLowerCase().includes(search) || sig.league.toLowerCase().includes(search);
+                return matchesMarket && matchesSearch;
+            });
+
+            filtered.sort((a, b) => sort === 'desc' ? b.gap - a.gap : a.gap - b.gap);
+
+            if(filtered.length === 0) { feed.innerHTML = "No matches found."; return; }
+
+            feed.innerHTML = filtered.map(sig => {
+                const pinWidth = 70;
+                const valWidth = pinWidth * (sig.best_odd / sig.pin_odd);
+                
+                // РАСЧЕТ NO-VIG (Справедливый кэф)
+                // Нам нужен кэф на противоположное плечо. Упрощенно считаем маржу Pin 2.5%
+                const pinMargin = 0.025; 
+                const fairOdd = (sig.pin_odd / (1 - pinMargin)).toFixed(2);
+
+                return `
+                <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
+                    <div class="text-left flex-1 w-full">
+                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${sig.league}</span>
+                        <h2 class="text-xl font-black text-slate-900 leading-tight">${sig.match}</h2>
+                        <p class="text-sm font-bold text-green-600">${sig.selection} (${sig.market} ${sig.line})</p>
+                    </div>
+                    <div class="flex-1 w-full max-w-xs space-y-2">
+                        <div class="bar-container"><div class="bar-pin" style="width: ${pinWidth}%"></div></div>
+                        <div class="bar-container"><div class="bar-val" style="width: ${valWidth}%"></div></div>
+                    </div>
+                    <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+                        <div class="text-right flex items-center gap-4">
+                            <div class="flex flex-col items-end">
+                                <span class="text-sm font-bold text-pink-500 bg-pink-50 px-2 py-0.5 rounded-lg">${sig.pin_odd}</span>
+                                <span class="text-[9px] font-black text-red-500 mt-1 uppercase">No-Vig: ${fairOdd}</span>
+                            </div>
+                            <div>
+                                <div class="text-xl font-black text-green-600 leading-none">+${sig.gap}%</div>
+                                <div class="text-2xl font-black text-black italic leading-tight">${sig.best_odd}</div>
+                            </div>
+                        </div>
+                        <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="bg-slate-900 text-white px-6 py-4 rounded-2xl font-black text-xs hover:bg-green-600 transition shadow-lg">Track 🎯</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // ... остальные функции (addToPortfolio, checkAllResults, renderPortfolio и т.д.) остаются такими же ...
+        
+        function addToPortfolio(sig) {
+            const teams = sig.match.split(' v ');
+            portfolio.unshift({...sig, id: Date.now(), status: 'pending', home: teams[0], away: teams[1], score: null});
+            localStorage.setItem('portfolio', JSON.stringify(portfolio));
+            alert("Match Tracked!");
+        }
+
+        async function checkAllResults() {
+            const btn = document.getElementById('check-btn');
+            btn.innerText = "Checking... ⏳";
+            const pendingLeagues = [...new Set(portfolio.filter(p => p.status === 'pending').map(p => p.sport_key || 'soccer_epl'))];
+            if (pendingLeagues.length === 0) { alert("Нет активных ставок."); btn.innerText = "Check Results 🔄"; return; }
+            try {
+                for (let league of pendingLeagues) {
+                    const res = await fetch(`https://api.the-odds-api.com/v4/sports/${league}/scores/?apiKey=ТВОЙ_КЛЮЧ&daysFrom=3`);
+                    const scores = await res.json();
+                    portfolio = portfolio.map(item => {
+                        if (item.status !== 'pending') return item;
+                        const matchScore = scores.find(s => s.home_team === item.home && s.away_team === item.away && s.completed);
+                        if (matchScore) {
+                            const hScore = parseInt(matchScore.scores.find(s => s.name === item.home).score);
+                            const aScore = parseInt(matchScore.scores.find(s => s.name === item.away).score);
+                            item.score = `${hScore} - ${aScore}`;
+                            if (item.market === 'Total') {
+                                const isOver = item.selection.includes('Over');
+                                const total = hScore + aScore;
+                                item.status = (isOver && total > item.line) || (!isOver && total < item.line) ? 'win' : 'loss';
+                            } else if (item.market === 'Handicap') {
+                                const isHome = item.selection === item.home;
+                                const diff = isHome ? (hScore + item.line - aScore) : (aScore + item.line - hScore);
+                                item.status = diff > 0 ? 'win' : 'loss';
+                            }
+                        }
+                        return item;
+                    });
+                }
+                localStorage.setItem('portfolio', JSON.stringify(portfolio));
+                renderPortfolio();
+            } catch (e) { alert("Ошибка API."); } finally { btn.innerText = "Check Results 🔄"; }
+        }
+
+        function setStatus(id, status) {
+            portfolio = portfolio.map(item => item.id === id ? {...item, status} : item);
+            localStorage.setItem('portfolio', JSON.stringify(portfolio));
+            renderPortfolio();
+        }
+
+        function renderPortfolio() {
+            const list = document.getElementById('portfolio-list');
+            const statsPanel = document.getElementById('stats-panel');
+            const wins = portfolio.filter(p => p.status === 'win');
+            const losses = portfolio.filter(p => p.status === 'loss');
+            const winRate = portfolio.length > 0 ? (wins.length / (wins.length + losses.length || 1) * 100).toFixed(1) : 0;
+            let totalProfit = 0;
+            wins.forEach(w => totalProfit += (parseFloat(w.best_odd) - 1) * 100);
+            losses.forEach(l => totalProfit -= 100);
+            const roi = portfolio.length > 0 ? (totalProfit / (portfolio.length * 100) * 100).toFixed(2) : 0;
+
+            statsPanel.innerHTML = `
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Win Rate</p>
+                    <p class="text-xl font-black text-green-600">${winRate}%</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">ROI</p>
+                    <p class="text-xl font-black text-blue-600">${roi}%</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Total Bets</p>
+                    <p class="text-xl font-black text-slate-900">${portfolio.length}</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">W / L</p>
+                    <p class="text-xl font-black text-slate-900">${wins.length} / ${losses.length}</p>
+                </div>`;
+
+            list.innerHTML = portfolio.map(item => `
+                <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500' : item.status === 'loss' ? 'border-l-8 border-l-red-500' : ''}">
+                    <div class="text-left">
+                        <h3 class="font-black text-slate-900">${item.match}</h3>
+                        <p class="text-xs font-bold text-green-600">${item.selection} @${item.best_odd} ${item.score ? `<span class="ml-3 text-slate-400 font-black">FT: ${item.score}</span>` : ''}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="setStatus(${item.id}, 'win')" class="w-10 h-10 rounded-full bg-green-100 text-green-600 font-black">W</button>
+                        <button onclick="setStatus(${item.id}, 'loss')" class="w-10 h-10 rounded-full bg-red-100 text-red-600 font-black">L</button>
+                        <button onclick="deleteBet(${item.id})" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 font-bold">✕</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function deleteBet(id) {
+            if(confirm("Удалить ставку?")) {
+                portfolio = portfolio.filter(p => p.id !== id);
+                localStorage.setItem('portfolio', JSON.stringify(portfolio));
+                renderPortfolio();
             }
         }
+
+        function filterSignals() { renderFeed(); }
+        function toggleView(view) {
+            document.getElementById('view-main').classList.toggle('hidden', view !== 'main');
+            document.getElementById('view-portfolio').classList.toggle('hidden', view !== 'portfolio');
+            document.getElementById('tab-main').classList.toggle('tab-active', view === 'main');
+            document.getElementById('tab-port').classList.toggle('tab-active', view === 'portfolio');
+            if(view === 'portfolio') renderPortfolio();
+        }
+        renderLeagueSelection();
     </script>
 </body>
 </html>
