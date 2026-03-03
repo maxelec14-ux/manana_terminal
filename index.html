@@ -43,7 +43,7 @@
             </div>
             <button onclick="scanMathBets()" id="math-scan-btn" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-blue-700 transition">Calculate Math Bets 🧮</button>
         </div>
-        <div id="math-feed" class="space-y-4 text-center py-20 text-slate-400 font-bold">Нажмите кнопку для анализа</div>
+        <div id="math-feed" class="space-y-4 text-center py-20 text-slate-400 font-bold">Нажмите кнопку для анализа выбранных лиг</div>
     </div>
 
     <div id="view-portfolio" class="max-w-5xl mx-auto hidden">
@@ -52,12 +52,12 @@
     </div>
 
     <script>
-        const API_KEY_SPORTSDB = "3"; 
+        const API_KEY_SPORTSDB = "3"; // Публичный ключ для тестов
 
         const LEAGUES_CONFIG = {
             "⚽ Футбол (Англия)": {
                 'soccer_epl': {id: '4328', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League'}, 
-                'soccer_england_league1': {id: '4396', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 League One'},
+                'soccer_england_league1': {id: '4396', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 League One'}, // Ваша лига из JSON
                 'soccer_england_championship': {id: '4329', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship'}
             },
             "⚽ Футбол (Европа)": {
@@ -99,7 +99,7 @@
             const statusLabel = document.getElementById('math-status');
             
             btn.innerText = "Processing... ⏳";
-            feed.innerHTML = "";
+            feed.innerHTML = `<div class="animate-pulse text-blue-600 font-black uppercase tracking-widest">Анализируем базу данных...</div>`;
             let mathSignals = [];
 
             const activeIds = selectedLeagues.map(key => {
@@ -108,37 +108,39 @@
 
             try {
                 for (let leagueId of activeIds) {
-                    statusLabel.innerText = `Checking League ID: ${leagueId}...`;
+                    statusLabel.innerText = `Загрузка матчей Лиги ID: ${leagueId}...`;
                     
-                    // 1. Запрос матчей
+                    // 1. Получаем список матчей
                     let resEvents = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/eventsnextleague.php?id=${leagueId}`);
                     let eventsData = await resEvents.json();
 
-                    if (!eventsData.events) {
-                        console.log(`No events for ${leagueId}`);
-                        continue;
-                    }
+                    if (!eventsData || !eventsData.events) continue;
 
-                    // 2. Запрос таблицы
+                    // 2. Получаем таблицу (сначала текущий сезон, потом прошлый как запасной)
                     let resTable = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/lookuptable.php?l=${leagueId}&s=2025-2026`);
                     let tableData = await resTable.json();
                     
-                    if (!tableData.table) {
+                    if (!tableData || !tableData.table) {
                         resTable = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/lookuptable.php?l=${leagueId}&s=2024-2025`);
                         tableData = await resTable.json();
                     }
 
-                    if (tableData.table) {
+                    if (tableData && tableData.table) {
+                        const table = tableData.table;
                         eventsData.events.forEach(ev => {
-                            // Ищем команду по ID, это надежнее чем по названию
-                            const home = tableData.table.find(t => t.idTeam === ev.idHomeTeam);
-                            const away = tableData.table.find(t => t.idAwayTeam === ev.idAwayTeam);
+                            // Гибкий поиск: по ID (надежно) или по точному имени (запасной вариант)
+                            const home = table.find(t => t.idTeam === ev.idHomeTeam || t.strTeam === ev.strHomeTeam);
+                            const away = table.find(t => t.idTeam === ev.idAwayTeam || t.strTeam === ev.strAwayTeam);
 
                             if (home && away) {
-                                const hPPM = (parseFloat(home.intPoints || 0) / Math.max(parseInt(home.intPlayed || 1), 1)).toFixed(2);
-                                const aPPM = (parseFloat(away.intPoints || 0) / Math.max(parseInt(away.intPlayed || 1), 1)).toFixed(2);
-                                const hGF = (parseFloat(home.intGoalsFor || 0) / Math.max(parseInt(home.intPlayed || 1), 1));
-                                const aGF = (parseFloat(away.intGoalsFor || 0) / Math.max(parseInt(away.intPlayed || 1), 1));
+                                const hPlayed = Math.max(parseInt(home.intPlayed || 1), 1);
+                                const aPlayed = Math.max(parseInt(away.intPlayed || 1), 1);
+                                
+                                const hPPM = (parseFloat(home.intPoints || 0) / hPlayed).toFixed(2);
+                                const aPPM = (parseFloat(away.intPoints || 0) / aPlayed).toFixed(2);
+                                
+                                const hGF = (parseFloat(home.intGoalsFor || 0) / hPlayed);
+                                const aGF = (parseFloat(away.intGoalsFor || 0) / aPlayed);
                                 const expTotal = (hGF + aGF).toFixed(2);
 
                                 mathSignals.push({
@@ -151,18 +153,18 @@
                             }
                         });
                     }
-                    await new Promise(r => setTimeout(r, 300));
+                    await new Promise(r => setTimeout(r, 400));
                 }
                 
                 if (mathSignals.length === 0) {
-                    feed.innerHTML = `<div class="text-slate-400">Матчи найдены в базе, но не удалось сопоставить их с турнирной таблицей.</div>`;
+                    feed.innerHTML = `<div class="text-slate-400 font-bold">Матчи найдены, но данные команд (PPM) для расчёта временно недоступны.</div>`;
                 } else {
                     renderMathFeed(mathSignals);
-                    statusLabel.innerText = `Analysis Complete: ${mathSignals.length} matches`;
+                    statusLabel.innerText = `Успешно проанализировано: ${mathSignals.length} матчей`;
                 }
 
             } catch (e) {
-                feed.innerHTML = "Connection Error.";
+                feed.innerHTML = "Ошибка подключения к API.";
                 console.error(e);
             } finally {
                 btn.innerText = "Calculate Math Bets 🧮";
@@ -193,7 +195,7 @@
         function addToPortfolio(sig) {
             portfolio.unshift({...sig, id: Date.now(), status: 'pending'});
             localStorage.setItem('portfolio', JSON.stringify(portfolio));
-            alert("Added!");
+            alert("Добавлено в трекер!");
         }
 
         function toggleView(view) {
