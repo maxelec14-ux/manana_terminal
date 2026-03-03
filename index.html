@@ -64,26 +64,29 @@
             finally { btn.innerText = "Search Value ⚡"; }
         }
 
-        function renderFeed(items) {
-            const feed = document.getElementById('feed');
-            if(items.length === 0) { feed.innerHTML = "<p class='text-center text-slate-400'>Валуев не найдено. Попробуйте выбрать больше лиг.</p>"; return; }
-            feed.innerHTML = items.map(sig => `
-                <div class="card p-6 flex justify-between items-center">
-                    <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">${sig.league}</span>
-                        <h2 class="text-lg font-black">${sig.match}</h2>
-                        <p class="text-sm font-bold text-blue-600">${sig.selection} (${sig.market} ${sig.line}) — ${sig.bookie}</p>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-xs font-bold text-green-600 mb-1">+${sig.gap}% Value</div>
-                        <div class="flex gap-2">
-                            <span class="bg-slate-100 px-3 py-1 rounded-lg text-xs font-bold">PIN: ${sig.pin_odd}</span>
-                            <span class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs font-bold italic">${sig.best_odd}</span>
-                        </div>
-                    </div>
+       function renderFeed(items) {
+    const feed = document.getElementById('feed');
+    if (!items || items.length === 0) { 
+        feed.innerHTML = "<p class='text-center text-slate-400'>Валуев не найдено. Попробуйте выбрать другие лиги или подождите.</p>"; 
+        return; 
+    }
+    feed.innerHTML = items.map(sig => `
+        <div class="card p-6 flex justify-between items-center mb-4 bg-white rounded-3xl border border-slate-100">
+            <div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">${sig.league}</span>
+                <h2 class="text-lg font-black text-slate-900">${sig.match}</h2>
+                <p class="text-sm font-bold text-blue-600">${sig.selection} (${sig.market} ${sig.line}) — ${sig.bookie}</p>
+            </div>
+            <div class="text-right">
+                <div class="text-xs font-bold text-green-600 mb-1">+${sig.gap}% Value</div>
+                <div class="flex gap-2">
+                    <span class="bg-slate-100 px-3 py-1 rounded-lg text-xs font-bold">PIN: ${sig.pin_odd}</span>
+                    <span class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs font-bold italic">${sig.best_odd}</span>
                 </div>
-            `).join('');
-        }
+            </div>
+        </div>
+    `).join('');
+}
 
         renderLeagues();
     </script>
