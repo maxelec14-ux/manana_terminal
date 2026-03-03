@@ -53,24 +53,21 @@
         <div class="flex justify-between items-center mb-6 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
             <div>
                 <h2 class="text-xl font-black text-slate-900">Statistical Analysis (PPM & Goals)</h2>
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Powered by TheSportsDB API</p>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">TheSportsDB Engine v2.0</p>
             </div>
             <button onclick="scanMathBets()" id="math-scan-btn" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-blue-700 transition active:scale-95">Calculate Math Bets 🧮</button>
         </div>
-        <div id="math-feed" class="space-y-4 text-center py-20 text-slate-400 font-bold">Нажмите кнопку для анализа турнирных таблиц</div>
+        <div id="math-feed" class="space-y-4 text-center py-20 text-slate-400 font-bold">Нажмите кнопку для глубокого анализа</div>
     </div>
 
     <div id="view-portfolio" class="max-w-5xl mx-auto hidden">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1 w-full" id="stats-panel"></div>
-            <button onclick="checkAllResults()" id="check-btn" class="w-full md:w-auto bg-blue-600 text-white px-6 py-4 rounded-2xl font-black text-xs shadow-lg hover:bg-blue-700 transition">Check Results 🔄</button>
-        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="stats-panel"></div>
         <div id="portfolio-list" class="space-y-4"></div>
     </div>
 
     <script>
-        const SPORTSDB_KEY = "123";
-        
+        const SPORTSDB_KEY = "123"; // Твой ключ
+
         const LEAGUES_CONFIG = {
             "⚽ Футбол (Soccer)": {
                 'soccer_epl': {id: '4328', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League'}, 
@@ -79,24 +76,11 @@
                 'soccer_italy_serie_a': {id: '4332', name: '🇮🇹 Serie A'}, 
                 'soccer_france_ligue_one': {id: '4334', name: '🇫🇷 Ligue 1'},
                 'soccer_portugal_primeira_liga': {id: '4344', name: '🇵🇹 Primeira Liga'},
-                'soccer_netherlands_eredivisie': {id: '4337', name: '🇳🇱 Eredivisie'},
-                'soccer_belgium_first_div': {id: '4338', name: '🇧🇪 First Div'},
                 'soccer_russia_premier_league': {id: '4355', name: '🇷🇺 РПЛ'},
-                'soccer_turkey_super_league': {id: '4339', name: '🇹🇷 Super League'},
-                'soccer_usa_mls': {id: '4346', name: '🇺🇸 MLS'},
-                'soccer_mexico_ligamx': {id: '4350', name: '🇲🇽 Liga MX'},
-                'soccer_brazil_campeonato': {id: '4351', name: '🇧🇷 Serie A'},
-                'soccer_argentina_primera_division': {id: '4354', name: '🇦🇷 Argentina'}
+                'soccer_usa_mls': {id: '4346', name: '🇺🇸 MLS'}
             },
-            "🏀 Баскетбол": { 
-                'basketball_nba': {id: '4387', name: '🇺🇸 NBA'},
-                'basketball_euroleague': {id: '4408', name: '🇪🇺 Euroleague'}
-            },
-            "🏒 Хоккей": { 
-                'icehockey_nhl': {id: '4380', name: '🇺🇸 NHL'},
-                'icehockey_liiga': {id: '4410', name: '🇫🇮 Liiga'},
-                'icehockey_sweden_hockey_league': {id: '4411', name: '🇸🇪 SHL'}
-            }
+            "🏀 Баскетбол": { 'basketball_nba': {id: '4387', name: '🇺🇸 NBA'} },
+            "🏒 Хоккей": { 'icehockey_nhl': {id: '4380', name: '🇺🇸 NHL'} }
         };
 
         let selectedLeagues = ['soccer_epl', 'soccer_germany_bundesliga'];
@@ -111,7 +95,7 @@
                     <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2">${cat}</h4>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                         ${Object.entries(leagues).map(([key, data]) => `
-                            <div onclick="toggleLeague('${key}')" class="p-3 rounded-2xl border text-[11px] font-bold cursor-pointer transition-all ${selectedLeagues.includes(key) ? 'active-league shadow-lg shadow-green-100' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100'}">
+                            <div onclick="toggleLeague('${key}')" class="p-3 rounded-2xl border text-[11px] font-bold cursor-pointer transition-all ${selectedLeagues.includes(key) ? 'active-league shadow-lg' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100'}">
                                 ${data.name}
                             </div>
                         `).join('')}
@@ -125,7 +109,7 @@
             renderLeagueSelection();
         }
 
-        // --- MARKET-BASED (Odds API) ---
+        // --- MARKET SCAN (The Odds API) ---
         async function startValueScan() {
             const btn = document.getElementById('scan-btn');
             btn.innerText = "Scanning... ⏳";
@@ -141,51 +125,32 @@
             const feed = document.getElementById('feed');
             const sort = document.getElementById('sort-order').value;
             const search = document.getElementById('global-search').value.toLowerCase();
-            let filtered = currentSignals.filter(sig => {
-                const matchesMarket = marketFilter === 'all' || sig.market === marketFilter;
-                const matchesSearch = sig.match.toLowerCase().includes(search) || sig.league.toLowerCase().includes(search);
-                return matchesMarket && matchesSearch;
-            });
+            let filtered = currentSignals.filter(sig => (marketFilter === 'all' || sig.market === marketFilter) && (sig.match.toLowerCase().includes(search)));
             filtered.sort((a, b) => sort === 'desc' ? b.gap - a.gap : a.gap - b.gap);
             if(!filtered.length) { feed.innerHTML = "No matches found."; return; }
-            feed.innerHTML = filtered.map(sig => {
-                const pinWidth = 70;
-                const valWidth = pinWidth * (sig.best_odd / sig.pin_odd);
-                const fairOdd = (sig.pin_odd / (1 - 0.025)).toFixed(2);
-                return `
+            feed.innerHTML = filtered.map(sig => `
                 <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
                     <div class="text-left flex-1 w-full">
                         <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${sig.league}</span>
                         <h2 class="text-xl font-black text-slate-900 leading-tight">${sig.match}</h2>
                         <p class="text-sm font-bold text-green-600">${sig.selection} (${sig.market} ${sig.line})</p>
                     </div>
-                    <div class="flex-1 w-full max-w-xs space-y-2">
-                        <div class="bar-container"><div class="bar-pin" style="width: ${pinWidth}%"></div></div>
-                        <div class="bar-container"><div class="bar-val" style="width: ${valWidth}%"></div></div>
-                    </div>
-                    <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
-                        <div class="text-right flex items-center gap-4">
-                            <div class="flex flex-col items-end">
-                                <span class="text-sm font-bold text-pink-500 bg-pink-50 px-2 py-0.5 rounded-lg">${sig.pin_odd}</span>
-                                <span class="text-[9px] font-black text-red-500 mt-1">No-Vig: ${fairOdd}</span>
-                            </div>
-                            <div>
-                                <div class="text-xl font-black text-green-600 leading-none">+${sig.gap}%</div>
-                                <div class="text-2xl font-black text-black italic leading-tight">${sig.best_odd}</div>
-                            </div>
+                    <div class="flex items-center gap-6">
+                        <div class="text-right">
+                            <span class="text-sm font-bold text-pink-500 bg-pink-50 px-2 py-0.5 rounded-lg">${sig.pin_odd}</span>
+                            <div class="text-2xl font-black text-black italic leading-tight">${sig.best_odd}</div>
                         </div>
-                        <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="bg-slate-900 text-white px-6 py-4 rounded-2xl font-black text-xs hover:bg-green-600 transition shadow-lg">Track 🎯</button>
+                        <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="bg-black text-white px-6 py-4 rounded-2xl font-black text-xs hover:bg-green-600 transition">Track 🎯</button>
                     </div>
-                </div>`;
-            }).join('');
+                </div>`).join('');
         }
 
-        // --- MATH-BASED (TheSportsDB) ---
+        // --- MATH SCAN (TheSportsDB) ---
         async function scanMathBets() {
             const btn = document.getElementById('math-scan-btn');
             const feed = document.getElementById('math-feed');
-            btn.innerText = "Analyzing... ⏳";
-            feed.innerHTML = `<div class="animate-pulse text-blue-600 font-black uppercase tracking-widest">Fetching Table & Next Games...</div>`;
+            btn.innerText = "Processing... ⏳";
+            feed.innerHTML = `<div class="animate-pulse text-blue-600 font-black uppercase tracking-widest">Searching Match Database...</div>`;
 
             let mathSignals = [];
             const activeIds = selectedLeagues.map(key => {
@@ -196,19 +161,27 @@
 
             try {
                 for (let leagueId of activeIds) {
-                    // Пробуем сезоны 2025-2026 или 2024-2025
+                    // Пытаемся найти таблицу сезона
                     let resTable = await fetch(`https://www.thesportsdb.com/api/v1/json/${SPORTSDB_KEY}/lookuptable.php?l=${leagueId}&s=2025-2026`);
                     let tableData = await resTable.json();
-                    
                     if (!tableData.table) {
                         resTable = await fetch(`https://www.thesportsdb.com/api/v1/json/${SPORTSDB_KEY}/lookuptable.php?l=${leagueId}&s=2024-2025`);
                         tableData = await resTable.json();
                     }
-                    
-                    const resEvents = await fetch(`https://www.thesportsdb.com/api/v1/json/${SPORTSDB_KEY}/eventsnextleague.php?id=${leagueId}`);
-                    const eventsData = await resEvents.json();
 
-                    if (tableData.table && eventsData.events) {
+                    // Пытаемся найти ближайшие игры
+                    let resEvents = await fetch(`https://www.thesportsdb.com/api/v1/json/${SPORTSDB_KEY}/eventsnextleague.php?id=${leagueId}`);
+                    let eventsData = await resEvents.json();
+
+                    // Резервный поиск по сегодняшнему дню, если Next пуст
+                    if (!eventsData || !eventsData.events) {
+                        const today = new Date().toISOString().split('T')[0];
+                        const resToday = await fetch(`https://www.thesportsdb.com/api/v1/json/${SPORTSDB_KEY}/eventsday.php?d=${today}&l=${leagueId}`);
+                        const todayData = await resToday.json();
+                        if (todayData.events) eventsData = todayData;
+                    }
+
+                    if (tableData.table && eventsData && eventsData.events) {
                         const table = tableData.table;
                         eventsData.events.forEach(ev => {
                             const home = table.find(t => t.idTeam === ev.idHomeTeam);
@@ -230,54 +203,48 @@
                             }
                         });
                     }
-                    await new Promise(r => setTimeout(r, 600)); // Задержка для лимита запросов
+                    await new Promise(r => setTimeout(r, 600));
                 }
                 renderMathFeed(mathSignals);
-            } catch (e) { feed.innerHTML = "API Connection Error."; console.error(e); }
+            } catch (e) { feed.innerHTML = "API Connection Error."; }
             finally { btn.innerText = "Calculate Math Bets 🧮"; }
         }
 
         function renderMathFeed(signals) {
             const container = document.getElementById('math-feed');
-            if (!signals.length) { container.innerHTML = "No upcoming matches found for selected leagues."; return; }
+            if (!signals.length) { container.innerHTML = "No matches found in API for next 48h."; return; }
             container.innerHTML = signals.map(sig => `
                 <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm text-left">
-                    <div class="flex-1 w-full">
+                    <div class="flex-1">
                         <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest">${sig.league}</span>
                         <h2 class="text-xl font-black text-slate-900 leading-tight">${sig.match}</h2>
-                        <div class="flex gap-3 mt-2">
-                            <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">H-PPM: ${sig.hPPM}</span>
-                            <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded">A-PPM: ${sig.aPPM}</span>
+                        <div class="flex gap-2 mt-1">
+                            <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 rounded">PPM H: ${sig.hPPM} / A: ${sig.aPPM}</span>
                         </div>
                     </div>
-                    <div class="flex-1 w-full text-center">
-                        <div class="text-[10px] font-black text-slate-400 uppercase mb-1">Expected Goals</div>
+                    <div class="text-center px-8 border-x border-slate-50">
+                        <div class="text-[10px] font-black text-slate-400 uppercase">Exp. Goals</div>
                         <div class="text-2xl font-black text-slate-900">${sig.expTotal}</div>
                     </div>
-                    <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
-                        <div class="text-right">
-                            <div class="text-[10px] font-black text-green-600 uppercase tracking-tighter">${sig.confidence}</div>
+                    <div class="text-right flex items-center gap-4">
+                        <div>
+                            <div class="text-[9px] font-black text-green-600 uppercase">${sig.confidence}</div>
                             <div class="text-lg font-black text-black italic leading-tight">${sig.recommendation}</div>
                         </div>
-                        <button onclick='addToPortfolio(${JSON.stringify({match: sig.match, selection: sig.recommendation, best_odd: 'Math', market: 'Total', line: 2.5})})' class="bg-blue-600 text-white p-4 rounded-2xl shadow-lg hover:bg-black transition">🎯</button>
+                        <button onclick='addToPortfolio(${JSON.stringify({match: sig.match, selection: sig.recommendation, best_odd: 'Math', market: 'Total', line: 2.5})})' class="bg-blue-600 text-white p-4 rounded-2xl hover:bg-black transition shadow-lg">🎯</button>
                     </div>
                 </div>`).join('');
         }
 
-        // --- COMMON ---
-        function setMarketFilter(f) {
-            marketFilter = f;
-            document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('bg-slate-100'));
-            const activeBtn = document.getElementById(`m-${f.toLowerCase()}`);
-            if(activeBtn) activeBtn.classList.add('bg-slate-100');
-            renderFeed();
+        // --- COMMON LOGIC ---
+        function addToPortfolio(sig) {
+            portfolio.unshift({...sig, id: Date.now(), status: 'pending'});
+            localStorage.setItem('portfolio', JSON.stringify(portfolio));
+            alert("Match Tracked!");
         }
 
-        function addToPortfolio(sig) {
-            const teams = sig.match.split(' v ');
-            portfolio.unshift({...sig, id: Date.now(), status: 'pending', home: teams[0] || '', away: teams[1] || '', score: null});
-            localStorage.setItem('portfolio', JSON.stringify(portfolio));
-            alert("Added!");
+        function deleteBet(id) {
+            if(confirm("Delete?")) { portfolio = portfolio.filter(p => p.id !== id); localStorage.setItem('portfolio', JSON.stringify(portfolio)); renderPortfolio(); }
         }
 
         function setStatus(id, status) {
@@ -288,40 +255,44 @@
 
         function renderPortfolio() {
             const list = document.getElementById('portfolio-list');
-            const statsPanel = document.getElementById('stats-panel');
-            const wins = portfolio.filter(p => p.status === 'win');
-            const losses = portfolio.filter(p => p.status === 'loss');
-            const wr = portfolio.length > 0 ? (wins.length / (wins.length + losses.length || 1) * 100).toFixed(1) : 0;
+            const stats = document.getElementById('stats-panel');
+            const wins = portfolio.filter(p => p.status === 'win').length;
+            const losses = portfolio.filter(p => p.status === 'loss').length;
+            
+            stats.innerHTML = `
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center"><p class="text-[10px] font-black text-slate-400 uppercase">Total</p><p class="text-xl font-black">${portfolio.length}</p></div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center"><p class="text-[10px] font-black text-green-500 uppercase">Wins</p><p class="text-xl font-black text-green-600">${wins}</p></div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center"><p class="text-[10px] font-black text-red-400 uppercase">Losses</p><p class="text-xl font-black text-red-600">${losses}</p></div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center"><p class="text-[10px] font-black text-blue-400 uppercase">Win Rate</p><p class="text-xl font-black text-blue-600">${portfolio.length > 0 ? (wins/(wins+losses||1)*100).toFixed(0) : 0}%</p></div>
+            `;
+
             list.innerHTML = portfolio.map(item => `
-                <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500 shadow-lg shadow-green-50' : item.status === 'loss' ? 'border-l-8 border-l-red-500 shadow-lg shadow-red-50' : ''}">
-                    <div class="text-left">
-                        <h3 class="font-black text-slate-900">${item.match}</h3>
-                        <p class="text-xs font-bold text-green-600">${item.selection} @${item.best_odd} ${item.score ? `<span class="ml-3 text-slate-400 font-black tracking-widest">FT: ${item.score}</span>` : ''}</p>
-                    </div>
+                <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500' : item.status === 'loss' ? 'border-l-8 border-l-red-500' : ''}">
+                    <div><h3 class="font-black text-slate-900">${item.match}</h3><p class="text-xs font-bold text-green-600">${item.selection} @${item.best_odd}</p></div>
                     <div class="flex gap-2">
-                        <button onclick="setStatus(${item.id}, 'win')" class="w-10 h-10 rounded-full bg-green-100 text-green-600 font-black">W</button>
-                        <button onclick="setStatus(${item.id}, 'loss')" class="w-10 h-10 rounded-full bg-red-100 text-red-600 font-black">L</button>
-                        <button onclick="deleteBet(${item.id})" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 font-bold">✕</button>
+                        <button onclick="setStatus(${item.id}, 'win')" class="w-8 h-8 rounded-full bg-green-100 text-green-600 font-black">W</button>
+                        <button onclick="setStatus(${item.id}, 'loss')" class="w-8 h-8 rounded-full bg-red-100 text-red-600 font-black">L</button>
+                        <button onclick="deleteBet(${item.id})" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 font-bold">✕</button>
                     </div>
                 </div>`).join('');
-            
-            statsPanel.innerHTML = `<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center"><p class="text-[10px] font-black text-slate-400 uppercase">Win Rate</p><p class="text-xl font-black text-green-600">${wr}%</p></div>`;
         }
 
-        function deleteBet(id) { if(confirm("Delete?")) { portfolio = portfolio.filter(p => p.id !== id); localStorage.setItem('portfolio', JSON.stringify(portfolio)); renderPortfolio(); } }
-
-        function filterSignals() { renderFeed(); }
+        function setMarketFilter(f) {
+            marketFilter = f;
+            document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('bg-slate-100'));
+            document.getElementById(`m-${f.toLowerCase()}`).classList.add('bg-slate-100');
+            renderFeed();
+        }
 
         function toggleView(view) {
-            document.getElementById('view-main').classList.toggle('hidden', view !== 'main');
-            document.getElementById('view-math').classList.toggle('hidden', view !== 'math');
-            document.getElementById('view-portfolio').classList.toggle('hidden', view !== 'portfolio');
-            document.getElementById('tab-main').className = `px-4 py-2 font-bold text-sm ${view === 'main' ? 'tab-active' : 'text-slate-400'}`;
-            document.getElementById('tab-math').className = `px-4 py-2 font-bold text-sm ${view === 'math' ? 'tab-active' : 'text-slate-400'}`;
-            document.getElementById('tab-port').className = `px-4 py-2 font-bold text-sm ${view === 'portfolio' ? 'tab-active' : 'text-slate-400'}`;
+            ['main', 'math', 'portfolio'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.toggle('hidden', v !== view);
+                document.getElementById(`tab-${v === 'portfolio' ? 'port' : v}`).className = `px-4 py-2 font-bold text-sm ${v === view ? 'tab-active' : 'text-slate-400'}`;
+            });
             if(view === 'portfolio') renderPortfolio();
         }
 
+        function filterSignals() { renderFeed(); }
         renderLeagueSelection();
     </script>
 </body>
