@@ -47,48 +47,34 @@
     </div>
 
     <div id="view-main" class="max-w-5xl mx-auto space-y-4">
-        <div id="feed" class="space-y-4 text-center py-20 text-slate-400 font-bold tracking-tight">Выберите лиги в ⚙️ и нажмите Search</div>
+        <div id="feed" class="space-y-4 text-center py-20 text-slate-400 font-bold">Выберите лиги в ⚙️ и нажмите Search</div>
     </div>
 
     <div id="view-portfolio" class="max-w-5xl mx-auto hidden">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" id="stats-panel"></div>
+        <div class="flex justify-between items-center mb-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1" id="stats-panel"></div>
+            <button onclick="checkAllResults()" id="check-btn" class="ml-4 bg-blue-600 text-white px-6 py-4 rounded-2xl font-black text-xs shadow-lg hover:bg-blue-700 transition">Check Results 🔄</button>
+        </div>
         <div id="portfolio-list" class="space-y-4"></div>
     </div>
 
     <script>
         const LEAGUES_CONFIG = {
             "⚽ Футбол (Soccer)": {
-                'soccer_epl': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', 
-                'soccer_germany_bundesliga': '🇩🇪 Bundesliga', 
-                'soccer_spain_la_liga': '🇪🇸 La Liga',
-                'soccer_italy_serie_a': '🇮🇹 Serie A', 
-                'soccer_france_ligue_one': '🇫🇷 Ligue 1', 
-                'soccer_uefa_champs_league': '🇪🇺 Champions League',
-                'soccer_uefa_europa_league': '🇪🇺 Europa League', 
-                'soccer_uefa_europa_conference_league': '🇪🇺 Conference League',
-                'soccer_portugal_primeira_liga': '🇵🇹 Primeira Liga', 
-                'soccer_netherlands_eredivisie': '🇳🇱 Eredivisie',
-                'soccer_belgium_first_div': '🇧🇪 Belgium 1st Div', 
-                'soccer_russia_premier_league': '🇷🇺 РПЛ (Russia)', 
-                'soccer_turkey_super_league': '🇹🇷 Super League',
-                'soccer_usa_mls': '🇺🇸 MLS (USA)', 
-                'soccer_mexico_ligamx': '🇲🇽 Liga MX', 
-                'soccer_brazil_campeonato': '🇧🇷 Serie A (Brazil)',
+                'soccer_epl': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', 'soccer_germany_bundesliga': '🇩🇪 Bundesliga', 'soccer_spain_la_liga': '🇪🇸 La Liga',
+                'soccer_italy_serie_a': '🇮🇹 Serie A', 'soccer_france_ligue_one': '🇫🇷 Ligue 1', 'soccer_uefa_champs_league': '🇪🇺 Champions League',
+                'soccer_uefa_europa_league': '🇪🇺 Europa League', 'soccer_uefa_europa_conference_league': '🇪🇺 Conference League',
+                'soccer_portugal_primeira_liga': '🇵🇹 Primeira Liga', 'soccer_netherlands_eredivisie': '🇳🇱 Eredivisie',
+                'soccer_belgium_first_div': '🇧🇪 Belgium 1st Div', 'soccer_russia_premier_league': '🇷🇺 РПЛ (Russia)', 'soccer_turkey_super_league': '🇹🇷 Super League',
+                'soccer_usa_mls': '🇺🇸 MLS (USA)', 'soccer_mexico_ligamx': '🇲🇽 Liga MX', 'soccer_brazil_campeonato': '🇧🇷 Serie A (Brazil)',
                 'soccer_argentina_primera_division': '🇦🇷 Argentina'
             },
             "🏀 Баскетбол (Basketball)": {
-                'basketball_nba': '🇺🇸 NBA', 
-                'basketball_euroleague': '🇪🇺 Euroleague', 
-                'basketball_ncaab': '🇺🇸 NCAAB', 
-                'basketball_wncaab': '🇺🇸 W-NCAAB'
+                'basketball_nba': '🇺🇸 NBA', 'basketball_euroleague': '🇪🇺 Euroleague', 'basketball_ncaab': '🇺🇸 NCAAB', 'basketball_wncaab': '🇺🇸 W-NCAAB'
             },
             "🏒 Хоккей (Ice Hockey)": {
-                'icehockey_nhl': '🇺🇸 NHL', 
-                'icehockey_ahl': '🇺🇸 AHL', 
-                'icehockey_liiga': '🇫🇮 Liiga', 
-                'icehockey_mestis': '🇫🇮 Mestis', 
-                'icehockey_sweden_allsvenskan': '🇸🇪 Allsvenskan', 
-                'icehockey_sweden_hockey_league': '🇸🇪 SHL'
+                'icehockey_nhl': '🇺🇸 NHL', 'icehockey_ahl': '🇺🇸 AHL', 'icehockey_liiga': '🇫🇮 Liiga', 'icehockey_mestis': '🇫🇮 Mestis', 
+                'icehockey_sweden_allsvenskan': '🇸🇪 Allsvenskan', 'icehockey_sweden_hockey_league': '🇸🇪 SHL'
             }
         };
 
@@ -133,7 +119,7 @@
                 const res = await fetch(`/api/fetch?leagues=${selectedLeagues.join(',')}`);
                 currentSignals = await res.json();
                 renderFeed();
-            } catch(e) { alert("API Error. Check if your API Key is correct."); }
+            } catch(e) { alert("API Error."); }
             finally { btn.innerText = "Search Value ⚡"; }
         }
 
@@ -150,7 +136,7 @@
 
             filtered.sort((a, b) => sort === 'desc' ? b.gap - a.gap : a.gap - b.gap);
 
-            if(filtered.length === 0) { feed.innerHTML = "No matches found. Try selecting more leagues or change filters."; return; }
+            if(filtered.length === 0) { feed.innerHTML = "No matches found."; return; }
 
             feed.innerHTML = filtered.map(sig => {
                 const pinWidth = 70;
@@ -167,20 +153,84 @@
                         <div class="bar-container"><div class="bar-val" style="width: ${valWidth}%"></div></div>
                     </div>
                     <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
-                        <div class="text-right">
-                            <div class="text-xl font-black text-green-600 leading-none">+${sig.gap}%</div>
-                            <div class="text-2xl font-black text-black italic leading-tight">${sig.best_odd}</div>
+                        <div class="text-right flex items-center gap-4">
+                            <span class="text-sm font-bold text-pink-500 bg-pink-50 px-2 py-1 rounded-lg">${sig.pin_odd}</span>
+                            <div>
+                                <div class="text-xl font-black text-green-600 leading-none">+${sig.gap}%</div>
+                                <div class="text-2xl font-black text-black italic leading-tight">${sig.best_odd}</div>
+                            </div>
                         </div>
-                        <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="bg-slate-900 text-white px-6 py-4 rounded-2xl font-black text-xs hover:bg-green-600 transition shadow-lg active:scale-90">Track 🎯</button>
+                        <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="bg-slate-900 text-white px-6 py-4 rounded-2xl font-black text-xs hover:bg-green-600 transition shadow-lg">Track 🎯</button>
                     </div>
                 </div>`;
             }).join('');
         }
 
         function addToPortfolio(sig) {
-            portfolio.unshift({...sig, id: Date.now(), status: 'pending'});
+            // Сохраняем названия команд отдельно для проверки счета
+            const teams = sig.match.split(' v ');
+            portfolio.unshift({
+                ...sig, 
+                id: Date.now(), 
+                status: 'pending', 
+                home: teams[0], 
+                away: teams[1],
+                score: null
+            });
             localStorage.setItem('portfolio', JSON.stringify(portfolio));
-            alert("Added to Portfolio!");
+            alert("Match Tracked!");
+        }
+
+        async function checkAllResults() {
+            const btn = document.getElementById('check-btn');
+            btn.innerText = "Checking... ⏳";
+            
+            // Берем уникальные лиги из портфолио, где есть 'pending'
+            const pendingLeagues = [...new Set(portfolio.filter(p => p.status === 'pending').map(p => p.sport_key || 'soccer_epl'))];
+            
+            if (pendingLeagues.length === 0) {
+                alert("Нет активных ставок для проверки.");
+                btn.innerText = "Check Results 🔄";
+                return;
+            }
+
+            try {
+                // В этом примере используем одну лигу для теста, в идеале нужно циклом по всем
+                // Но для экономии лимитов проверим те, что есть
+                for (let league of pendingLeagues) {
+                    const res = await fetch(`https://api.the-odds-api.com/v4/sports/${league}/scores/?apiKey=ТВОЙ_КЛЮЧ&daysFrom=3`);
+                    const scores = await res.json();
+                    
+                    portfolio = portfolio.map(item => {
+                        if (item.status !== 'pending') return item;
+                        
+                        const matchScore = scores.find(s => s.home_team === item.home && s.away_team === item.away && s.completed);
+                        if (matchScore) {
+                            const hScore = parseInt(matchScore.scores.find(s => s.name === item.home).score);
+                            const aScore = parseInt(matchScore.scores.find(s => s.name === item.away).score);
+                            item.score = `${hScore} - ${aScore}`;
+                            
+                            // Простейшая логика проверки (для Totals и Handicap)
+                            if (item.market === 'Total') {
+                                const isOver = item.selection.includes('Over');
+                                const total = hScore + aScore;
+                                item.status = (isOver && total > item.line) || (!isOver && total < item.line) ? 'win' : 'loss';
+                            } else if (item.market === 'Handicap') {
+                                const isHome = item.selection === item.home;
+                                const diff = isHome ? (hScore + item.line - aScore) : (aScore + item.line - hScore);
+                                item.status = diff > 0 ? 'win' : 'loss';
+                            }
+                        }
+                        return item;
+                    });
+                }
+                localStorage.setItem('portfolio', JSON.stringify(portfolio));
+                renderPortfolio();
+            } catch (e) {
+                alert("Ошибка при проверке результатов. Проверьте API ключ.");
+            } finally {
+                btn.innerText = "Check Results 🔄";
+            }
         }
 
         function setStatus(id, status) {
@@ -219,10 +269,13 @@
                 </div>`;
 
             list.innerHTML = portfolio.map(item => `
-                <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500' : item.status === 'loss' ? 'border-l-8 border-l-red-500' : ''}">
+                <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500 shadow-lg shadow-green-50' : item.status === 'loss' ? 'border-l-8 border-l-red-500 shadow-lg shadow-red-50' : ''}">
                     <div class="text-left">
                         <h3 class="font-black text-slate-900">${item.match}</h3>
-                        <p class="text-xs font-bold text-green-600">${item.selection} @${item.best_odd}</p>
+                        <p class="text-xs font-bold text-green-600">
+                            ${item.selection} @${item.best_odd} 
+                            ${item.score ? `<span class="ml-3 text-slate-400 font-black tracking-widest">FT: ${item.score}</span>` : ''}
+                        </p>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="setStatus(${item.id}, 'win')" class="w-10 h-10 rounded-full bg-green-100 text-green-600 font-black hover:bg-green-600 hover:text-white transition">W</button>
