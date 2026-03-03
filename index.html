@@ -9,9 +9,6 @@
         .active-league { background: #00C076 !important; color: white !important; border-color: #00C076 !important; }
         .card { transition: 0.2s; }
         .tab-active { border-bottom: 3px solid #00C076; color: #00C076; }
-        .bar-container { height: 8px; background: #EDF2F7; border-radius: 4px; width: 100%; position: relative; overflow: hidden; }
-        .bar-pin { height: 100%; background: #FF007A; transition: 0.3s; }
-        .bar-val { height: 100%; background: #00C076; transition: 0.3s; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -32,19 +29,12 @@
     </div>
 
     <div id="view-main" class="max-w-5xl mx-auto space-y-4">
-        <div class="max-w-5xl mx-auto mb-6 flex flex-wrap gap-4 items-center justify-between">
+        <div class="flex justify-between items-center mb-6">
             <div class="flex gap-2 bg-white p-1 rounded-xl border border-slate-100">
                 <button onclick="setMarketFilter('all')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn bg-slate-100" id="m-all">All</button>
                 <button onclick="setMarketFilter('Total')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn" id="m-total">Totals</button>
-                <button onclick="setMarketFilter('Handicap')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition market-btn" id="m-handicap">Handicaps</button>
             </div>
-            <div class="flex gap-4 items-center">
-                <select id="sort-order" onchange="renderFeed()" class="bg-transparent font-bold text-xs outline-none cursor-pointer">
-                    <option value="desc">High Value First</option>
-                    <option value="asc">Low Value First</option>
-                </select>
-                <button id="scan-btn" onclick="startValueScan()" class="bg-black text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:scale-105 active:scale-95 transition">Search Value ⚡</button>
-            </div>
+            <button id="scan-btn" onclick="startValueScan()" class="bg-black text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:scale-105 transition">Search Value ⚡</button>
         </div>
         <div id="feed" class="space-y-4 text-center py-20 text-slate-400 font-bold">Выберите лиги в ⚙️ и нажмите Search</div>
     </div>
@@ -52,12 +42,12 @@
     <div id="view-math" class="max-w-5xl mx-auto hidden space-y-4">
         <div class="flex justify-between items-center mb-6 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
             <div>
-                <h2 class="text-xl font-black text-slate-900">Statistical Analysis (PPM & Goals)</h2>
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">TheSportsDB Engine v2.0</p>
+                <h2 class="text-xl font-black text-slate-900">Statistical Engine</h2>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Analysis based on League Table & PPM</p>
             </div>
-            <button onclick="scanMathBets()" id="math-scan-btn" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-blue-700 transition active:scale-95">Calculate Math Bets 🧮</button>
+            <button onclick="scanMathBets()" id="math-scan-btn" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-blue-700 transition">Calculate Math Bets 🧮</button>
         </div>
-        <div id="math-feed" class="space-y-4 text-center py-20 text-slate-400 font-bold">Нажмите кнопку для глубокого анализа</div>
+        <div id="math-feed" class="space-y-4 text-center py-20 text-slate-400 font-bold">Нажмите кнопку для анализа</div>
     </div>
 
     <div id="view-portfolio" class="max-w-5xl mx-auto hidden">
@@ -66,24 +56,28 @@
     </div>
 
     <script>
-        const SPORTSDB_KEY = "123"; // Твой ключ
+        const API_KEY_SPORTSDB = "3"; // Публичный ключ с расширенным доступом
 
         const LEAGUES_CONFIG = {
-            "⚽ Футбол (Soccer)": {
+            "⚽ Футбол (Англия)": {
                 'soccer_epl': {id: '4328', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League'}, 
+                'soccer_england_league1': {id: '4396', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 League One'},
+                'soccer_england_championship': {id: '4329', name: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship'}
+            },
+            "⚽ Футбол (Европа)": {
                 'soccer_germany_bundesliga': {id: '4331', name: '🇩🇪 Bundesliga'}, 
                 'soccer_spain_la_liga': {id: '4335', name: '🇪🇸 La Liga'},
                 'soccer_italy_serie_a': {id: '4332', name: '🇮🇹 Serie A'}, 
                 'soccer_france_ligue_one': {id: '4334', name: '🇫🇷 Ligue 1'},
-                'soccer_portugal_primeira_liga': {id: '4344', name: '🇵🇹 Primeira Liga'},
-                'soccer_russia_premier_league': {id: '4355', name: '🇷🇺 РПЛ'},
-                'soccer_usa_mls': {id: '4346', name: '🇺🇸 MLS'}
+                'soccer_russia_premier_league': {id: '4355', name: '🇷🇺 РПЛ'}
             },
-            "🏀 Баскетбол": { 'basketball_nba': {id: '4387', name: '🇺🇸 NBA'} },
-            "🏒 Хоккей": { 'icehockey_nhl': {id: '4380', name: '🇺🇸 NHL'} }
+            "🏀 Спорт (США)": { 
+                'basketball_nba': {id: '4387', name: '🇺🇸 NBA'},
+                'icehockey_nhl': {id: '4380', name: '🇺🇸 NHL'}
+            }
         };
 
-        let selectedLeagues = ['soccer_epl', 'soccer_germany_bundesliga'];
+        let selectedLeagues = ['soccer_epl', 'soccer_england_league1'];
         let currentSignals = [];
         let marketFilter = 'all';
         let portfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
@@ -92,7 +86,7 @@
             const container = document.getElementById('league-categories');
             container.innerHTML = Object.entries(LEAGUES_CONFIG).map(([cat, leagues]) => `
                 <div>
-                    <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-2">${cat}</h4>
+                    <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">${cat}</h4>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                         ${Object.entries(leagues).map(([key, data]) => `
                             <div onclick="toggleLeague('${key}')" class="p-3 rounded-2xl border text-[11px] font-bold cursor-pointer transition-all ${selectedLeagues.includes(key) ? 'active-league shadow-lg' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100'}">
@@ -109,7 +103,7 @@
             renderLeagueSelection();
         }
 
-        // --- MARKET SCAN (The Odds API) ---
+        // --- MARKET SCAN ---
         async function startValueScan() {
             const btn = document.getElementById('scan-btn');
             btn.innerText = "Scanning... ⏳";
@@ -117,80 +111,70 @@
                 const res = await fetch(`/api/fetch?leagues=${selectedLeagues.join(',')}`);
                 currentSignals = await res.json();
                 renderFeed();
-            } catch(e) { alert("API Error."); }
+            } catch(e) { console.error(e); }
             finally { btn.innerText = "Search Value ⚡"; }
         }
 
         function renderFeed() {
             const feed = document.getElementById('feed');
-            const sort = document.getElementById('sort-order').value;
             const search = document.getElementById('global-search').value.toLowerCase();
             let filtered = currentSignals.filter(sig => (marketFilter === 'all' || sig.market === marketFilter) && (sig.match.toLowerCase().includes(search)));
-            filtered.sort((a, b) => sort === 'desc' ? b.gap - a.gap : a.gap - b.gap);
             if(!filtered.length) { feed.innerHTML = "No matches found."; return; }
             feed.innerHTML = filtered.map(sig => `
-                <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
-                    <div class="text-left flex-1 w-full">
+                <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center shadow-sm">
+                    <div class="text-left">
                         <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${sig.league}</span>
                         <h2 class="text-xl font-black text-slate-900 leading-tight">${sig.match}</h2>
                         <p class="text-sm font-bold text-green-600">${sig.selection} (${sig.market} ${sig.line})</p>
                     </div>
-                    <div class="flex items-center gap-6">
-                        <div class="text-right">
-                            <span class="text-sm font-bold text-pink-500 bg-pink-50 px-2 py-0.5 rounded-lg">${sig.pin_odd}</span>
-                            <div class="text-2xl font-black text-black italic leading-tight">${sig.best_odd}</div>
+                    <div class="text-right flex items-center gap-6">
+                        <div>
+                            <span class="text-xs font-bold text-pink-500 bg-pink-50 px-2 py-0.5 rounded-lg">${sig.pin_odd}</span>
+                            <div class="text-2xl font-black italic">${sig.best_odd}</div>
                         </div>
-                        <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="bg-black text-white px-6 py-4 rounded-2xl font-black text-xs hover:bg-green-600 transition">Track 🎯</button>
+                        <button onclick='addToPortfolio(${JSON.stringify(sig)})' class="bg-black text-white p-4 rounded-2xl hover:bg-green-600 transition shadow-lg">🎯</button>
                     </div>
                 </div>`).join('');
         }
 
-        // --- MATH SCAN (TheSportsDB) ---
+        // --- MATH SCAN (THE SPORTS DB) ---
         async function scanMathBets() {
             const btn = document.getElementById('math-scan-btn');
             const feed = document.getElementById('math-feed');
             btn.innerText = "Processing... ⏳";
-            feed.innerHTML = `<div class="animate-pulse text-blue-600 font-black uppercase tracking-widest">Searching Match Database...</div>`;
+            feed.innerHTML = `<div class="animate-pulse text-blue-600 font-black tracking-widest">Accessing Sports Database...</div>`;
 
             let mathSignals = [];
             const activeIds = selectedLeagues.map(key => {
                 for (let cat in LEAGUES_CONFIG) if (LEAGUES_CONFIG[cat][key]) return LEAGUES_CONFIG[cat][key].id;
             }).filter(id => id);
 
-            if (!activeIds.length) { feed.innerHTML = "Select leagues in Settings ⚙️"; btn.innerText = "Calculate Math Bets 🧮"; return; }
+            if (!activeIds.length) { feed.innerHTML = "Выберите лиги в настройках ⚙️"; btn.innerText = "Calculate Math Bets 🧮"; return; }
 
             try {
                 for (let leagueId of activeIds) {
-                    // Пытаемся найти таблицу сезона
-                    let resTable = await fetch(`https://www.thesportsdb.com/api/v1/json/${SPORTSDB_KEY}/lookuptable.php?l=${leagueId}&s=2025-2026`);
+                    // 1. Пытаемся взять таблицу (2025-2026 или 2024-2025)
+                    let resTable = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/lookuptable.php?l=${leagueId}&s=2025-2026`);
                     let tableData = await resTable.json();
                     if (!tableData.table) {
-                        resTable = await fetch(`https://www.thesportsdb.com/api/v1/json/${SPORTSDB_KEY}/lookuptable.php?l=${leagueId}&s=2024-2025`);
+                        resTable = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/lookuptable.php?l=${leagueId}&s=2024-2025`);
                         tableData = await resTable.json();
                     }
 
-                    // Пытаемся найти ближайшие игры
-                    let resEvents = await fetch(`https://www.thesportsdb.com/api/v1/json/${SPORTSDB_KEY}/eventsnextleague.php?id=${leagueId}`);
+                    // 2. Берем ближайшие матчи
+                    let resEvents = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY_SPORTSDB}/eventsnextleague.php?id=${leagueId}`);
                     let eventsData = await resEvents.json();
 
-                    // Резервный поиск по сегодняшнему дню, если Next пуст
-                    if (!eventsData || !eventsData.events) {
-                        const today = new Date().toISOString().split('T')[0];
-                        const resToday = await fetch(`https://www.thesportsdb.com/api/v1/json/${SPORTSDB_KEY}/eventsday.php?d=${today}&l=${leagueId}`);
-                        const todayData = await resToday.json();
-                        if (todayData.events) eventsData = todayData;
-                    }
-
-                    if (tableData.table && eventsData && eventsData.events) {
+                    if (tableData.table && eventsData.events) {
                         const table = tableData.table;
                         eventsData.events.forEach(ev => {
                             const home = table.find(t => t.idTeam === ev.idHomeTeam);
                             const away = table.find(t => t.idAwayTeam === ev.idAwayTeam);
                             if (home && away) {
-                                const hPPM = (parseInt(home.intPoints || 0) / Math.max(parseInt(home.intPlayed || 1), 1)).toFixed(2);
-                                const aPPM = (parseInt(away.intPoints || 0) / Math.max(parseInt(away.intPlayed || 1), 1)).toFixed(2);
-                                const hGF = (parseInt(home.intGoalsFor || 0) / Math.max(parseInt(home.intPlayed || 1), 1));
-                                const aGF = (parseInt(away.intGoalsFor || 0) / Math.max(parseInt(away.intPlayed || 1), 1));
+                                const hPPM = (parseFloat(home.intPoints || 0) / Math.max(parseInt(home.intPlayed || 1), 1)).toFixed(2);
+                                const aPPM = (parseFloat(away.intPoints || 0) / Math.max(parseInt(away.intPlayed || 1), 1)).toFixed(2);
+                                const hGF = (parseFloat(home.intGoalsFor || 0) / Math.max(parseInt(home.intPlayed || 1), 1));
+                                const aGF = (parseFloat(away.intGoalsFor || 0) / Math.max(parseInt(away.intPlayed || 1), 1));
                                 const expTotal = (hGF + aGF).toFixed(2);
 
                                 mathSignals.push({
@@ -203,18 +187,18 @@
                             }
                         });
                     }
-                    await new Promise(r => setTimeout(r, 600));
+                    await new Promise(r => setTimeout(r, 600)); 
                 }
                 renderMathFeed(mathSignals);
-            } catch (e) { feed.innerHTML = "API Connection Error."; }
+            } catch (e) { feed.innerHTML = "Ошибка API или соединения."; console.error(e); }
             finally { btn.innerText = "Calculate Math Bets 🧮"; }
         }
 
         function renderMathFeed(signals) {
             const container = document.getElementById('math-feed');
-            if (!signals.length) { container.innerHTML = "No matches found in API for next 48h."; return; }
+            if (!signals.length) { container.innerHTML = "Ближайших матчей для выбранных лиг не найдено."; return; }
             container.innerHTML = signals.map(sig => `
-                <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm text-left">
+                <div class="card bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center shadow-sm text-left">
                     <div class="flex-1">
                         <span class="text-[9px] font-black text-blue-500 uppercase tracking-widest">${sig.league}</span>
                         <h2 class="text-xl font-black text-slate-900 leading-tight">${sig.match}</h2>
@@ -222,50 +206,28 @@
                             <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 rounded">PPM H: ${sig.hPPM} / A: ${sig.aPPM}</span>
                         </div>
                     </div>
-                    <div class="text-center px-8 border-x border-slate-50">
-                        <div class="text-[10px] font-black text-slate-400 uppercase">Exp. Goals</div>
-                        <div class="text-2xl font-black text-slate-900">${sig.expTotal}</div>
-                    </div>
-                    <div class="text-right flex items-center gap-4">
+                    <div class="text-right flex items-center gap-6">
                         <div>
-                            <div class="text-[9px] font-black text-green-600 uppercase">${sig.confidence}</div>
-                            <div class="text-lg font-black text-black italic leading-tight">${sig.recommendation}</div>
+                            <div class="text-[10px] font-black text-slate-400 uppercase">Exp. Goals: ${sig.expTotal}</div>
+                            <div class="text-lg font-black italic leading-tight">${sig.recommendation}</div>
                         </div>
-                        <button onclick='addToPortfolio(${JSON.stringify({match: sig.match, selection: sig.recommendation, best_odd: 'Math', market: 'Total', line: 2.5})})' class="bg-blue-600 text-white p-4 rounded-2xl hover:bg-black transition shadow-lg">🎯</button>
+                        <button onclick='addToPortfolio(${JSON.stringify({match: sig.match, selection: sig.recommendation, best_odd: 'MATH'})})' class="bg-blue-600 text-white p-4 rounded-2xl hover:bg-black transition shadow-lg">🎯</button>
                     </div>
                 </div>`).join('');
         }
 
-        // --- COMMON LOGIC ---
+        // --- PORTFOLIO & UI ---
         function addToPortfolio(sig) {
             portfolio.unshift({...sig, id: Date.now(), status: 'pending'});
             localStorage.setItem('portfolio', JSON.stringify(portfolio));
-            alert("Match Tracked!");
-        }
-
-        function deleteBet(id) {
-            if(confirm("Delete?")) { portfolio = portfolio.filter(p => p.id !== id); localStorage.setItem('portfolio', JSON.stringify(portfolio)); renderPortfolio(); }
-        }
-
-        function setStatus(id, status) {
-            portfolio = portfolio.map(item => item.id === id ? {...item, status} : item);
-            localStorage.setItem('portfolio', JSON.stringify(portfolio));
-            renderPortfolio();
+            alert("Added to Tracker!");
         }
 
         function renderPortfolio() {
             const list = document.getElementById('portfolio-list');
             const stats = document.getElementById('stats-panel');
             const wins = portfolio.filter(p => p.status === 'win').length;
-            const losses = portfolio.filter(p => p.status === 'loss').length;
-            
-            stats.innerHTML = `
-                <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center"><p class="text-[10px] font-black text-slate-400 uppercase">Total</p><p class="text-xl font-black">${portfolio.length}</p></div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center"><p class="text-[10px] font-black text-green-500 uppercase">Wins</p><p class="text-xl font-black text-green-600">${wins}</p></div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center"><p class="text-[10px] font-black text-red-400 uppercase">Losses</p><p class="text-xl font-black text-red-600">${losses}</p></div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center"><p class="text-[10px] font-black text-blue-400 uppercase">Win Rate</p><p class="text-xl font-black text-blue-600">${portfolio.length > 0 ? (wins/(wins+losses||1)*100).toFixed(0) : 0}%</p></div>
-            `;
-
+            stats.innerHTML = `<div class="bg-white p-4 rounded-2xl border text-center shadow-sm"><p class="text-[10px] font-black text-slate-400 uppercase">Win Rate</p><p class="text-xl font-black text-green-600">${portfolio.length > 0 ? (wins/portfolio.length*100).toFixed(0) : 0}%</p></div>`;
             list.innerHTML = portfolio.map(item => `
                 <div class="bg-white p-6 rounded-[32px] border border-slate-100 flex justify-between items-center ${item.status === 'win' ? 'border-l-8 border-l-green-500' : item.status === 'loss' ? 'border-l-8 border-l-red-500' : ''}">
                     <div><h3 class="font-black text-slate-900">${item.match}</h3><p class="text-xs font-bold text-green-600">${item.selection} @${item.best_odd}</p></div>
@@ -277,12 +239,8 @@
                 </div>`).join('');
         }
 
-        function setMarketFilter(f) {
-            marketFilter = f;
-            document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('bg-slate-100'));
-            document.getElementById(`m-${f.toLowerCase()}`).classList.add('bg-slate-100');
-            renderFeed();
-        }
+        function setStatus(id, s) { portfolio = portfolio.map(p => p.id === id ? {...p, status: s} : p); localStorage.setItem('portfolio', JSON.stringify(portfolio)); renderPortfolio(); }
+        function deleteBet(id) { portfolio = portfolio.filter(p => p.id !== id); localStorage.setItem('portfolio', JSON.stringify(portfolio)); renderPortfolio(); }
 
         function toggleView(view) {
             ['main', 'math', 'portfolio'].forEach(v => {
@@ -292,6 +250,7 @@
             if(view === 'portfolio') renderPortfolio();
         }
 
+        function setMarketFilter(f) { marketFilter = f; renderFeed(); }
         function filterSignals() { renderFeed(); }
         renderLeagueSelection();
     </script>
