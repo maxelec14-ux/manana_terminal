@@ -9,7 +9,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         
         body { background: #0F172A; font-family: 'Inter', sans-serif; color: #E2E8F0; margin: 0; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; backdrop-filter: blur(12px); transition: 0.3s; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; backdrop-filter: blur(12px); }
         .neon-text { color: #10B981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
         
         /* Индикаторы формы */
@@ -103,8 +103,8 @@
 
         // Обработка формы (W/D/L)
         const processForm = (formStr) => {
-            if (!formStr || formStr === "null") return [];
-            // Очищаем от мусора и берем последние 5
+            if (!formStr || formStr === "null" || typeof formStr !== 'string') return [];
+            // Очищаем от мусора (запятых и т.д.) и берем только WDL
             return formStr.toUpperCase().replace(/[^WDL]/g, '').split('').slice(-5);
         };
 
@@ -112,16 +112,16 @@
             const btn = document.getElementById('update-btn');
             const feed = document.getElementById('feed');
             btn.disabled = true;
-            feed.innerHTML = '<div class="text-center py-20 animate-pulse font-black text-emerald-500 text-xs tracking-widest uppercase">Syncing via Vercel Edge...</div>';
+            feed.innerHTML = '<div class="text-center py-20 animate-pulse font-black text-emerald-500 text-xs tracking-widest uppercase">Connecting to Satellite...</div>';
 
             try {
                 const res = await fetch('/api/matches');
                 const data = await res.json();
                 
                 RAW_DATA = data.matches.map(m => {
-                    const leagueTable = data.standings[m.competition.code] || [];
-                    const hT = leagueTable.find(t => t.id === m.homeTeam.id);
-                    const aT = leagueTable.find(t => t.id === m.awayTeam.id);
+                    // Ищем данные по ID команды в "словаре" standings
+                    const hT = data.standings[m.homeTeam.id];
+                    const aT = data.standings[m.awayTeam.id];
 
                     if (!hT || !aT) return null;
 
@@ -133,11 +133,14 @@
                     const aC = (aT.goalsAgainst / aT.playedGames).toFixed(2);
 
                     return {
-                        league: m.competition.name, code: m.competition.code,
+                        league: m.competition.name, 
+                        code: m.competition.code,
                         date: m.utcDate.split('T')[0],
                         time: new Date(m.utcDate).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                        home: m.homeTeam.shortName, away: m.awayTeam.shortName,
-                        hForm: processForm(hT.form), aForm: processForm(aT.form),
+                        home: m.homeTeam.shortName, 
+                        away: m.awayTeam.shortName,
+                        hForm: processForm(hT.form), 
+                        aForm: processForm(aT.form),
                         hPPM, aPPM, hS, hC, aS, aC,
                         expTotal: ((parseFloat(hS)+parseFloat(aC)+parseFloat(aS)+parseFloat(hC))/2).toFixed(2),
                         handicap: ((hPPM - aPPM) * 0.8).toFixed(2)
@@ -147,7 +150,7 @@
                 updateLeagueDropdown();
                 applyFilters();
             } catch (err) {
-                feed.innerHTML = `<div class="p-10 text-center text-rose-500 font-bold uppercase text-xs">Error: ${err.message}</div>`;
+                feed.innerHTML = `<div class="p-10 text-center text-rose-500 font-bold uppercase text-xs">Sync Failed: ${err.message}</div>`;
             } finally {
                 btn.disabled = false;
             }
@@ -175,7 +178,7 @@
         function render(matches) {
             const feed = document.getElementById('feed');
             if (matches.length === 0) {
-                feed.innerHTML = '<div class="text-center py-20 text-slate-700 font-bold uppercase text-xs tracking-widest">No matching results</div>';
+                feed.innerHTML = '<div class="text-center py-20 text-slate-700 font-bold uppercase text-xs tracking-widest">No matching results found</div>';
                 return;
             }
 
@@ -191,7 +194,7 @@
                             <div>
                                 <h2 class="text-2xl font-black italic tracking-tighter text-white mb-2 uppercase">${m.home}</h2>
                                 <div class="flex gap-1.5 mb-5">
-                                    ${m.hForm.length ? m.hForm.map(f => `<div class="f-dot f-${f.toLowerCase()}">${f}</div>`).join('') : '<span class="text-[8px] text-slate-700 font-bold uppercase tracking-widest">No Form Data</span>'}
+                                    ${m.hForm.length ? m.hForm.map(f => `<div class="f-dot f-${f.toLowerCase()}">${f}</div>`).join('') : '<span class="text-[8px] text-slate-700 font-black uppercase tracking-widest">Form N/A</span>'}
                                 </div>
                                 <div class="flex gap-3">
                                     <div class="stat-badge"><p class="text-[8px] text-slate-500 font-bold uppercase mb-1">PPM</p><p class="text-xs font-black ${getColor('ppm', m.hPPM)}">${m.hPPM}</p></div>
@@ -202,7 +205,7 @@
                             <div>
                                 <h2 class="text-2xl font-black italic tracking-tighter text-white mb-2 uppercase">${m.away}</h2>
                                 <div class="flex gap-1.5 mb-5">
-                                    ${m.aForm.length ? m.aForm.map(f => `<div class="f-dot f-${f.toLowerCase()}">${f}</div>`).join('') : '<span class="text-[8px] text-slate-700 font-bold uppercase tracking-widest">No Form Data</span>'}
+                                    ${m.aForm.length ? m.aForm.map(f => `<div class="f-dot f-${f.toLowerCase()}">${f}</div>`).join('') : '<span class="text-[8px] text-slate-700 font-black uppercase tracking-widest">Form N/A</span>'}
                                 </div>
                                 <div class="flex gap-3">
                                     <div class="stat-badge"><p class="text-[8px] text-slate-500 font-bold uppercase mb-1">PPM</p><p class="text-xs font-black ${getColor('ppm', m.aPPM)}">${m.aPPM}</p></div>
@@ -217,7 +220,7 @@
                         <div>
                             <p class="text-[10px] font-black text-slate-500 uppercase mb-1">Exp. Total</p>
                             <p class="text-4xl font-[900] italic text-emerald-500 tracking-tighter">${m.expTotal}</p>
-                            <p class="text-[8px] font-black uppercase mt-1 text-slate-500">Goal Threshold</p>
+                            <p class="text-[8px] font-black uppercase mt-1 ${m.expTotal > 2.5 ? 'text-emerald-500' : 'text-amber-500'}">${m.expTotal > 2.5 ? 'High Prob' : 'Low Prob'}</p>
                         </div>
                         <div>
                             <p class="text-[10px] font-black text-slate-500 uppercase mb-1">AI Handicap</p>
