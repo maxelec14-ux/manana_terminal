@@ -3,30 +3,36 @@ export default async function handler(req, res) {
   const headers = { 'X-Auth-Token': API_KEY };
 
   try {
-    // 1. Получаем все матчи на ближайшие 7 дней
+    // 1. Получаем матчи
     const matchesRes = await fetch('https://api.football-data.org/v4/matches', { headers });
     const matchesData = await matchesRes.json();
 
-    // 2. Получаем таблицы топ-лиг (для PPM и голов)
-    // Чтобы не превысить лимит 10 зап/мин, мы берем только те лиги, где есть матчи
+    if (!matchesData.matches) throw new Error("No matches found");
+
+    // 2. Получаем коды лиг, которые есть в списке матчей
     const leagueCodes = [...new Set(matchesData.matches.map(m => m.competition.code))];
     
-    const standings = {};
-    for (const code of leagueCodes.slice(0, 8)) { // Берем первые 8 активных лиг
-      const sRes = await fetch(`https://api.football-data.org/v4/competitions/${code}/standings`, { headers });
-      const sData = await sRes.json();
-      if (sData.standings) {
-        standings[code] = sData.standings[0].table;
-      }
-      // Небольшая задержка, чтобы Vercel не забанили
-      await new Promise(r => setTimeout(r, 100));
+    const standingsMap = {};
+
+    // 3. Собираем таблицы для этих лиг
+    // Лимит 10 запросов в минуту, поэтому берем только нужные лиги
+    for (const code of leagueCodes.slice(0, 10)) {
+      try {
+        const sRes = await fetch(`https://api.football-data.org/v4/competitions/${code}/standings`, { headers });
+        const sData = await sRes.json();
+        if (sData.standings && sData.standings[0]) {
+          standingsMap[code] = sData.standings[0].table;
+        }
+      } catch (e) { console.error(`Error loading league ${code}`); }
     }
 
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/json');
     res.status(200).json({ 
       matches: matchesData.matches, 
-      standings: standings 
+      standings: standingsMap 
     });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
