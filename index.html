@@ -3,35 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MananaAI | Tactical Intelligence Pro</title>
+    <title>MananaAI | Pro Tactical Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         
         body { background: #0F172A; font-family: 'Inter', sans-serif; color: #E2E8F0; margin: 0; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; backdrop-filter: blur(12px); }
+        .glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; backdrop-filter: blur(12px); transition: 0.3s; }
         .neon-text { color: #10B981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
         
         /* Индикаторы формы */
-        .f-dot { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; transition: 0.3s; }
+        .f-dot { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; }
         .f-w { background: #10B981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
         .f-d { background: #64748B; }
         .f-l { background: #F43F5E; box-shadow: 0 0 10px rgba(244, 63, 94, 0.3); }
 
         .stat-badge { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 14px; padding: 10px 15px; min-width: 90px; }
         
-        input, select { background: #1E293B; border: 1px solid #334155; color: white; border-radius: 12px; padding: 10px; font-size: 12px; outline: none; transition: 0.2s; }
-        input:focus { border-color: #10B981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1); }
+        input, select { background: #1E293B; border: 1px solid #334155; color: white; border-radius: 12px; padding: 10px; font-size: 12px; outline: none; }
+        input:focus { border-color: #10B981; }
 
-        /* Подсветка данных */
+        /* Динамические цвета */
         .val-bad { color: #F43F5E; }        
         .val-mid { color: #FBBF24; }        
         .val-good { color: #10B981; }       
         .val-excellent { color: #34D399; text-shadow: 0 0 8px rgba(52, 211, 153, 0.4); font-weight: 900; }
 
-        .btn-update { background: #10B981; transition: all 0.3s ease; }
+        .btn-update { background: #10B981; transition: 0.3s; }
         .btn-update:hover { background: #059669; transform: translateY(-1px); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2); }
-        .btn-update:active { transform: scale(0.95); }
+        .btn-update:disabled { background: #1E293B; color: #475569; }
     </style>
 </head>
 <body class="p-4 md:p-10">
@@ -39,18 +39,22 @@
     <div class="max-w-6xl mx-auto">
         <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
             <div>
-                <h1 class="text-4xl font-[900] italic tracking-tighter neon-text">MANANA<span class="text-white">AI</span></h1>
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mt-1">Satellite Intelligence System</p>
+                <h1 class="text-4xl font-[900] italic tracking-tighter neon-text uppercase">MANANA<span class="text-white">AI</span></h1>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] mt-1">Strategic Analytics Suite</p>
             </div>
             <button onclick="updateData()" id="update-btn" class="btn-update text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest">
                 Update Data ⚡
             </button>
         </header>
 
-        <div class="glass-card p-6 mb-10 grid grid-cols-2 md:grid-cols-5 gap-4 items-end">
+        <div class="glass-card p-6 mb-10 grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+            <div class="flex flex-col gap-1 md:col-span-2">
+                <label class="text-[9px] font-bold text-slate-500 uppercase">Search Team</label>
+                <input type="text" id="f-search" placeholder="Enter team name..." oninput="applyFilters()">
+            </div>
             <div class="flex flex-col gap-1">
                 <label class="text-[9px] font-bold text-slate-500 uppercase">League</label>
-                <select id="f-league" onchange="applyFilters()"><option value="all">All Competitions</option></select>
+                <select id="f-league" onchange="applyFilters()"><option value="all">All Leagues</option></select>
             </div>
             <div class="flex flex-col gap-1">
                 <label class="text-[9px] font-bold text-slate-500 uppercase">Min PPM Diff</label>
@@ -60,21 +64,20 @@
                 <label class="text-[9px] font-bold text-slate-500 uppercase">Min Total</label>
                 <input type="number" id="f-total" step="0.1" value="0" oninput="applyFilters()">
             </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-[9px] font-bold text-slate-500 uppercase">Event Date</label>
-                <input type="date" id="f-date" onchange="applyFilters()">
-            </div>
-            <div class="text-right pb-3 font-black text-xs text-emerald-500 uppercase tracking-tighter" id="match-count">0 Matches Found</div>
+            <div class="text-right pb-3 font-black text-[10px] text-emerald-500 uppercase" id="match-count">0 Matches Found</div>
         </div>
 
-        <div id="feed" class="space-y-6 text-center py-20 border-2 border-dashed border-slate-800 rounded-[40px]">
-            <p class="text-slate-600 font-bold uppercase text-[10px] tracking-[0.5em]">Synchronize with Satellite Feed</p>
+        <div id="feed" class="space-y-6">
+            <div class="text-center py-20 border-2 border-dashed border-slate-800 rounded-[40px] text-slate-600 font-bold uppercase text-xs tracking-widest">
+                No active session. Press Update.
+            </div>
         </div>
     </div>
 
     <script>
         let RAW_DATA = [];
 
+        // Система цветовой индикации
         const getColor = (type, val) => {
             val = parseFloat(val);
             if (type === 'ppm') {
@@ -98,11 +101,18 @@
             return '';
         };
 
+        // Обработка формы (W/D/L)
+        const processForm = (formStr) => {
+            if (!formStr || formStr === "null") return [];
+            // Очищаем от мусора и берем последние 5
+            return formStr.toUpperCase().replace(/[^WDL]/g, '').split('').slice(-5);
+        };
+
         async function updateData() {
             const btn = document.getElementById('update-btn');
             const feed = document.getElementById('feed');
             btn.disabled = true;
-            feed.innerHTML = '<div class="text-center py-20 animate-pulse font-black text-emerald-500 text-xs tracking-[0.4em] uppercase">Connecting to Edge...</div>';
+            feed.innerHTML = '<div class="text-center py-20 animate-pulse font-black text-emerald-500 text-xs tracking-widest uppercase">Syncing via Vercel Edge...</div>';
 
             try {
                 const res = await fetch('/api/matches');
@@ -110,16 +120,10 @@
                 
                 RAW_DATA = data.matches.map(m => {
                     const leagueTable = data.standings[m.competition.code] || [];
-                    const hT = leagueTable.find(t => t.team.id === m.homeTeam.id);
-                    const aT = leagueTable.find(t => t.team.id === m.awayTeam.id);
+                    const hT = leagueTable.find(t => t.id === m.homeTeam.id);
+                    const aT = leagueTable.find(t => t.id === m.awayTeam.id);
 
                     if (!hT || !aT) return null;
-
-                    // Обработка формы: заменяем запятые и разбиваем на символы
-                    const processForm = (formStr) => {
-                        if (!formStr) return [];
-                        return formStr.replace(/,/g, '').split('').slice(0, 5);
-                    };
 
                     const hPPM = (hT.points / hT.playedGames).toFixed(2);
                     const aPPM = (aT.points / aT.playedGames).toFixed(2);
@@ -136,16 +140,14 @@
                         hForm: processForm(hT.form), aForm: processForm(aT.form),
                         hPPM, aPPM, hS, hC, aS, aC,
                         expTotal: ((parseFloat(hS)+parseFloat(aC)+parseFloat(aS)+parseFloat(hC))/2).toFixed(2),
-                        handicap: ((hPPM - aPPM) * 0.8).toFixed(2),
-                        oddsH: (1 / (0.33 + ((hPPM - aPPM) * 0.2))).toFixed(2),
-                        oddsA: (1 / (0.33 - ((hPPM - aPPM) * 0.2))).toFixed(2)
+                        handicap: ((hPPM - aPPM) * 0.8).toFixed(2)
                     };
                 }).filter(i => i !== null);
 
                 updateLeagueDropdown();
                 applyFilters();
             } catch (err) {
-                feed.innerHTML = `<div class="p-10 text-center text-rose-500 font-bold uppercase text-xs tracking-widest">Handshake Failed: ${err.message}</div>`;
+                feed.innerHTML = `<div class="p-10 text-center text-rose-500 font-bold uppercase text-xs">Error: ${err.message}</div>`;
             } finally {
                 btn.disabled = false;
             }
@@ -153,14 +155,15 @@
 
         function applyFilters() {
             const league = document.getElementById('f-league').value;
-            const date = document.getElementById('f-date').value;
+            const search = document.getElementById('f-search').value.toLowerCase();
             const ppmLimit = parseFloat(document.getElementById('f-ppm').value) || 0;
             const totalLimit = parseFloat(document.getElementById('f-total').value) || 0;
 
             const filtered = RAW_DATA.filter(m => {
                 const pDiff = Math.abs(m.hPPM - m.aPPM);
+                const matchesSearch = m.home.toLowerCase().includes(search) || m.away.toLowerCase().includes(search);
                 return (league === 'all' || m.code === league) &&
-                       (!date || m.date === date) &&
+                       matchesSearch &&
                        (pDiff >= ppmLimit) &&
                        (parseFloat(m.expTotal) >= totalLimit);
             });
@@ -172,25 +175,24 @@
         function render(matches) {
             const feed = document.getElementById('feed');
             if (matches.length === 0) {
-                feed.innerHTML = '<div class="text-center py-20 text-slate-600 font-bold uppercase text-[10px]">No matches match current filters</div>';
+                feed.innerHTML = '<div class="text-center py-20 text-slate-700 font-bold uppercase text-xs tracking-widest">No matching results</div>';
                 return;
             }
 
             feed.innerHTML = matches.map(m => `
-                <div class="glass-card p-6 md:p-8 flex flex-col lg:flex-row justify-between items-center gap-8 border-l-4 border-emerald-500/20">
+                <div class="glass-card p-6 md:p-8 flex flex-col lg:flex-row justify-between items-center gap-8 border-l-4 border-emerald-500/30">
                     <div class="flex-1 w-full">
                         <div class="flex items-center gap-3 mb-6">
-                            <span class="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em] bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20">${m.league}</span>
+                            <span class="text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded-lg">${m.league}</span>
                             <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">${m.date} • ${m.time}</span>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
                             <div>
-                                <h2 class="text-2xl font-black italic tracking-tighter text-white mb-3 uppercase">${m.home}</h2>
-                                <div class="flex gap-2 mb-6">${m.hForm.map(f => {
-                                    const c = f.toUpperCase();
-                                    return `<div class="f-dot f-${c.toLowerCase()}">${c}</div>`
-                                }).join('')}</div>
+                                <h2 class="text-2xl font-black italic tracking-tighter text-white mb-2 uppercase">${m.home}</h2>
+                                <div class="flex gap-1.5 mb-5">
+                                    ${m.hForm.length ? m.hForm.map(f => `<div class="f-dot f-${f.toLowerCase()}">${f}</div>`).join('') : '<span class="text-[8px] text-slate-700 font-bold uppercase tracking-widest">No Form Data</span>'}
+                                </div>
                                 <div class="flex gap-3">
                                     <div class="stat-badge"><p class="text-[8px] text-slate-500 font-bold uppercase mb-1">PPM</p><p class="text-xs font-black ${getColor('ppm', m.hPPM)}">${m.hPPM}</p></div>
                                     <div class="stat-badge"><p class="text-[8px] text-slate-500 font-bold uppercase mb-1">Scored</p><p class="text-xs font-black ${getColor('scored', m.hS)}">${m.hS}</p></div>
@@ -198,11 +200,10 @@
                                 </div>
                             </div>
                             <div>
-                                <h2 class="text-2xl font-black italic tracking-tighter text-white mb-3 uppercase">${m.away}</h2>
-                                <div class="flex gap-2 mb-6">${m.aForm.map(f => {
-                                    const c = f.toUpperCase();
-                                    return `<div class="f-dot f-${c.toLowerCase()}">${c}</div>`
-                                }).join('')}</div>
+                                <h2 class="text-2xl font-black italic tracking-tighter text-white mb-2 uppercase">${m.away}</h2>
+                                <div class="flex gap-1.5 mb-5">
+                                    ${m.aForm.length ? m.aForm.map(f => `<div class="f-dot f-${f.toLowerCase()}">${f}</div>`).join('') : '<span class="text-[8px] text-slate-700 font-bold uppercase tracking-widest">No Form Data</span>'}
+                                </div>
                                 <div class="flex gap-3">
                                     <div class="stat-badge"><p class="text-[8px] text-slate-500 font-bold uppercase mb-1">PPM</p><p class="text-xs font-black ${getColor('ppm', m.aPPM)}">${m.aPPM}</p></div>
                                     <div class="stat-badge"><p class="text-[8px] text-slate-500 font-bold uppercase mb-1">Scored</p><p class="text-xs font-black ${getColor('scored', m.aS)}">${m.aS}</p></div>
@@ -212,16 +213,14 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-row lg:flex-col gap-6 w-full lg:w-48 lg:border-l border-white/5 lg:pl-10 justify-around text-center">
+                    <div class="flex flex-row lg:flex-col gap-8 w-full lg:w-48 lg:border-l border-white/5 lg:pl-10 justify-around text-center">
                         <div>
-                            <p class="text-[10px] font-black text-slate-500 uppercase mb-1 tracking-widest">Exp. Total</p>
+                            <p class="text-[10px] font-black text-slate-500 uppercase mb-1">Exp. Total</p>
                             <p class="text-4xl font-[900] italic text-emerald-500 tracking-tighter">${m.expTotal}</p>
-                            <div class="inline-block px-2 py-0.5 rounded mt-2 bg-emerald-500/10">
-                                <p class="text-[8px] font-black ${m.expTotal > 2.5 ? 'text-emerald-500' : 'text-amber-500'} uppercase">Total ${m.expTotal > 2.5 ? 'Over' : 'Under'} 2.5</p>
-                            </div>
+                            <p class="text-[8px] font-black uppercase mt-1 text-slate-500">Goal Threshold</p>
                         </div>
                         <div>
-                            <p class="text-[10px] font-black text-slate-500 uppercase mb-1 tracking-widest">AI Handicap</p>
+                            <p class="text-[10px] font-black text-slate-500 uppercase mb-1">AI Handicap</p>
                             <p class="text-3xl font-[900] italic text-white tracking-tighter">${m.handicap > 0 ? '-' : '+'}${Math.abs(m.handicap)}</p>
                         </div>
                     </div>
@@ -235,7 +234,7 @@
             for (const item of RAW_DATA) {
                 if(!map.has(item.code)){ map.set(item.code, true); unique.push({code: item.code, name: item.league}); }
             }
-            select.innerHTML = '<option value="all">All Competitions</option>' + unique.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
+            select.innerHTML = '<option value="all">All Leagues</option>' + unique.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
         }
     </script>
 </body>
