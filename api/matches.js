@@ -3,28 +3,24 @@ export default async function handler(req, res) {
   const headers = { 'X-Auth-Token': API_KEY };
 
   try {
+    // Получаем матчи на неделю (с запасом)
     const matchesRes = await fetch('https://api.football-data.org/v4/matches', { headers });
     const matchesData = await matchesRes.json();
-    const leagueCodes = [...new Set(matchesData.matches.map(m => m.competition.code))];
     
+    const leagueCodes = ['PL', 'PD', 'BL1', 'SA', 'FL1', 'PPL', 'DED', 'ELC', 'BSA', 'CL', 'EC', 'WC'];
     const standingsMap = {};
 
-    for (const code of leagueCodes.slice(0, 6)) { // Ограничение для скорости
+    for (const code of leagueCodes) {
       const sRes = await fetch(`https://api.football-data.org/v4/competitions/${code}/standings`, { headers });
       const sData = await sRes.json();
-      
-      if (sData.standings) {
-        // Ищем в 'TOTAL', 'HOME' или 'AWAY' — где-нибудь форма точно должна быть
-        const mainTable = sData.standings.find(s => s.type === 'TOTAL') || sData.standings[0];
-        
-        mainTable.table.forEach(row => {
+      if (sData.standings && sData.standings[0]) {
+        sData.standings[0].table.forEach(row => {
           standingsMap[row.team.id] = {
             points: row.points,
             playedGames: row.playedGames,
             goalsFor: row.goalsFor,
             goalsAgainst: row.goalsAgainst,
-            // Пробуем взять форму, если её нет — ставим пустую строку
-            form: row.form || "" 
+            country: sData.area.name
           };
         });
       }
