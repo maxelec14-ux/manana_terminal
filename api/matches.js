@@ -5,8 +5,8 @@ export default async function handler(req, res) {
   try {
     const matchesRes = await fetch('https://api.football-data.org/v4/matches', { headers });
     const matchesData = await matchesRes.json();
-
     const leagueCodes = [...new Set(matchesData.matches.map(m => m.competition.code))];
+    
     const standingsMap = {};
 
     for (const code of leagueCodes.slice(0, 8)) {
@@ -14,16 +14,16 @@ export default async function handler(req, res) {
       const sData = await sRes.json();
       
       if (sData.standings && sData.standings[0]) {
-        // Обогащаем таблицу: если API не дал form, мы попробуем составить её позже или оставим как есть
-        standingsMap[code] = sData.standings[0].table.map(team => ({
-          id: team.team.id,
-          name: team.team.shortName,
-          points: team.points,
-          playedGames: team.playedGames,
-          goalsFor: team.goalsFor,
-          goalsAgainst: team.goalsAgainst,
-          form: team.form || "" // Берем то, что есть
-        }));
+        // Сохраняем данные, используя ID команды как ключ для мгновенного поиска
+        sData.standings[0].table.forEach(row => {
+          standingsMap[row.team.id] = {
+            points: row.points,
+            playedGames: row.playedGames,
+            goalsFor: row.goalsFor,
+            goalsAgainst: row.goalsAgainst,
+            form: row.form || ""
+          };
+        });
       }
     }
 
