@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MananaAI | Light Analytics Pro</title>
+    <title>MananaAI | Tactical Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
         body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #1E293B; margin: 0; }
-        
         .match-card { background: white; border: 1px solid #E2E8F0; border-radius: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: 0.3s; }
         
-        /* Цветовая палитра пользователя */
         .c-red { color: #EF4444; } .bg-red { background: #EF4444; }
         .c-yellow { color: #D97706; } .bg-yellow { background: #D97706; }
         .c-blue { color: #2563EB; } .bg-blue { background: #2563EB; }
@@ -20,12 +18,11 @@
         .btn-toggle { background: #FFFFFF; color: #64748B; padding: 10px 18px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid #E2E8F0; transition: 0.2s; white-space: nowrap; }
         .btn-toggle.active { background: #2563EB; color: white; border-color: #2563EB; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
 
-        input { background: white; border: 1px solid #E2E8F0; color: #1E293B; border-radius: 16px; padding: 16px; outline: none; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        input:focus { border-color: #2563EB; }
+        .btn-sort { background: #F1F5F9; color: #475569; padding: 8px 14px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; transition: 0.2s; border: 1px solid transparent; }
+        .btn-sort.active { background: #1E293B; color: white; }
 
+        input { background: white; border: 1px solid #E2E8F0; color: #1E293B; border-radius: 16px; padding: 16px; outline: none; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .btn-main { background: #059669; color: white; transition: 0.3s; font-weight: 800; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.2); }
-        .btn-main:hover { background: #047857; transform: translateY(-1px); }
-        
         .stat-value { font-size: 1.5rem; font-weight: 900; line-height: 1; }
     </style>
 </head>
@@ -35,7 +32,7 @@
         <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
             <div>
                 <h1 class="text-4xl font-[900] italic tracking-tighter text-blue-600 uppercase">MANANA<span class="text-slate-800">AI</span></h1>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Professional Tactical Suite</p>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Advanced Sort & Analytics Suite</p>
             </div>
             <button onclick="updateData()" id="update-btn" class="btn-main px-12 py-4 rounded-2xl text-xs uppercase tracking-widest">
                 Update Live Feed ⚡
@@ -43,28 +40,38 @@
         </header>
 
         <div class="space-y-6 mb-12">
-            <input type="text" id="f-search" placeholder="Quick Search: Team or League..." oninput="applyFilters()">
+            <input type="text" id="f-search" placeholder="Поиск по команде или лиге..." oninput="applyFilters()">
             
             <div class="flex flex-col gap-4">
                 <div id="league-btns" class="flex flex-wrap gap-2">
-                    <button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 All Leagues</button>
+                    <button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 Все лиги</button>
                 </div>
                 <div id="day-btns" class="flex flex-wrap gap-2">
-                    <button class="btn-toggle active" onclick="filterDay('all', this)">🗓 Full Week</button>
-                    <button class="btn-toggle" onclick="filterDay('Monday', this)">Mon</button>
-                    <button class="btn-toggle" onclick="filterDay('Tuesday', this)">Tue</button>
-                    <button class="btn-toggle" onclick="filterDay('Wednesday', this)">Wed</button>
-                    <button class="btn-toggle" onclick="filterDay('Thursday', this)">Thu</button>
-                    <button class="btn-toggle" onclick="filterDay('Friday', this)">Fri</button>
-                    <button class="btn-toggle" onclick="filterDay('Saturday', this)">Sat</button>
-                    <button class="btn-toggle" onclick="filterDay('Sunday', this)">Sun</button>
+                    <button class="btn-toggle active" onclick="filterDay('all', this)">🗓 Вся неделя</button>
+                    <button class="btn-toggle" onclick="filterDay('Monday', this)">Пн</button>
+                    <button class="btn-toggle" onclick="filterDay('Tuesday', this)">Вт</button>
+                    <button class="btn-toggle" onclick="filterDay('Wednesday', this)">Ср</button>
+                    <button class="btn-toggle" onclick="filterDay('Thursday', this)">Чт</button>
+                    <button class="btn-toggle" onclick="filterDay('Friday', this)">Пт</button>
+                    <button class="btn-toggle" onclick="filterDay('Saturday', this)">Сб</button>
+                    <button class="btn-toggle" onclick="filterDay('Sunday', this)">Вс</button>
+                </div>
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 border-t border-slate-200">
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <span class="text-[10px] font-black text-slate-400 uppercase mr-2">Сортировка:</span>
+                        <button class="btn-sort active" id="sort-default" onclick="setSort('default', this)">По времени</button>
+                        <button class="btn-sort" onclick="setSort('total', this)">🔥 Тотал (Max)</button>
+                        <button class="btn-sort" onclick="setSort('btts', this)">⚽ BTTS %</button>
+                        <button class="btn-sort" onclick="setSort('ppm', this)">⚖️ Разница PPM</button>
+                    </div>
+                    <div id="status-bar" class="text-[10px] font-bold text-blue-600 uppercase italic">Готов к загрузке</div>
                 </div>
             </div>
         </div>
 
         <div id="feed" class="space-y-8">
             <div class="text-center py-20 border-2 border-dashed border-slate-200 rounded-[40px] text-slate-400 font-bold uppercase text-xs tracking-widest">
-                System Ready. Press Update to Fetch Matches.
+                Нажмите "Update" для старта анализа.
             </div>
         </div>
     </div>
@@ -73,35 +80,27 @@
         let RAW_DATA = [];
         let currentLeague = 'all';
         let currentDay = 'all';
+        let currentSort = 'default';
 
         const flags = { 'England': '🇬🇧', 'Spain': '🇪🇸', 'Germany': '🇩🇪', 'Italy': '🇮🇹', 'France': '🇫🇷', 'Netherlands': '🇳🇱', 'Portugal': '🇵🇹', 'Brazil': '🇧🇷', 'Europe': '🇪🇺' };
 
         const getStyle = (type, val) => {
             val = parseFloat(val);
             if (type === 'ppm') {
-                if (val <= 1.0) return 'red';
-                if (val <= 1.5) return 'yellow';
-                if (val <= 2.0) return 'blue';
-                return 'green';
+                if (val <= 1.0) return 'red'; if (val <= 1.5) return 'yellow'; if (val <= 2.0) return 'blue'; return 'green';
             }
             if (type === 'scored') {
-                if (val <= 0.6) return 'red';
-                if (val <= 1.3) return 'yellow';
-                if (val <= 2.0) return 'blue';
-                return 'green';
+                if (val <= 0.6) return 'red'; if (val <= 1.3) return 'yellow'; if (val <= 2.0) return 'blue'; return 'green';
             }
             if (type === 'conceded') {
-                if (val <= 0.6) return 'green';
-                if (val <= 1.3) return 'blue';
-                if (val <= 2.0) return 'yellow';
-                return 'red';
+                if (val <= 0.6) return 'green'; if (val <= 1.3) return 'blue'; if (val <= 2.0) return 'yellow'; return 'red';
             }
         };
 
         async function updateData() {
             const btn = document.getElementById('update-btn');
             btn.disabled = true;
-            document.getElementById('feed').innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs tracking-widest">Satellite Syncing...</div>';
+            document.getElementById('feed').innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs tracking-widest">Анализ спутниковых данных...</div>';
 
             try {
                 const res = await fetch('/api/matches');
@@ -120,26 +119,22 @@
                     const aC = (aT.goalsAgainst / aT.playedGames).toFixed(2);
 
                     const dateObj = new Date(m.utcDate);
-                    const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-
-                    // Расчет ожидаемых голов (ExpG)
                     const expH = (parseFloat(hS) + parseFloat(aC)) / 2;
                     const expA = (parseFloat(aS) + parseFloat(hC)) / 2;
                     
-                    // Исправленный расчет BTTS (Обе забьют)
-                    // P = 1 - e^(-λ), где λ - это ожидаемое количество голов
-                    const probH_ScoreAtLeastOne = (1 - Math.exp(-expH));
-                    const probA_ScoreAtLeastOne = (1 - Math.exp(-expA));
-                    const bttsFinal = (probH_ScoreAtLeastOne * probA_ScoreAtLeastOne * 100).toFixed(0);
+                    const bttsFinal = ( (1 - Math.exp(-expH)) * (1 - Math.exp(-expA)) * 100 ).toFixed(0);
 
                     return {
                         id: m.id, league: m.competition.name, code: m.competition.code, country: hT.country,
-                        day: dayName, date: dateObj.toLocaleDateString(), time: dateObj.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                        day: dateObj.toLocaleDateString('en-US', { weekday: 'long' }),
+                        utc: m.utcDate,
+                        time: dateObj.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
                         home: m.homeTeam.shortName, away: m.awayTeam.shortName,
                         hPPM, aPPM, hS, hC, aS, aC,
                         score: `${Math.round(expH)}:${Math.round(expA)}`,
-                        total: (expH + expA).toFixed(2),
-                        btts: Math.min(bttsFinal, 98), 
+                        total: parseFloat((expH + expA).toFixed(2)),
+                        btts: parseInt(Math.min(bttsFinal, 98)), 
+                        ppmDiff: Math.abs(parseFloat(hPPM) - parseFloat(aPPM)).toFixed(2),
                         handicap: (hPPM - aPPM).toFixed(2)
                     };
                 }).filter(i => i !== null);
@@ -154,7 +149,7 @@
         function renderLeagues() {
             const container = document.getElementById('league-btns');
             const unique = [...new Set(RAW_DATA.map(m => JSON.stringify({code: m.code, name: m.league, country: m.country})))].map(s => JSON.parse(s));
-            container.innerHTML = `<button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 All Leagues</button>` + 
+            container.innerHTML = `<button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 Все лиги</button>` + 
                 unique.map(l => `<button class="btn-toggle" onclick="filterLeague('${l.code}', this)">${flags[l.country] || '⚽'} ${l.name}</button>`).join('');
         }
 
@@ -172,77 +167,63 @@
             applyFilters();
         }
 
+        function setSort(type, btn) {
+            currentSort = type;
+            document.querySelectorAll('.btn-sort').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilters();
+        }
+
         function applyFilters() {
             const search = document.getElementById('f-search').value.toLowerCase();
-            const filtered = RAW_DATA.filter(m => {
+            let filtered = RAW_DATA.filter(m => {
                 const sMatch = m.home.toLowerCase().includes(search) || m.away.toLowerCase().includes(search) || m.league.toLowerCase().includes(search);
                 const lMatch = currentLeague === 'all' || m.code === currentLeague;
                 const dMatch = currentDay === 'all' || m.day === currentDay;
                 return sMatch && lMatch && dMatch;
             });
+
+            // Логика сортировки
+            if (currentSort === 'total') filtered.sort((a, b) => b.total - a.total);
+            else if (currentSort === 'btts') filtered.sort((a, b) => b.btts - a.btts);
+            else if (currentSort === 'ppm') filtered.sort((a, b) => b.ppmDiff - a.ppmDiff);
+            else filtered.sort((a, b) => new Date(a.utc) - new Date(b.utc));
+
+            document.getElementById('status-bar').innerText = `Найдено: ${filtered.length} | Сортировка: ${currentSort}`;
             render(filtered);
         }
 
         const createStat = (label, val, type) => {
             const color = getStyle(type, val);
             const width = Math.min((val / 3) * 100, 100);
-            return `
-                <div class="flex-1">
-                    <div class="flex justify-between items-end mb-2">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">${label}</span>
-                        <span class="stat-value c-${color}">${val}</span>
-                    </div>
-                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                        <div class="bg-${color} h-full transition-all duration-700" style="width: ${width}%"></div>
-                    </div>
-                </div>`;
+            return `<div class="flex-1"><div class="flex justify-between items-end mb-2"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">${label}</span><span class="stat-value c-${color}">${val}</span></div><div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden"><div class="bg-${color} h-full transition-all duration-700" style="width: ${width}%"></div></div></div>`;
         };
 
         function render(matches) {
             const feed = document.getElementById('feed');
-            if(!matches.length) { feed.innerHTML = '<div class="text-center py-20 text-slate-400 font-bold uppercase text-xs">No Matches Matching Filters</div>'; return; }
+            if(!matches.length) { feed.innerHTML = '<div class="text-center py-20 text-slate-400 font-bold uppercase text-xs">Матчи не найдены</div>'; return; }
             
             feed.innerHTML = matches.map(m => `
                 <div class="match-card p-6 md:p-10">
                     <div class="flex flex-wrap justify-between items-start gap-4 mb-10">
-                        <div>
-                            <span class="bg-blue-50 text-blue-600 text-[11px] font-extrabold px-3 py-1.5 rounded-lg border border-blue-100 uppercase tracking-wider">${m.league}</span>
-                            <p class="text-[11px] font-semibold text-slate-400 mt-3 uppercase tracking-widest">${m.day}, ${m.time}</p>
-                        </div>
+                        <div><span class="bg-blue-50 text-blue-600 text-[11px] font-extrabold px-3 py-1.5 rounded-lg border border-blue-100 uppercase tracking-wider">${m.league}</span><p class="text-[11px] font-semibold text-slate-400 mt-3 uppercase tracking-widest">${m.day}, ${m.time}</p></div>
                         <div class="flex gap-8">
-                            <div class="text-right">
-                                <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Exp. Total</p>
-                                <p class="text-2xl font-black text-slate-800">${m.total}</p>
-                            </div>
-                            <div class="text-right border-l pl-8 border-slate-100">
-                                <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">BTTS Prob %</p>
-                                <p class="text-2xl font-black text-blue-600">${m.btts}%</p>
-                            </div>
+                            <div class="text-right"><p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Exp. Total</p><p class="text-2xl font-black text-slate-800">${m.total}</p></div>
+                            <div class="text-right border-l pl-8 border-slate-100"><p class="text-[10px] text-slate-400 uppercase font-bold mb-1">BTTS %</p><p class="text-2xl font-black text-blue-600">${m.btts}%</p></div>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-16">
-                        <div class="space-y-8">
-                            <h3 class="text-3xl font-[900] uppercase tracking-tighter text-slate-800">${m.home}</h3>
-                            <div class="flex gap-6">${createStat('PPM', m.hPPM, 'ppm')}${createStat('G-Scored', m.hS, 'scored')}${createStat('G-Conceded', m.hC, 'conceded')}</div>
-                        </div>
-                        <div class="space-y-8">
-                            <h3 class="text-3xl font-[900] uppercase tracking-tighter text-slate-800">${m.away}</h3>
-                            <div class="flex gap-6">${createStat('PPM', m.aPPM, 'ppm')}${createStat('G-Scored', m.aS, 'scored')}${createStat('G-Conceded', m.aC, 'conceded')}</div>
-                        </div>
+                        <div class="space-y-8"><h3 class="text-3xl font-[900] uppercase tracking-tighter text-slate-800">${m.home}</h3><div class="flex gap-6">${createStat('PPM', m.hPPM, 'ppm')}${createStat('G-Scored', m.hS, 'scored')}${createStat('G-Conceded', m.hC, 'conceded')}</div></div>
+                        <div class="space-y-8"><h3 class="text-3xl font-[900] uppercase tracking-tighter text-slate-800">${m.away}</h3><div class="flex gap-6">${createStat('PPM', m.aPPM, 'ppm')}${createStat('G-Scored', m.aS, 'scored')}${createStat('G-Conceded', m.aC, 'conceded')}</div></div>
                     </div>
-                    
                     <div class="mt-12 pt-6 border-t border-slate-50 flex flex-wrap justify-between items-center gap-4">
                         <div class="flex gap-8">
-                            <span class="text-[11px] font-bold text-slate-400 uppercase">Handicap: <span class="text-slate-800 font-black">${m.handicap > 0 ? '-' : '+'}${Math.abs(m.handicap)}</span></span>
-                            <span class="text-[11px] font-bold text-slate-400 uppercase">Exact Score: <span class="text-blue-600 font-black italic text-sm">${m.score}</span></span>
+                            <span class="text-[11px] font-bold text-slate-400 uppercase">Гандикап: <span class="text-slate-800 font-black">${m.handicap > 0 ? '-' : '+'}${Math.abs(m.handicap)}</span></span>
+                            <span class="text-[11px] font-bold text-slate-400 uppercase">Разница PPM: <span class="text-blue-600 font-black">${m.ppmDiff}</span></span>
+                            <span class="text-[11px] font-bold text-slate-400 uppercase italic">Счет: <span class="text-slate-800 font-black">${m.score}</span></span>
                         </div>
-                        <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest flex items-center gap-2">
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Manana AI Sync Active
-                        </span>
                     </div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
     </script>
 </body>
