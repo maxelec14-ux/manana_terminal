@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -40,38 +40,38 @@
         </header>
 
         <div class="space-y-6 mb-12">
-            <input type="text" id="f-search" placeholder="Поиск по команде или лиге..." oninput="applyFilters()">
+            <input type="text" id="f-search" placeholder="Quick search: Team or League..." oninput="applyFilters()">
             
             <div class="flex flex-col gap-4">
                 <div id="league-btns" class="flex flex-wrap gap-2">
-                    <button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 Все лиги</button>
+                    <button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 All Leagues</button>
                 </div>
                 <div id="day-btns" class="flex flex-wrap gap-2">
-                    <button class="btn-toggle active" onclick="filterDay('all', this)">🗓 Вся неделя</button>
-                    <button class="btn-toggle" onclick="filterDay('Monday', this)">Пн</button>
-                    <button class="btn-toggle" onclick="filterDay('Tuesday', this)">Вт</button>
-                    <button class="btn-toggle" onclick="filterDay('Wednesday', this)">Ср</button>
-                    <button class="btn-toggle" onclick="filterDay('Thursday', this)">Чт</button>
-                    <button class="btn-toggle" onclick="filterDay('Friday', this)">Пт</button>
-                    <button class="btn-toggle" onclick="filterDay('Saturday', this)">Сб</button>
-                    <button class="btn-toggle" onclick="filterDay('Sunday', this)">Вс</button>
+                    <button class="btn-toggle active" onclick="filterDay('all', this)">🗓 Full Week</button>
+                    <button class="btn-toggle" onclick="filterDay('Monday', this)">Mon</button>
+                    <button class="btn-toggle" onclick="filterDay('Tuesday', this)">Tue</button>
+                    <button class="btn-toggle" onclick="filterDay('Wednesday', this)">Wed</button>
+                    <button class="btn-toggle" onclick="filterDay('Thursday', this)">Thu</button>
+                    <button class="btn-toggle" onclick="filterDay('Friday', this)">Fri</button>
+                    <button class="btn-toggle" onclick="filterDay('Saturday', this)">Sat</button>
+                    <button class="btn-toggle" onclick="filterDay('Sunday', this)">Sun</button>
                 </div>
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 border-t border-slate-200">
                     <div class="flex flex-wrap gap-2 items-center">
-                        <span class="text-[10px] font-black text-slate-400 uppercase mr-2">Сортировка:</span>
-                        <button class="btn-sort active" id="sort-default" onclick="setSort('default', this)">По времени</button>
-                        <button class="btn-sort" onclick="setSort('total', this)">🔥 Тотал (Max)</button>
-                        <button class="btn-sort" onclick="setSort('btts', this)">⚽ BTTS %</button>
-                        <button class="btn-sort" onclick="setSort('ppm', this)">⚖️ Разница PPM</button>
+                        <span class="text-[10px] font-black text-slate-400 uppercase mr-2">Sort By:</span>
+                        <button class="btn-sort active" id="sort-default" onclick="setSort('default', this)">Time</button>
+                        <button class="btn-sort" id="sort-total" onclick="setSort('total', this)">🔥 Exp. Total</button>
+                        <button class="btn-sort" id="sort-btts" onclick="setSort('btts', this)">⚽ BTTS %</button>
+                        <button class="btn-sort" id="sort-ppm" onclick="setSort('ppm', this)">⚖️ PPM Diff</button>
                     </div>
-                    <div id="status-bar" class="text-[10px] font-bold text-blue-600 uppercase italic">Готов к загрузке</div>
+                    <div id="status-bar" class="text-[10px] font-bold text-blue-600 uppercase italic">Ready to Sync</div>
                 </div>
             </div>
         </div>
 
         <div id="feed" class="space-y-8">
             <div class="text-center py-20 border-2 border-dashed border-slate-200 rounded-[40px] text-slate-400 font-bold uppercase text-xs tracking-widest">
-                Нажмите "Update" для старта анализа.
+                Press "Update" to start analysis.
             </div>
         </div>
     </div>
@@ -81,6 +81,7 @@
         let currentLeague = 'all';
         let currentDay = 'all';
         let currentSort = 'default';
+        let sortDirection = 'desc'; // 'desc' or 'asc'
 
         const flags = { 'England': '🇬🇧', 'Spain': '🇪🇸', 'Germany': '🇩🇪', 'Italy': '🇮🇹', 'France': '🇫🇷', 'Netherlands': '🇳🇱', 'Portugal': '🇵🇹', 'Brazil': '🇧🇷', 'Europe': '🇪🇺' };
 
@@ -100,7 +101,7 @@
         async function updateData() {
             const btn = document.getElementById('update-btn');
             btn.disabled = true;
-            document.getElementById('feed').innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs tracking-widest">Анализ спутниковых данных...</div>';
+            document.getElementById('feed').innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs tracking-widest">Analyzing Satellite Feeds...</div>';
 
             try {
                 const res = await fetch('/api/matches');
@@ -134,8 +135,7 @@
                         score: `${Math.round(expH)}:${Math.round(expA)}`,
                         total: parseFloat((expH + expA).toFixed(2)),
                         btts: parseInt(Math.min(bttsFinal, 98)), 
-                        ppmDiff: Math.abs(parseFloat(hPPM) - parseFloat(aPPM)).toFixed(2),
-                        handicap: (hPPM - aPPM).toFixed(2)
+                        ppmDiff: Math.abs(parseFloat(hPPM) - parseFloat(aPPM)).toFixed(2)
                     };
                 }).filter(i => i !== null);
 
@@ -149,7 +149,7 @@
         function renderLeagues() {
             const container = document.getElementById('league-btns');
             const unique = [...new Set(RAW_DATA.map(m => JSON.stringify({code: m.code, name: m.league, country: m.country})))].map(s => JSON.parse(s));
-            container.innerHTML = `<button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 Все лиги</button>` + 
+            container.innerHTML = `<button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 All Leagues</button>` + 
                 unique.map(l => `<button class="btn-toggle" onclick="filterLeague('${l.code}', this)">${flags[l.country] || '⚽'} ${l.name}</button>`).join('');
         }
 
@@ -168,9 +168,18 @@
         }
 
         function setSort(type, btn) {
-            currentSort = type;
-            document.querySelectorAll('.btn-sort').forEach(b => b.classList.remove('active'));
+            if (currentSort === type) {
+                sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+            } else {
+                currentSort = type;
+                sortDirection = 'desc';
+            }
+            document.querySelectorAll('.btn-sort').forEach(b => {
+                b.classList.remove('active');
+                b.innerText = b.innerText.replace(' ↑', '').replace(' ↓', '');
+            });
             btn.classList.add('active');
+            btn.innerText += sortDirection === 'desc' ? ' ↓' : ' ↑';
             applyFilters();
         }
 
@@ -183,13 +192,14 @@
                 return sMatch && lMatch && dMatch;
             });
 
-            // Логика сортировки
-            if (currentSort === 'total') filtered.sort((a, b) => b.total - a.total);
-            else if (currentSort === 'btts') filtered.sort((a, b) => b.btts - a.btts);
-            else if (currentSort === 'ppm') filtered.sort((a, b) => b.ppmDiff - a.ppmDiff);
-            else filtered.sort((a, b) => new Date(a.utc) - new Date(b.utc));
+            const dir = sortDirection === 'desc' ? 1 : -1;
 
-            document.getElementById('status-bar').innerText = `Найдено: ${filtered.length} | Сортировка: ${currentSort}`;
+            if (currentSort === 'total') filtered.sort((a, b) => (b.total - a.total) * dir);
+            else if (currentSort === 'btts') filtered.sort((a, b) => (b.btts - a.btts) * dir);
+            else if (currentSort === 'ppm') filtered.sort((a, b) => (b.ppmDiff - a.ppmDiff) * dir);
+            else filtered.sort((a, b) => (new Date(a.utc) - new Date(b.utc)) * (dir * -1));
+
+            document.getElementById('status-bar').innerText = `Matches: ${filtered.length} | Sorting: ${currentSort} (${sortDirection})`;
             render(filtered);
         }
 
@@ -201,7 +211,7 @@
 
         function render(matches) {
             const feed = document.getElementById('feed');
-            if(!matches.length) { feed.innerHTML = '<div class="text-center py-20 text-slate-400 font-bold uppercase text-xs">Матчи не найдены</div>'; return; }
+            if(!matches.length) { feed.innerHTML = '<div class="text-center py-20 text-slate-400 font-bold uppercase text-xs">No Matches Found</div>'; return; }
             
             feed.innerHTML = matches.map(m => `
                 <div class="match-card p-6 md:p-10">
@@ -218,10 +228,12 @@
                     </div>
                     <div class="mt-12 pt-6 border-t border-slate-50 flex flex-wrap justify-between items-center gap-4">
                         <div class="flex gap-8">
-                            <span class="text-[11px] font-bold text-slate-400 uppercase">Гандикап: <span class="text-slate-800 font-black">${m.handicap > 0 ? '-' : '+'}${Math.abs(m.handicap)}</span></span>
-                            <span class="text-[11px] font-bold text-slate-400 uppercase">Разница PPM: <span class="text-blue-600 font-black">${m.ppmDiff}</span></span>
-                            <span class="text-[11px] font-bold text-slate-400 uppercase italic">Счет: <span class="text-slate-800 font-black">${m.score}</span></span>
+                            <span class="text-[11px] font-bold text-slate-400 uppercase">PPM Diff: <span class="text-blue-600 font-black">${m.ppmDiff}</span></span>
+                            <span class="text-[11px] font-bold text-slate-400 uppercase italic">Exp. Score: <span class="text-slate-800 font-black">${m.score}</span></span>
                         </div>
+                        <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Manana AI Sync Active
+                        </span>
                     </div>
                 </div>`).join('');
         }
