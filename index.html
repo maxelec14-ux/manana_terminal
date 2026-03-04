@@ -8,48 +8,71 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { background: #0B0F1A; font-family: 'Inter', sans-serif; color: #E2E8F0; }
-        .glass-card { background: rgba(17, 24, 39, 0.8); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 20px; }
+        .glass-card { background: rgba(17, 24, 39, 0.8); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; transition: 0.3s; }
         
-        /* Цвета */
+        /* Цветовая палитра пользователя */
         .c-red { color: #EF4444; } .bg-red { background: #EF4444; }
         .c-yellow { color: #F59E0B; } .bg-yellow { background: #F59E0B; }
         .c-blue { color: #3B82F6; } .bg-blue { background: #3B82F6; }
         .c-green { color: #10B981; } .bg-green { background: #10B981; }
 
-        .stat-bar { height: 4px; border-radius: 2px; margin-top: 4px; transition: 0.3s; opacity: 0.6; }
-        
-        .league-btn { background: #1E293B; padding: 8px 16px; border-radius: 12px; font-size: 11px; font-weight: 700; transition: 0.2s; border: 1px solid transparent; }
-        .league-btn.active { background: #3B82F6; border-color: #60A5FA; }
+        .btn-toggle { background: #1E293B; padding: 8px 14px; border-radius: 10px; font-size: 11px; font-weight: 700; border: 1px solid transparent; transition: 0.2s; white-space: nowrap; }
+        .btn-toggle.active { background: #3B82F6; color: white; border-color: #60A5FA; }
 
-        input { background: #1E293B; border: 1px solid #334155; color: white; border-radius: 12px; padding: 12px; outline: none; width: 100%; }
+        input { background: #1E293B; border: 1px solid #334155; color: white; border-radius: 12px; padding: 12px; outline: none; }
+        .btn-main { background: #10B981; transition: 0.3s; font-weight: 900; }
+        .btn-main:hover { background: #059669; transform: translateY(-1px); }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-10">
 
     <div class="max-w-6xl mx-auto">
-        <header class="mb-8">
-            <h1 class="text-3xl font-black italic tracking-tighter text-blue-500">MANANA<span class="text-white">AI</span></h1>
-            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">No-Form Intelligence Engine</p>
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+            <div>
+                <h1 class="text-4xl font-[900] italic tracking-tighter text-blue-500 uppercase">MANANA<span class="text-white">AI</span></h1>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Satellite Intelligence Engine</p>
+            </div>
+            <button onclick="updateData()" id="update-btn" class="btn-main text-white px-10 py-4 rounded-2xl text-xs uppercase tracking-widest">
+                Update Data ⚡
+            </button>
         </header>
 
-        <div class="mb-6"><input type="text" id="f-search" placeholder="Search by team or league..." oninput="applyFilters()"></div>
-        
-        <div id="league-container" class="flex flex-wrap gap-2 mb-8">
-            <button class="league-btn active" onclick="filterLeague('all', this)">🌍 All</button>
+        <div class="space-y-6 mb-10">
+            <input type="text" id="f-search" placeholder="Quick search: team or league..." oninput="applyFilters()">
+            
+            <div class="flex flex-col gap-4">
+                <div id="league-btns" class="flex flex-wrap gap-2">
+                    <button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 All Leagues</button>
+                </div>
+                <div id="day-btns" class="flex flex-wrap gap-2">
+                    <button class="btn-toggle active" onclick="filterDay('all', this)">🗓 All Week</button>
+                    <button class="btn-toggle" onclick="filterDay('Monday', this)">Mon</button>
+                    <button class="btn-toggle" onclick="filterDay('Tuesday', this)">Tue</button>
+                    <button class="btn-toggle" onclick="filterDay('Wednesday', this)">Wed</button>
+                    <button class="btn-toggle" onclick="filterDay('Thursday', this)">Thu</button>
+                    <button class="btn-toggle" onclick="filterDay('Friday', this)">Fri</button>
+                    <button class="btn-toggle" onclick="filterDay('Saturday', this)">Sat</button>
+                    <button class="btn-toggle" onclick="filterDay('Sunday', this)">Sun</button>
+                </div>
+            </div>
         </div>
 
-        <div id="feed" class="space-y-4">
-            <div class="text-center py-20 animate-pulse text-slate-600 uppercase text-xs font-bold">Waiting for Sync...</div>
+        <div id="feed" class="space-y-6">
+            <div class="text-center py-20 border-2 border-dashed border-slate-800 rounded-[40px] text-slate-600 font-bold uppercase text-xs tracking-widest">
+                System Idle. Press Update to Fetch Matches.
+            </div>
         </div>
     </div>
 
     <script>
         let RAW_DATA = [];
         let currentLeague = 'all';
+        let currentDay = 'all';
 
         const flags = { 'England': '🇬🇧', 'Spain': '🇪🇸', 'Germany': '🇩🇪', 'Italy': '🇮🇹', 'France': '🇫🇷', 'Netherlands': '🇳🇱', 'Portugal': '🇵🇹', 'Brazil': '🇧🇷', 'Europe': '🇪🇺' };
 
-        const getParamStyle = (type, val) => {
+        // Логика подсветки по ТЗ
+        const getStyle = (type, val) => {
             val = parseFloat(val);
             if (type === 'ppm') {
                 if (val <= 1.0) return 'red';
@@ -72,6 +95,10 @@
         };
 
         async function updateData() {
+            const btn = document.getElementById('update-btn');
+            btn.disabled = true;
+            document.getElementById('feed').innerHTML = '<div class="text-center py-20 animate-pulse text-blue-500 font-black uppercase text-xs">Syncing with Football-Data API...</div>';
+
             try {
                 const res = await fetch('/api/matches');
                 const data = await res.json();
@@ -88,36 +115,49 @@
                     const aS = (aT.goalsFor / aT.playedGames).toFixed(2);
                     const aC = (aT.goalsAgainst / aT.playedGames).toFixed(2);
 
-                    // Прогноз счета (очень упрощенно: Scored + Conceded Opponent / 2)
-                    const expH = ((parseFloat(hS) + parseFloat(aC)) / 2).toFixed(0);
-                    const expA = ((parseFloat(aS) + parseFloat(hC)) / 2).toFixed(0);
+                    const dateObj = new Date(m.utcDate);
+                    const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+
+                    // Математические расчеты
+                    const expH = Math.round((parseFloat(hS) + parseFloat(aC)) / 2);
+                    const expA = Math.round((parseFloat(aS) + parseFloat(hC)) / 2);
 
                     return {
                         id: m.id, league: m.competition.name, code: m.competition.code, country: hT.country,
+                        day: dayName, date: dateObj.toLocaleDateString(), time: dateObj.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
                         home: m.homeTeam.shortName, away: m.awayTeam.shortName,
                         hPPM, aPPM, hS, hC, aS, aC,
                         score: `${expH}:${expA}`,
                         handicap: (hPPM - aPPM).toFixed(2),
-                        oddsH: (1.1 + (2 / hPPM)).toFixed(2),
-                        oddsA: (1.1 + (2 / aPPM)).toFixed(2)
+                        oddsH: (1 + (2.5 / hPPM)).toFixed(2),
+                        oddsA: (1 + (2.5 / aPPM)).toFixed(2)
                     };
                 }).filter(i => i !== null);
 
                 renderLeagues();
                 applyFilters();
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                document.getElementById('feed').innerHTML = `<div class="text-red-500 text-center py-20 font-bold">${e.message}</div>`;
+            } finally { btn.disabled = false; }
         }
 
         function renderLeagues() {
-            const container = document.getElementById('league-container');
+            const container = document.getElementById('league-btns');
             const unique = [...new Set(RAW_DATA.map(m => JSON.stringify({code: m.code, name: m.league, country: m.country})))].map(s => JSON.parse(s));
-            container.innerHTML = `<button class="league-btn active" onclick="filterLeague('all', this)">🌍 All</button>` + 
-                unique.map(l => `<button class="league-btn" onclick="filterLeague('${l.code}', this)">${flags[l.country] || '⚽'} ${l.name}</button>`).join('');
+            container.innerHTML = `<button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 All Leagues</button>` + 
+                unique.map(l => `<button class="btn-toggle" onclick="filterLeague('${l.code}', this)">${flags[l.country] || '⚽'} ${l.name}</button>`).join('');
         }
 
         function filterLeague(code, btn) {
             currentLeague = code;
-            document.querySelectorAll('.league-btn').forEach(b => b.classList.remove('active'));
+            btn.parentElement.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilters();
+        }
+
+        function filterDay(day, btn) {
+            currentDay = day;
+            btn.parentElement.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             applyFilters();
         }
@@ -125,68 +165,64 @@
         function applyFilters() {
             const search = document.getElementById('f-search').value.toLowerCase();
             const filtered = RAW_DATA.filter(m => {
-                const matchesSearch = m.home.toLowerCase().includes(search) || m.away.toLowerCase().includes(search) || m.league.toLowerCase().includes(search);
-                const matchesLeague = currentLeague === 'all' || m.code === currentLeague;
-                return matchesSearch && matchesLeague;
+                const sMatch = m.home.toLowerCase().includes(search) || m.away.toLowerCase().includes(search) || m.league.toLowerCase().includes(search);
+                const lMatch = currentLeague === 'all' || m.code === currentLeague;
+                const dMatch = currentDay === 'all' || m.day === currentDay;
+                return sMatch && lMatch && dMatch;
             });
             render(filtered);
         }
 
         const createStat = (label, val, type) => {
-            const color = getParamStyle(type, val);
+            const color = getStyle(type, val);
             const width = Math.min((val / 3) * 100, 100);
             return `
                 <div class="flex-1">
-                    <div class="flex justify-between text-[9px] font-bold uppercase mb-1">
+                    <div class="flex justify-between text-[10px] font-black uppercase mb-1.5">
                         <span class="text-slate-500">${label}</span>
                         <span class="c-${color}">${val}</span>
                     </div>
-                    <div class="w-full bg-slate-800 rounded-full h-1">
-                        <div class="bg-${color} h-1 rounded-full" style="width: ${width}%"></div>
+                    <div class="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                        <div class="bg-${color} h-full transition-all duration-500" style="width: ${width}%"></div>
                     </div>
                 </div>`;
         };
 
         function render(matches) {
             const feed = document.getElementById('feed');
+            if(!matches.length) { feed.innerHTML = '<div class="text-center py-20 text-slate-600 font-bold uppercase text-xs">No matches found for these filters</div>'; return; }
+            
             feed.innerHTML = matches.map(m => `
-                <div class="glass-card p-5 md:p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <span class="text-[10px] font-black text-blue-400 uppercase tracking-tighter">${m.league}</span>
-                        <div class="flex gap-4 text-[10px] font-bold">
-                            <span class="text-slate-500">Odds: <span class="text-white">${m.oddsH}</span> / <span class="text-white">${m.oddsA}</span></span>
-                            <span class="text-blue-500">Exp: ${m.score}</span>
+                <div class="glass-card p-6 md:p-8">
+                    <div class="flex flex-wrap justify-between items-center gap-4 mb-8">
+                        <div class="flex items-center gap-3">
+                            <span class="bg-blue-500/10 text-blue-500 text-[10px] font-black px-3 py-1 rounded-md border border-blue-500/20">${m.league}</span>
+                            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">${m.day}, ${m.time}</span>
+                        </div>
+                        <div class="flex gap-6 items-center">
+                            <div class="text-center"><p class="text-[8px] text-slate-500 uppercase font-black">AI Odds</p><p class="text-xs font-bold text-white">${m.oddsH} — ${m.oddsA}</p></div>
+                            <div class="text-center"><p class="text-[8px] text-slate-500 uppercase font-black">Exp. Score</p><p class="text-lg font-black text-blue-500 italic">${m.score}</p></div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                        <div>
-                            <h3 class="text-xl font-black uppercase mb-4 tracking-tighter">${m.home}</h3>
-                            <div class="flex gap-4">
-                                ${createStat('PPM', m.hPPM, 'ppm')}
-                                ${createStat('Scored', m.hS, 'scored')}
-                                ${createStat('Conceded', m.hC, 'conceded')}
-                            </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <div class="space-y-6">
+                            <h3 class="text-2xl font-[900] uppercase tracking-tighter text-white">${m.home}</h3>
+                            <div class="flex gap-4">${createStat('PPM', m.hPPM, 'ppm')}${createStat('Scored', m.hS, 'scored')}${createStat('Conceded', m.hC, 'conceded')}</div>
                         </div>
-                        <div>
-                            <h3 class="text-xl font-black uppercase mb-4 tracking-tighter">${m.away}</h3>
-                            <div class="flex gap-4">
-                                ${createStat('PPM', m.aPPM, 'ppm')}
-                                ${createStat('Scored', m.aS, 'scored')}
-                                ${createStat('Conceded', m.aC, 'conceded')}
-                            </div>
+                        <div class="space-y-6">
+                            <h3 class="text-2xl font-[900] uppercase tracking-tighter text-white">${m.away}</h3>
+                            <div class="flex gap-4">${createStat('PPM', m.aPPM, 'ppm')}${createStat('Scored', m.aS, 'scored')}${createStat('Conceded', m.aC, 'conceded')}</div>
                         </div>
                     </div>
                     
-                    <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
-                        <span class="text-[9px] font-bold text-slate-600 uppercase">AI Handicap: ${m.handicap > 0 ? '-' : '+'}${Math.abs(m.handicap)}</span>
-                        <span class="text-[9px] font-bold text-blue-500/50 uppercase italic">Manana Sat-Sync Active</span>
+                    <div class="mt-8 pt-5 border-t border-white/5 flex justify-between items-center">
+                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Asian Handicap: <span class="text-white">${m.handicap > 0 ? '-' : '+'}${Math.abs(m.handicap)}</span></span>
+                        <div class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
                     </div>
                 </div>
             `).join('');
         }
-
-        updateData();
     </script>
 </body>
 </html>
