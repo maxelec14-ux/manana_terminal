@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-        body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #1E293B; }
+        body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #1E293B; margin: 0; }
         
         .match-card { background: white; border: 1px solid #E2E8F0; border-radius: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: 0.3s; }
         
@@ -21,7 +21,7 @@
         .btn-toggle.active { background: #2563EB; color: white; border-color: #2563EB; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
 
         input { background: white; border: 1px solid #E2E8F0; color: #1E293B; border-radius: 16px; padding: 16px; outline: none; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        input:focus { border-color: #2563EB; ring: 2px ring rgba(37, 99, 235, 0.1); }
+        input:focus { border-color: #2563EB; }
 
         .btn-main { background: #059669; color: white; transition: 0.3s; font-weight: 800; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.2); }
         .btn-main:hover { background: #047857; transform: translateY(-1px); }
@@ -43,28 +43,28 @@
         </header>
 
         <div class="space-y-6 mb-12">
-            <input type="text" id="f-search" placeholder="Поиск команды или лиги..." oninput="applyFilters()">
+            <input type="text" id="f-search" placeholder="Quick Search: Team or League..." oninput="applyFilters()">
             
             <div class="flex flex-col gap-4">
                 <div id="league-btns" class="flex flex-wrap gap-2">
-                    <button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 Все лиги</button>
+                    <button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 All Leagues</button>
                 </div>
                 <div id="day-btns" class="flex flex-wrap gap-2">
-                    <button class="btn-toggle active" onclick="filterDay('all', this)">🗓 Вся неделя</button>
-                    <button class="btn-toggle" onclick="filterDay('Monday', this)">Пн</button>
-                    <button class="btn-toggle" onclick="filterDay('Tuesday', this)">Вт</button>
-                    <button class="btn-toggle" onclick="filterDay('Wednesday', this)">Ср</button>
-                    <button class="btn-toggle" onclick="filterDay('Thursday', this)">Чт</button>
-                    <button class="btn-toggle" onclick="filterDay('Friday', this)">Пт</button>
-                    <button class="btn-toggle" onclick="filterDay('Saturday', this)">Сб</button>
-                    <button class="btn-toggle" onclick="filterDay('Sunday', this)">Вс</button>
+                    <button class="btn-toggle active" onclick="filterDay('all', this)">🗓 Full Week</button>
+                    <button class="btn-toggle" onclick="filterDay('Monday', this)">Mon</button>
+                    <button class="btn-toggle" onclick="filterDay('Tuesday', this)">Tue</button>
+                    <button class="btn-toggle" onclick="filterDay('Wednesday', this)">Wed</button>
+                    <button class="btn-toggle" onclick="filterDay('Thursday', this)">Thu</button>
+                    <button class="btn-toggle" onclick="filterDay('Friday', this)">Fri</button>
+                    <button class="btn-toggle" onclick="filterDay('Saturday', this)">Sat</button>
+                    <button class="btn-toggle" onclick="filterDay('Sunday', this)">Sun</button>
                 </div>
             </div>
         </div>
 
         <div id="feed" class="space-y-8">
             <div class="text-center py-20 border-2 border-dashed border-slate-200 rounded-[40px] text-slate-400 font-bold uppercase text-xs tracking-widest">
-                Система готова. Нажмите "Update" для загрузки матчей.
+                System Ready. Press Update to Fetch Matches.
             </div>
         </div>
     </div>
@@ -101,7 +101,7 @@
         async function updateData() {
             const btn = document.getElementById('update-btn');
             btn.disabled = true;
-            document.getElementById('feed').innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs tracking-widest">Синхронизация данных...</div>';
+            document.getElementById('feed').innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs tracking-widest">Satellite Syncing...</div>';
 
             try {
                 const res = await fetch('/api/matches');
@@ -122,12 +122,15 @@
                     const dateObj = new Date(m.utcDate);
                     const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
 
-                    // Математика прогноза
+                    // Расчет ожидаемых голов (ExpG)
                     const expH = (parseFloat(hS) + parseFloat(aC)) / 2;
                     const expA = (parseFloat(aS) + parseFloat(hC)) / 2;
                     
-                    // BTTS Prob (Обе забьют) - вероятность на основе силы атаки против защиты
-                    const bttsProb = (((expH > 0.8 ? 1 : expH) + (expA > 0.8 ? 1 : expA)) / 2 * 100).toFixed(0);
+                    // Исправленный расчет BTTS (Обе забьют)
+                    // P = 1 - e^(-λ), где λ - это ожидаемое количество голов
+                    const probH_ScoreAtLeastOne = (1 - Math.exp(-expH));
+                    const probA_ScoreAtLeastOne = (1 - Math.exp(-expA));
+                    const bttsFinal = (probH_ScoreAtLeastOne * probA_ScoreAtLeastOne * 100).toFixed(0);
 
                     return {
                         id: m.id, league: m.competition.name, code: m.competition.code, country: hT.country,
@@ -136,7 +139,7 @@
                         hPPM, aPPM, hS, hC, aS, aC,
                         score: `${Math.round(expH)}:${Math.round(expA)}`,
                         total: (expH + expA).toFixed(2),
-                        btts: Math.min(bttsProb, 94), // Ограничиваем разумным пределом
+                        btts: Math.min(bttsFinal, 98), 
                         handicap: (hPPM - aPPM).toFixed(2)
                     };
                 }).filter(i => i !== null);
@@ -151,7 +154,7 @@
         function renderLeagues() {
             const container = document.getElementById('league-btns');
             const unique = [...new Set(RAW_DATA.map(m => JSON.stringify({code: m.code, name: m.league, country: m.country})))].map(s => JSON.parse(s));
-            container.innerHTML = `<button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 Все лиги</button>` + 
+            container.innerHTML = `<button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 All Leagues</button>` + 
                 unique.map(l => `<button class="btn-toggle" onclick="filterLeague('${l.code}', this)">${flags[l.country] || '⚽'} ${l.name}</button>`).join('');
         }
 
@@ -197,7 +200,7 @@
 
         function render(matches) {
             const feed = document.getElementById('feed');
-            if(!matches.length) { feed.innerHTML = '<div class="text-center py-20 text-slate-400 font-bold uppercase text-xs">Матчи не найдены</div>'; return; }
+            if(!matches.length) { feed.innerHTML = '<div class="text-center py-20 text-slate-400 font-bold uppercase text-xs">No Matches Matching Filters</div>'; return; }
             
             feed.innerHTML = matches.map(m => `
                 <div class="match-card p-6 md:p-10">
@@ -208,11 +211,11 @@
                         </div>
                         <div class="flex gap-8">
                             <div class="text-right">
-                                <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Ожидаемый Тотал</p>
+                                <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Exp. Total</p>
                                 <p class="text-2xl font-black text-slate-800">${m.total}</p>
                             </div>
                             <div class="text-right border-l pl-8 border-slate-100">
-                                <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">BTTS (ОЗ) %</p>
+                                <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">BTTS Prob %</p>
                                 <p class="text-2xl font-black text-blue-600">${m.btts}%</p>
                             </div>
                         </div>
@@ -231,11 +234,11 @@
                     
                     <div class="mt-12 pt-6 border-t border-slate-50 flex flex-wrap justify-between items-center gap-4">
                         <div class="flex gap-8">
-                            <span class="text-[11px] font-bold text-slate-400 uppercase">Гандикап: <span class="text-slate-800 font-black">${m.handicap > 0 ? '-' : '+'}${Math.abs(m.handicap)}</span></span>
-                            <span class="text-[11px] font-bold text-slate-400 uppercase">Точный счет: <span class="text-blue-600 font-black italic text-sm">${m.score}</span></span>
+                            <span class="text-[11px] font-bold text-slate-400 uppercase">Handicap: <span class="text-slate-800 font-black">${m.handicap > 0 ? '-' : '+'}${Math.abs(m.handicap)}</span></span>
+                            <span class="text-[11px] font-bold text-slate-400 uppercase">Exact Score: <span class="text-blue-600 font-black italic text-sm">${m.score}</span></span>
                         </div>
                         <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest flex items-center gap-2">
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Manana AI Sync
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Manana AI Sync Active
                         </span>
                     </div>
                 </div>
