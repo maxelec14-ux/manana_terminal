@@ -10,7 +10,6 @@
         body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #1E293B; margin: 0; }
         .match-card { background: white; border: 1px solid #E2E8F0; border-radius: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         
-        /* User Color Palette */
         .c-red { color: #EF4444; } .bg-red { background: #EF4444; }
         .c-yellow { color: #D97706; } .bg-yellow { background: #D97706; }
         .c-blue { color: #2563EB; } .bg-blue { background: #2563EB; }
@@ -22,7 +21,6 @@
         .btn-sort { background: #F1F5F9; color: #475569; padding: 8px 14px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; border: 1px solid transparent; cursor: pointer; }
         .btn-sort.active { background: #1E293B; color: white; }
 
-        /* Progress Bars Styling */
         .progress-container { width: 100%; height: 6px; background: #F1F5F9; border-radius: 10px; margin-top: 8px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 10px; transition: width 0.8s ease-out; }
 
@@ -61,11 +59,7 @@
             </div>
         </div>
 
-        <div id="feed" class="space-y-8">
-            <div class="text-center py-20 border-2 border-dashed border-slate-200 rounded-[40px] text-slate-400 font-bold uppercase text-xs tracking-widest">
-                Execute Sync to run Models.
-            </div>
-        </div>
+        <div id="feed" class="space-y-8"></div>
     </div>
 
     <script>
@@ -73,6 +67,9 @@
         let currentSort = 'default';
         let sortDirection = 'desc';
         let currentLeague = 'all';
+
+        const factorial = (n) => n <= 1 ? 1 : n * factorial(n - 1);
+        const poisson = (k, lambda) => (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
 
         const getColorBTTS = (val) => {
             if (val >= 70) return 'c-green';
@@ -95,7 +92,6 @@
             return 'c-red';
         };
 
-        // PPM / Scored / Conceded Visual Styles
         const getMetricColor = (type, val) => {
             val = parseFloat(val);
             if (type === 'ppm') return val >= 2.0 ? 'bg-green' : val >= 1.5 ? 'bg-blue' : val >= 1.0 ? 'bg-yellow' : 'bg-red';
@@ -104,14 +100,10 @@
             return 'bg-slate-400';
         };
 
-        const getMetricTextColor = (type, val) => {
-            return getMetricColor(type, val).replace('bg-', 'c-');
-        };
-
         async function updateData() {
             const btn = document.getElementById('update-btn');
             btn.disabled = true;
-            document.getElementById('feed').innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs">Syncing Models...</div>';
+            document.getElementById('feed').innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs tracking-widest">Calculating Poisson Probabilities...</div>';
             
             try {
                 const res = await fetch('/api/matches');
@@ -129,19 +121,38 @@
                     const aS = aT.goalsFor / aT.playedGames;
                     const aC = aT.goalsAgainst / aT.playedGames;
 
-                    const expH = (hS + aC) / 2;
-                    const expA = (aS + hC) / 2;
-                    const total = expH + expA;
-                    const probH_Win = (1 - Math.exp(-expH)) * Math.exp(-expA); 
-                    const btts = (1 - Math.exp(-expH)) * (1 - Math.exp(-expA)) * 100;
-                    
-                    const estOdds = 1 / (probH_Win || 0.01);
-                    const marketOdds = estOdds * 1.05; 
-                    const edge = (probH_Win * marketOdds) - 1;
-                    const kelly = Math.max(0, edge / (marketOdds - 1) * 0.25);
+                    const lambdaH = (hS + aC) / 2;
+                    const lambdaA = (aS + hC) / 2;
 
+                    // Poisson 1X2 Calculation
+                    let pHome = 0, pDraw = 0, pAway = 0;
+                    for(let i=0; i<7; i++) {
+                        for(let j=0; j<7; j++) {
+                            let prob = poisson(i, lambdaH) * poisson(j, lambdaA);
+                            if(i > j) pHome += prob;
+                            else if(i === j) pDraw += prob;
+                            else pAway += prob;
+                        }
+                    }
+
+                    // Value/Edge Detection Logic
+                    // Simulating market odds for comparison:
+                    const mOddsH = (1 / pHome) * 1.05; 
+                    const mOddsD = (1 / pDraw) * 1.05;
+                    const mOddsA = (1 / pAway) * 1.05;
+
+                    const edgeH = (pHome * mOddsH) - 1;
+                    const edgeD = (pDraw * mOddsD) - 1;
+                    const edgeA = (pAway * mOddsA) - 1;
+
+                    let bestEdge = edgeH;
+                    let bestLabel = "Value (Home)";
+                    if (edgeD > bestEdge) { bestEdge = edgeD; bestLabel = "Value (Draw)"; }
+                    if (edgeA > bestEdge) { bestEdge = edgeA; bestLabel = "Value (Away)"; }
+
+                    const kelly = Math.max(0, bestEdge / (mOddsH - 1) * 0.25);
+                    const btts = (1 - Math.exp(-lambdaH)) * (1 - Math.exp(-lambdaA)) * 100;
                     const diffVal = hPPM - aPPM;
-                    const diffText = diffVal > 0 ? `H +${diffVal.toFixed(2)}` : `A +${Math.abs(diffVal).toFixed(2)}`;
 
                     return {
                         league: m.competition.name, leagueCode: m.competition.code, utcDate: m.utcDate,
@@ -149,19 +160,21 @@
                         home: m.homeTeam.shortName, away: m.awayTeam.shortName,
                         hPPM: hPPM.toFixed(2), aPPM: aPPM.toFixed(2),
                         hS: hS.toFixed(2), hC: hC.toFixed(2), aS: aS.toFixed(2), aC: aC.toFixed(2),
-                        total: total.toFixed(2), btts: btts.toFixed(0),
-                        kelly: (kelly * 100).toFixed(2), ev: (edge * 100).toFixed(2),
-                        winProb: (probH_Win * 100).toFixed(1), ppmDiff: diffText,
-                        score: `${Math.round(expH)}:${Math.round(expA)}`,
-                        confidence: Math.min(95, (probH_Win * 150)).toFixed(0)
+                        total: (lambdaH + lambdaA).toFixed(2),
+                        btts: btts.toFixed(0),
+                        kelly: (kelly * 100).toFixed(2),
+                        edgeLabel: bestLabel,
+                        edgeValue: (bestEdge * 100).toFixed(2),
+                        winProbStr: `H: ${(pHome * 100).toFixed(0)}% | D: ${(pDraw * 100).toFixed(0)}% | A: ${(pAway * 100).toFixed(0)}%`,
+                        ppmDiff: diffVal > 0 ? `H +${diffVal.toFixed(2)}` : `A +${Math.abs(diffVal).toFixed(2)}`,
+                        score: `${Math.round(lambdaH)}:${Math.round(lambdaA)}`,
+                        confidence: Math.max(pHome, pAway) * 100
                     };
                 }).filter(i => i !== null);
 
                 renderLeagues();
                 applyFilters();
-            } catch (e) {
-                document.getElementById('feed').innerHTML = `<div class="text-red-500 text-center py-20 font-bold italic uppercase">Error: ${e.message}</div>`;
-            } finally { btn.disabled = false; }
+            } catch (e) { console.error(e); } finally { btn.disabled = false; }
         }
 
         function renderLeagues() {
@@ -202,11 +215,10 @@
 
         const createMetric = (label, val, type) => {
             const colorClass = getMetricColor(type, val);
-            const textColor = getMetricTextColor(type, val);
             const percentage = Math.min(100, (val / (type === 'ppm' ? 3 : 3.5)) * 100);
             return `<div class="flex-1">
                 <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">${label}</p>
-                <p class="stat-value ${textColor}">${val}</p>
+                <p class="stat-value ${colorClass.replace('bg-', 'c-')}">${val}</p>
                 <div class="progress-container"><div class="progress-fill ${colorClass}" style="width: ${percentage}%"></div></div>
             </div>`;
         };
@@ -227,16 +239,10 @@
                     </div>
                     <div class="deep-stats-grid">
                         <div><p class="deep-label">Kelly Criterion</p><p class="deep-value">${m.kelly}%</p></div>
-                        <div><p class="deep-label">Market Edge (EV)</p><p class="deep-value c-green">+${m.ev}%</p></div>
-                        <div><p class="deep-label">Home Win Prob</p><p class="deep-value">${m.winProb}%</p></div>
+                        <div><p class="deep-label">${m.edgeLabel}</p><p class="deep-value c-green">+${m.edgeValue}%</p></div>
+                        <div><p class="deep-label">1-X-2 Probabilities</p><p class="deep-value" style="font-size: 12px">${m.winProbStr}</p></div>
                         <div><p class="deep-label">PPM Diff</p><p class="deep-value ${m.ppmDiff.includes('H') ? 'c-green' : 'c-red'}">${m.ppmDiff}</p></div>
                         <div><p class="deep-label">Exp. Score</p><p class="deep-value ${getColorScore(m.confidence)}">${m.score}</p></div>
-                    </div>
-                    <div class="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center">
-                         <span class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Model: Poisson + Kelly v2.4</span>
-                         <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest flex items-center gap-2">
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Quant Engine Active
-                        </span>
                     </div>
                 </div>`).join('');
         }
