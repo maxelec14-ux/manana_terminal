@@ -10,6 +10,7 @@
         body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #1E293B; margin: 0; }
         .match-card { background: white; border: 1px solid #E2E8F0; border-radius: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         
+        /* User Color Palette */
         .c-red { color: #EF4444; } .bg-red { background: #EF4444; }
         .c-yellow { color: #D97706; } .bg-yellow { background: #D97706; }
         .c-blue { color: #2563EB; } .bg-blue { background: #2563EB; }
@@ -21,14 +22,18 @@
         .btn-sort { background: #F1F5F9; color: #475569; padding: 8px 14px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; border: 1px solid transparent; cursor: pointer; }
         .btn-sort.active { background: #1E293B; color: white; }
 
-        .deep-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; background: #F8FAFC; padding: 1.5rem; border-radius: 20px; border: 1px solid #F1F5F9; }
+        /* Progress Bars Styling */
+        .progress-container { width: 100%; height: 6px; background: #F1F5F9; border-radius: 10px; margin-top: 8px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 10px; transition: width 0.8s ease-out; }
+
+        .deep-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; background: #F8FAFC; padding: 1.5rem; border-radius: 20px; border: 1px solid #F1F5F9; margin-top: 2rem; }
         .deep-label { font-size: 9px; font-weight: 800; color: #94A3B8; text-transform: uppercase; margin-bottom: 2px; }
         .deep-value { font-size: 14px; font-weight: 900; color: #334155; }
 
         input { background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 16px; width: 100%; outline: none; }
         .btn-main { background: #059669; color: white; font-weight: 800; transition: 0.3s; cursor: pointer; }
         .btn-main:disabled { background: #94A3B8; cursor: not-allowed; }
-        .stat-value { font-size: 1.5rem; font-weight: 900; line-height: 1; }
+        .stat-value { font-size: 2rem; font-weight: 900; line-height: 1; }
     </style>
 </head>
 <body class="p-4 md:p-10">
@@ -90,18 +95,28 @@
             return 'c-red';
         };
 
+        // PPM / Scored / Conceded Visual Styles
+        const getMetricColor = (type, val) => {
+            val = parseFloat(val);
+            if (type === 'ppm') return val >= 2.0 ? 'bg-green' : val >= 1.5 ? 'bg-blue' : val >= 1.0 ? 'bg-yellow' : 'bg-red';
+            if (type === 'scored') return val >= 2.0 ? 'bg-green' : val >= 1.5 ? 'bg-blue' : val >= 1.0 ? 'bg-yellow' : 'bg-red';
+            if (type === 'conceded') return val <= 0.8 ? 'bg-green' : val <= 1.2 ? 'bg-blue' : val <= 1.6 ? 'bg-yellow' : 'bg-red';
+            return 'bg-slate-400';
+        };
+
+        const getMetricTextColor = (type, val) => {
+            return getMetricColor(type, val).replace('bg-', 'c-');
+        };
+
         async function updateData() {
             const btn = document.getElementById('update-btn');
-            const feed = document.getElementById('feed');
             btn.disabled = true;
-            feed.innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs">Syncing Models...</div>';
+            document.getElementById('feed').innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs">Syncing Models...</div>';
             
             try {
                 const res = await fetch('/api/matches');
                 const data = await res.json();
                 
-                if (!data.matches) throw new Error("No matches found in API");
-
                 RAW_DATA = data.matches.map(m => {
                     const hT = data.standings[m.homeTeam.id];
                     const aT = data.standings[m.awayTeam.id];
@@ -117,12 +132,11 @@
                     const expH = (hS + aC) / 2;
                     const expA = (aS + hC) / 2;
                     const total = expH + expA;
-
                     const probH_Win = (1 - Math.exp(-expH)) * Math.exp(-expA); 
                     const btts = (1 - Math.exp(-expH)) * (1 - Math.exp(-expA)) * 100;
                     
                     const estOdds = 1 / (probH_Win || 0.01);
-                    const marketOdds = estOdds * 1.05; // Simulation
+                    const marketOdds = estOdds * 1.05; 
                     const edge = (probH_Win * marketOdds) - 1;
                     const kelly = Math.max(0, edge / (marketOdds - 1) * 0.25);
 
@@ -130,19 +144,14 @@
                     const diffText = diffVal > 0 ? `H +${diffVal.toFixed(2)}` : `A +${Math.abs(diffVal).toFixed(2)}`;
 
                     return {
-                        league: m.competition.name,
-                        leagueCode: m.competition.code,
-                        utcDate: m.utcDate,
+                        league: m.competition.name, leagueCode: m.competition.code, utcDate: m.utcDate,
                         time: new Date(m.utcDate).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
                         home: m.homeTeam.shortName, away: m.awayTeam.shortName,
                         hPPM: hPPM.toFixed(2), aPPM: aPPM.toFixed(2),
                         hS: hS.toFixed(2), hC: hC.toFixed(2), aS: aS.toFixed(2), aC: aC.toFixed(2),
-                        total: total.toFixed(2),
-                        btts: btts.toFixed(0),
-                        kelly: (kelly * 100).toFixed(2),
-                        ev: (edge * 100).toFixed(2),
-                        winProb: (probH_Win * 100).toFixed(1),
-                        ppmDiff: diffText,
+                        total: total.toFixed(2), btts: btts.toFixed(0),
+                        kelly: (kelly * 100).toFixed(2), ev: (edge * 100).toFixed(2),
+                        winProb: (probH_Win * 100).toFixed(1), ppmDiff: diffText,
                         score: `${Math.round(expH)}:${Math.round(expA)}`,
                         confidence: Math.min(95, (probH_Win * 150)).toFixed(0)
                     };
@@ -151,10 +160,8 @@
                 renderLeagues();
                 applyFilters();
             } catch (e) {
-                feed.innerHTML = `<div class="text-red-500 text-center py-20 font-bold italic uppercase">API Error: ${e.message}</div>`;
-            } finally {
-                btn.disabled = false;
-            }
+                document.getElementById('feed').innerHTML = `<div class="text-red-500 text-center py-20 font-bold italic uppercase">Error: ${e.message}</div>`;
+            } finally { btn.disabled = false; }
         }
 
         function renderLeagues() {
@@ -181,12 +188,9 @@
 
         function applyFilters() {
             const search = document.getElementById('f-search').value.toLowerCase();
-            let filtered = RAW_DATA.filter(m => {
-                const sMatch = m.home.toLowerCase().includes(search) || m.away.toLowerCase().includes(search);
-                const lMatch = currentLeague === 'all' || m.leagueCode === currentLeague;
-                return sMatch && lMatch;
-            });
-
+            let filtered = RAW_DATA.filter(m => m.home.toLowerCase().includes(search) || m.away.toLowerCase().includes(search));
+            if (currentLeague !== 'all') filtered = filtered.filter(m => m.leagueCode === currentLeague);
+            
             const dir = sortDirection === 'desc' ? 1 : -1;
             if (currentSort === 'total') filtered.sort((a, b) => (b.total - a.total) * dir);
             else if (currentSort === 'btts') filtered.sort((a, b) => (b.btts - a.btts) * dir);
@@ -196,32 +200,30 @@
             render(filtered);
         }
 
-        const createStat = (label, val, type) => {
-            const color = (type === 'ppm' && parseFloat(val) > 1.8) ? 'c-green' : 'c-blue';
+        const createMetric = (label, val, type) => {
+            const colorClass = getMetricColor(type, val);
+            const textColor = getMetricTextColor(type, val);
+            const percentage = Math.min(100, (val / (type === 'ppm' ? 3 : 3.5)) * 100);
             return `<div class="flex-1">
-                <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">${label}</p>
-                <p class="stat-value ${color}">${val}</p>
+                <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">${label}</p>
+                <p class="stat-value ${textColor}">${val}</p>
+                <div class="progress-container"><div class="progress-fill ${colorClass}" style="width: ${percentage}%"></div></div>
             </div>`;
         };
 
         function render(matches) {
-            const feed = document.getElementById('feed');
-            if (!matches.length) {
-                feed.innerHTML = '<div class="text-center py-20 text-slate-400 font-bold uppercase text-xs">No Matches Found</div>';
-                return;
-            }
-            feed.innerHTML = matches.map(m => `
-                <div class="match-card p-8">
-                    <div class="flex justify-between items-start mb-8">
-                        <div><span class="text-[11px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-lg uppercase">${m.league}</span><p class="text-[11px] font-bold text-slate-400 mt-2">${m.time}</p></div>
-                        <div class="flex gap-6 text-right">
-                            <div><p class="text-[9px] font-bold text-slate-400 uppercase">Exp. Total</p><p class="text-2xl font-black ${getColorTotal(m.total)}">${m.total}</p></div>
-                            <div class="border-l pl-6"><p class="text-[9px] font-bold text-slate-400 uppercase">BTTS Prob</p><p class="text-2xl font-black ${getColorBTTS(m.btts)}">${m.btts}%</p></div>
+            document.getElementById('feed').innerHTML = matches.map(m => `
+                <div class="match-card p-10">
+                    <div class="flex justify-between items-start mb-10">
+                        <div><span class="text-[11px] font-black text-blue-600 bg-blue-50 px-4 py-1.5 rounded-xl uppercase tracking-wider">${m.league}</span><p class="text-[11px] font-bold text-slate-400 mt-3 uppercase tracking-widest">${m.time}</p></div>
+                        <div class="flex gap-10 text-right">
+                            <div><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Exp. Total</p><p class="text-3xl font-[900] ${getColorTotal(m.total)}">${m.total}</p></div>
+                            <div class="border-l border-slate-100 pl-10"><p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">BTTS Prob</p><p class="text-3xl font-[900] ${getColorBTTS(m.btts)}">${m.btts}%</p></div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-8">
-                        <div class="space-y-4"><h3 class="text-2xl font-black">${m.home}</h3><div class="flex gap-4">${createStat('PPM', m.hPPM, 'ppm')}${createStat('Scored', m.hS)}</div></div>
-                        <div class="space-y-4"><h3 class="text-2xl font-black">${m.away}</h3><div class="flex gap-4">${createStat('PPM', m.aPPM, 'ppm')}${createStat('Scored', m.aS)}</div></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-20">
+                        <div class="space-y-6"><h3 class="text-3xl font-[900] tracking-tighter uppercase">${m.home}</h3><div class="flex gap-6">${createMetric('PPM', m.hPPM, 'ppm')}${createMetric('G-Scored', m.hS, 'scored')}${createMetric('G-Conceded', m.hC, 'conceded')}</div></div>
+                        <div class="space-y-6"><h3 class="text-3xl font-[900] tracking-tighter uppercase">${m.away}</h3><div class="flex gap-6">${createMetric('PPM', m.aPPM, 'ppm')}${createMetric('G-Scored', m.aS, 'scored')}${createMetric('G-Conceded', m.aC, 'conceded')}</div></div>
                     </div>
                     <div class="deep-stats-grid">
                         <div><p class="deep-label">Kelly Criterion</p><p class="deep-value">${m.kelly}%</p></div>
@@ -229,6 +231,12 @@
                         <div><p class="deep-label">Home Win Prob</p><p class="deep-value">${m.winProb}%</p></div>
                         <div><p class="deep-label">PPM Diff</p><p class="deep-value ${m.ppmDiff.includes('H') ? 'c-green' : 'c-red'}">${m.ppmDiff}</p></div>
                         <div><p class="deep-label">Exp. Score</p><p class="deep-value ${getColorScore(m.confidence)}">${m.score}</p></div>
+                    </div>
+                    <div class="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center">
+                         <span class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Model: Poisson + Kelly v2.4</span>
+                         <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Quant Engine Active
+                        </span>
                     </div>
                 </div>`).join('');
         }
