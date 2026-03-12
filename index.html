@@ -10,16 +10,15 @@
         body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #1E293B; margin: 0; }
         .match-card { background: white; border: 1px solid #E2E8F0; border-radius: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         
-        /* User Color Palette */
         .c-red { color: #EF4444; } .bg-red { background: #EF4444; }
         .c-yellow { color: #D97706; } .bg-yellow { background: #D97706; }
         .c-blue { color: #2563EB; } .bg-blue { background: #2563EB; }
         .c-green { color: #059669; } .bg-green { background: #059669; }
 
-        .btn-toggle { background: #FFFFFF; color: #64748B; padding: 10px 18px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid #E2E8F0; transition: 0.2s; }
+        .btn-toggle { background: #FFFFFF; color: #64748B; padding: 10px 18px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid #E2E8F0; transition: 0.2s; cursor: pointer; }
         .btn-toggle.active { background: #2563EB; color: white; border-color: #2563EB; }
 
-        .btn-sort { background: #F1F5F9; color: #475569; padding: 8px 14px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; border: 1px solid transparent; }
+        .btn-sort { background: #F1F5F9; color: #475569; padding: 8px 14px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; border: 1px solid transparent; cursor: pointer; }
         .btn-sort.active { background: #1E293B; color: white; }
 
         .deep-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; background: #F8FAFC; padding: 1.5rem; border-radius: 20px; border: 1px solid #F1F5F9; }
@@ -27,7 +26,8 @@
         .deep-value { font-size: 14px; font-weight: 900; color: #334155; }
 
         input { background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 16px; width: 100%; outline: none; }
-        .btn-main { background: #059669; color: white; font-weight: 800; transition: 0.3s; }
+        .btn-main { background: #059669; color: white; font-weight: 800; transition: 0.3s; cursor: pointer; }
+        .btn-main:disabled { background: #94A3B8; cursor: not-allowed; }
         .stat-value { font-size: 1.5rem; font-weight: 900; line-height: 1; }
     </style>
 </head>
@@ -44,7 +44,9 @@
 
         <div class="space-y-6 mb-12">
             <input type="text" id="f-search" placeholder="Quick Search..." oninput="applyFilters()">
-            <div id="league-btns" class="flex flex-wrap gap-2"></div>
+            <div id="league-btns" class="flex flex-wrap gap-2">
+                <button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 All Leagues</button>
+            </div>
             <div class="flex flex-wrap gap-2 items-center pt-4 border-t border-slate-200">
                 <span class="text-[10px] font-black text-slate-400 uppercase mr-2">Sort By:</span>
                 <button class="btn-sort active" id="sort-default" onclick="setSort('default', this)">Time</button>
@@ -54,42 +56,52 @@
             </div>
         </div>
 
-        <div id="feed" class="space-y-8"></div>
+        <div id="feed" class="space-y-8">
+            <div class="text-center py-20 border-2 border-dashed border-slate-200 rounded-[40px] text-slate-400 font-bold uppercase text-xs tracking-widest">
+                Execute Sync to run Models.
+            </div>
+        </div>
     </div>
 
     <script>
         let RAW_DATA = [];
         let currentSort = 'default';
         let sortDirection = 'desc';
+        let currentLeague = 'all';
 
-        // Colors logic from user prompt
         const getColorBTTS = (val) => {
-            if (val > 70) return 'c-green';
-            if (val > 60) return 'c-blue';
-            if (val > 50) return 'c-yellow';
+            if (val >= 70) return 'c-green';
+            if (val >= 60) return 'c-blue';
+            if (val >= 50) return 'c-yellow';
             return 'c-red';
         };
 
         const getColorTotal = (val) => {
-            if (val > 3.5) return 'c-green';
-            if (val > 3.0) return 'c-blue';
-            if (val > 2.5) return 'c-yellow';
+            if (val >= 3.5) return 'c-green';
+            if (val >= 3.0) return 'c-blue';
+            if (val >= 2.5) return 'c-yellow';
             return 'c-red';
         };
 
         const getColorScore = (prob) => {
-            if (prob > 80) return 'c-green';
-            if (prob > 70) return 'c-blue';
-            if (prob > 60) return 'c-yellow';
+            if (prob >= 80) return 'c-green';
+            if (prob >= 70) return 'c-blue';
+            if (prob >= 60) return 'c-yellow';
             return 'c-red';
         };
 
         async function updateData() {
-            document.getElementById('feed').innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs">Syncing Models...</div>';
+            const btn = document.getElementById('update-btn');
+            const feed = document.getElementById('feed');
+            btn.disabled = true;
+            feed.innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs">Syncing Models...</div>';
+            
             try {
                 const res = await fetch('/api/matches');
                 const data = await res.json();
                 
+                if (!data.matches) throw new Error("No matches found in API");
+
                 RAW_DATA = data.matches.map(m => {
                     const hT = data.standings[m.homeTeam.id];
                     const aT = data.standings[m.awayTeam.id];
@@ -106,22 +118,21 @@
                     const expA = (aS + hC) / 2;
                     const total = expH + expA;
 
-                    // Poisson & Math
                     const probH_Win = (1 - Math.exp(-expH)) * Math.exp(-expA); 
                     const btts = (1 - Math.exp(-expH)) * (1 - Math.exp(-expA)) * 100;
                     
-                    // Kelly & EV (assuming typical market odds based on PPM)
-                    const estOdds = 1 / probH_Win;
-                    const marketOdds = estOdds * 0.95; // Simulating a slight value edge
+                    const estOdds = 1 / (probH_Win || 0.01);
+                    const marketOdds = estOdds * 1.05; // Simulation
                     const edge = (probH_Win * marketOdds) - 1;
                     const kelly = Math.max(0, edge / (marketOdds - 1) * 0.25);
 
-                    // PPM Diff Direction
                     const diffVal = hPPM - aPPM;
                     const diffText = diffVal > 0 ? `H +${diffVal.toFixed(2)}` : `A +${Math.abs(diffVal).toFixed(2)}`;
 
                     return {
                         league: m.competition.name,
+                        leagueCode: m.competition.code,
+                        utcDate: m.utcDate,
                         time: new Date(m.utcDate).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
                         home: m.homeTeam.shortName, away: m.awayTeam.shortName,
                         hPPM: hPPM.toFixed(2), aPPM: aPPM.toFixed(2),
@@ -133,12 +144,31 @@
                         winProb: (probH_Win * 100).toFixed(1),
                         ppmDiff: diffText,
                         score: `${Math.round(expH)}:${Math.round(expA)}`,
-                        confidence: Math.min(95, (probH_Win * 150)).toFixed(0) // Simulated score confidence
+                        confidence: Math.min(95, (probH_Win * 150)).toFixed(0)
                     };
                 }).filter(i => i !== null);
 
+                renderLeagues();
                 applyFilters();
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                feed.innerHTML = `<div class="text-red-500 text-center py-20 font-bold italic uppercase">API Error: ${e.message}</div>`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function renderLeagues() {
+            const container = document.getElementById('league-btns');
+            const unique = [...new Set(RAW_DATA.map(m => JSON.stringify({code: m.leagueCode, name: m.league})))].map(s => JSON.parse(s));
+            container.innerHTML = `<button class="btn-toggle active" onclick="filterLeague('all', this)">🌍 All Leagues</button>` + 
+                unique.map(l => `<button class="btn-toggle" onclick="filterLeague('${l.code}', this)">${l.name}</button>`).join('');
+        }
+
+        function filterLeague(code, btn) {
+            currentLeague = code;
+            document.querySelectorAll('#league-btns .btn-toggle').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilters();
         }
 
         function setSort(type, btn) {
@@ -150,14 +180,58 @@
         }
 
         function applyFilters() {
-            let filtered = [...RAW_DATA];
-            if (currentSort === 'total') filtered.sort((a, b) => sortDirection === 'desc' ? b.total - a.total : a.total - b.total);
+            const search = document.getElementById('f-search').value.toLowerCase();
+            let filtered = RAW_DATA.filter(m => {
+                const sMatch = m.home.toLowerCase().includes(search) || m.away.toLowerCase().includes(search);
+                const lMatch = currentLeague === 'all' || m.leagueCode === currentLeague;
+                return sMatch && lMatch;
+            });
+
+            const dir = sortDirection === 'desc' ? 1 : -1;
+            if (currentSort === 'total') filtered.sort((a, b) => (b.total - a.total) * dir);
+            else if (currentSort === 'btts') filtered.sort((a, b) => (b.btts - a.btts) * dir);
+            else if (currentSort === 'ppm') filtered.sort((a, b) => (parseFloat(b.ppmDiff.split('+')[1]) - parseFloat(a.ppmDiff.split('+')[1])) * dir);
+            else filtered.sort((a, b) => (new Date(a.utcDate) - new Date(b.utcDate)) * (dir * -1));
+
             render(filtered);
         }
 
         const createStat = (label, val, type) => {
-            const color = (type === 'ppm' && val > 1.5) ? 'c-green' : 'c-blue';
+            const color = (type === 'ppm' && parseFloat(val) > 1.8) ? 'c-green' : 'c-blue';
             return `<div class="flex-1">
                 <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">${label}</p>
                 <p class="stat-value ${color}">${val}</p>
-                <div class="w-full bg-slate-100 h-1 rounded-full mt-2"><div class="bg-blue-600 h-1 rounded-full" style
+            </div>`;
+        };
+
+        function render(matches) {
+            const feed = document.getElementById('feed');
+            if (!matches.length) {
+                feed.innerHTML = '<div class="text-center py-20 text-slate-400 font-bold uppercase text-xs">No Matches Found</div>';
+                return;
+            }
+            feed.innerHTML = matches.map(m => `
+                <div class="match-card p-8">
+                    <div class="flex justify-between items-start mb-8">
+                        <div><span class="text-[11px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-lg uppercase">${m.league}</span><p class="text-[11px] font-bold text-slate-400 mt-2">${m.time}</p></div>
+                        <div class="flex gap-6 text-right">
+                            <div><p class="text-[9px] font-bold text-slate-400 uppercase">Exp. Total</p><p class="text-2xl font-black ${getColorTotal(m.total)}">${m.total}</p></div>
+                            <div class="border-l pl-6"><p class="text-[9px] font-bold text-slate-400 uppercase">BTTS Prob</p><p class="text-2xl font-black ${getColorBTTS(m.btts)}">${m.btts}%</p></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-8">
+                        <div class="space-y-4"><h3 class="text-2xl font-black">${m.home}</h3><div class="flex gap-4">${createStat('PPM', m.hPPM, 'ppm')}${createStat('Scored', m.hS)}</div></div>
+                        <div class="space-y-4"><h3 class="text-2xl font-black">${m.away}</h3><div class="flex gap-4">${createStat('PPM', m.aPPM, 'ppm')}${createStat('Scored', m.aS)}</div></div>
+                    </div>
+                    <div class="deep-stats-grid">
+                        <div><p class="deep-label">Kelly Criterion</p><p class="deep-value">${m.kelly}%</p></div>
+                        <div><p class="deep-label">Market Edge (EV)</p><p class="deep-value c-green">+${m.ev}%</p></div>
+                        <div><p class="deep-label">Home Win Prob</p><p class="deep-value">${m.winProb}%</p></div>
+                        <div><p class="deep-label">PPM Diff</p><p class="deep-value ${m.ppmDiff.includes('H') ? 'c-green' : 'c-red'}">${m.ppmDiff}</p></div>
+                        <div><p class="deep-label">Exp. Score</p><p class="deep-value ${getColorScore(m.confidence)}">${m.score}</p></div>
+                    </div>
+                </div>`).join('');
+        }
+    </script>
+</body>
+</html>
