@@ -3,27 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MananaAI | Quant Pro Suite</title>
+    <title>MananaAI | Quant Analytics Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
         body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #1E293B; margin: 0; }
         .match-card { background: white; border: 1px solid #E2E8F0; border-radius: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         
-        /* Dynamic Colors */
-        .color-red { color: #EF4444; } .color-yellow { color: #D97706; }
-        .color-blue { color: #2563EB; } .color-green { color: #059669; }
+        /* User Color Palette */
+        .c-red { color: #EF4444; } .bg-red { background: #EF4444; }
+        .c-yellow { color: #D97706; } .bg-yellow { background: #D97706; }
+        .c-blue { color: #2563EB; } .bg-blue { background: #2563EB; }
+        .c-green { color: #059669; } .bg-green { background: #059669; }
 
-        .btn-toggle { background: white; color: #64748B; padding: 10px 18px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid #E2E8F0; transition: 0.2s; }
+        .btn-toggle { background: #FFFFFF; color: #64748B; padding: 10px 18px; border-radius: 14px; font-size: 12px; font-weight: 600; border: 1px solid #E2E8F0; transition: 0.2s; }
         .btn-toggle.active { background: #2563EB; color: white; border-color: #2563EB; }
 
-        .deep-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; background: #F8FAFC; padding: 1.25rem; border-radius: 20px; border: 1px solid #F1F5F9; }
-        .deep-label { font-size: 9px; font-weight: 800; color: #94A3B8; text-transform: uppercase; margin-bottom: 2px; }
-        .deep-value { font-size: 13px; font-weight: 800; color: #1E293B; }
+        .btn-sort { background: #F1F5F9; color: #475569; padding: 8px 14px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; border: 1px solid transparent; }
+        .btn-sort.active { background: #1E293B; color: white; }
 
-        .btn-main { background: #059669; color: white; font-weight: 800; transition: 0.3s; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.2); }
-        .stat-bar { height: 6px; border-radius: 10px; background: #E2E8F0; overflow: hidden; }
-        .stat-fill { height: 100%; transition: 0.5s; }
+        .deep-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; background: #F8FAFC; padding: 1.5rem; border-radius: 20px; border: 1px solid #F1F5F9; }
+        .deep-label { font-size: 9px; font-weight: 800; color: #94A3B8; text-transform: uppercase; margin-bottom: 2px; }
+        .deep-value { font-size: 14px; font-weight: 900; color: #334155; }
+
+        input { background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 16px; width: 100%; outline: none; }
+        .btn-main { background: #059669; color: white; font-weight: 800; transition: 0.3s; }
+        .stat-value { font-size: 1.5rem; font-weight: 900; line-height: 1; }
     </style>
 </head>
 <body class="p-4 md:p-10">
@@ -32,148 +37,127 @@
         <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
             <div>
                 <h1 class="text-4xl font-[900] italic tracking-tighter text-blue-600 uppercase">MANANA<span class="text-slate-800">AI</span></h1>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Quant Engine v3.0 | Fixed Models</p>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Quant-Driven Analytical Engine</p>
             </div>
-            <button onclick="updateData()" id="update-btn" class="btn-main px-12 py-4 rounded-2xl text-xs uppercase tracking-widest">Update Data ⚡</button>
+            <button onclick="updateData()" id="update-btn" class="btn-main px-12 py-4 rounded-2xl text-xs uppercase tracking-widest">Update Analytics ⚡</button>
         </header>
 
-        <div id="feed" class="space-y-8">
-            <div class="text-center py-20 text-slate-400 font-bold uppercase text-xs tracking-widest border-2 border-dashed rounded-[40px]">Awaiting Data Injection...</div>
+        <div class="space-y-6 mb-12">
+            <input type="text" id="f-search" placeholder="Quick Search..." oninput="applyFilters()">
+            <div id="league-btns" class="flex flex-wrap gap-2"></div>
+            <div class="flex flex-wrap gap-2 items-center pt-4 border-t border-slate-200">
+                <span class="text-[10px] font-black text-slate-400 uppercase mr-2">Sort By:</span>
+                <button class="btn-sort active" id="sort-default" onclick="setSort('default', this)">Time</button>
+                <button class="btn-sort" id="sort-total" onclick="setSort('total', this)">🔥 Exp. Total</button>
+                <button class="btn-sort" id="sort-btts" onclick="setSort('btts', this)">⚽ BTTS %</button>
+                <button class="btn-sort" id="sort-ppm" onclick="setSort('ppm', this)">⚖️ PPM Diff</button>
+            </div>
         </div>
+
+        <div id="feed" class="space-y-8"></div>
     </div>
 
     <script>
         let RAW_DATA = [];
+        let currentSort = 'default';
+        let sortDirection = 'desc';
 
-        function factorial(n) { return n <= 1 ? 1 : n * factorial(n - 1); }
-        function poisson(k, lambda) { return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k); }
+        // Colors logic from user prompt
+        const getColorBTTS = (val) => {
+            if (val > 70) return 'c-green';
+            if (val > 60) return 'c-blue';
+            if (val > 50) return 'c-yellow';
+            return 'c-red';
+        };
 
-        function getBttsColor(prob) {
-            if (prob >= 70) return 'color-green';
-            if (prob >= 60) return 'color-blue';
-            if (prob >= 50) return 'color-yellow';
-            return 'color-red';
-        }
+        const getColorTotal = (val) => {
+            if (val > 3.5) return 'c-green';
+            if (val > 3.0) return 'c-blue';
+            if (val > 2.5) return 'c-yellow';
+            return 'c-red';
+        };
 
-        function getTotalColor(total) {
-            if (total >= 3.5) return 'color-green';
-            if (total >= 3.0) return 'color-blue';
-            if (total >= 2.5) return 'color-yellow';
-            return 'color-red';
-        }
-
-        function getScoreColor(prob) {
-            if (prob >= 80) return 'color-green';
-            if (prob >= 70) return 'color-blue';
-            if (prob >= 60) return 'color-yellow';
-            if (prob >= 50) return 'color-red';
-            return 'text-slate-400';
-        }
+        const getColorScore = (prob) => {
+            if (prob > 80) return 'c-green';
+            if (prob > 70) return 'c-blue';
+            if (prob > 60) return 'c-yellow';
+            return 'c-red';
+        };
 
         async function updateData() {
+            document.getElementById('feed').innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs">Syncing Models...</div>';
             try {
                 const res = await fetch('/api/matches');
                 const data = await res.json();
                 
                 RAW_DATA = data.matches.map(m => {
-                    const h = data.standings[m.homeTeam.id];
-                    const a = data.standings[m.awayTeam.id];
-                    if (!h || !a) return null;
+                    const hT = data.standings[m.homeTeam.id];
+                    const aT = data.standings[m.awayTeam.id];
+                    if (!hT || !aT) return null;
 
-                    const hS = h.goalsFor / h.playedGames; const hC = h.goalsAgainst / h.playedGames;
-                    const aS = a.goalsFor / a.playedGames; const aC = a.goalsAgainst / a.playedGames;
-                    const hPPM = h.points / h.playedGames; const aPPM = a.points / a.playedGames;
+                    const hPPM = hT.points / hT.playedGames;
+                    const aPPM = aT.points / aT.playedGames;
+                    const hS = hT.goalsFor / hT.playedGames;
+                    const hC = hT.goalsAgainst / hT.playedGames;
+                    const aS = aT.goalsFor / aT.playedGames;
+                    const aC = aT.goalsAgainst / aT.playedGames;
 
-                    const lambdaH = (hS + aC) / 2;
-                    const lambdaA = (aS + hC) / 2;
+                    const expH = (hS + aC) / 2;
+                    const expA = (aS + hC) / 2;
+                    const total = expH + expA;
 
-                    // 1. Probabilities Matrix
-                    let pWin = 0, pDraw = 0, pLoss = 0;
-                    let scores = [];
-                    for(let i=0; i<5; i++) {
-                        for(let j=0; j<5; j++) {
-                            let prob = poisson(i, lambdaH) * poisson(j, lambdaA);
-                            if(i > j) pWin += prob; else if(i === j) pDraw += prob; else pLoss += prob;
-                            scores.push({ s: `${i}:${j}`, p: (prob * 100).toFixed(1) });
-                        }
-                    }
-                    const topScores = scores.sort((a,b) => b.p - a.p).slice(0, 4);
+                    // Poisson & Math
+                    const probH_Win = (1 - Math.exp(-expH)) * Math.exp(-expA); 
+                    const btts = (1 - Math.exp(-expH)) * (1 - Math.exp(-expA)) * 100;
+                    
+                    // Kelly & EV (assuming typical market odds based on PPM)
+                    const estOdds = 1 / probH_Win;
+                    const marketOdds = estOdds * 0.95; // Simulating a slight value edge
+                    const edge = (probH_Win * marketOdds) - 1;
+                    const kelly = Math.max(0, edge / (marketOdds - 1) * 0.25);
 
-                    // 2. BTTS & Total
-                    const probH_0 = poisson(0, lambdaH);
-                    const probA_0 = poisson(0, lambdaA);
-                    const btts = (1 - probH_0) * (1 - probA_0) * 100;
-
-                    // 3. EV & Kelly (Simulated against market avg 2.10)
-                    const marketOdds = 2.10;
-                    const fairOdds = 1 / pWin;
-                    const ev = (pWin * marketOdds) - 1;
-                    const kelly = ev > 0 ? (ev / (marketOdds - 1)) * 0.25 : 0;
+                    // PPM Diff Direction
+                    const diffVal = hPPM - aPPM;
+                    const diffText = diffVal > 0 ? `H +${diffVal.toFixed(2)}` : `A +${Math.abs(diffVal).toFixed(2)}`;
 
                     return {
+                        league: m.competition.name,
+                        time: new Date(m.utcDate).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
                         home: m.homeTeam.shortName, away: m.awayTeam.shortName,
-                        league: m.competition.name, time: new Date(m.utcDate).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
                         hPPM: hPPM.toFixed(2), aPPM: aPPM.toFixed(2),
                         hS: hS.toFixed(2), hC: hC.toFixed(2), aS: aS.toFixed(2), aC: aC.toFixed(2),
-                        btts: btts.toFixed(0), total: (lambdaH + lambdaA).toFixed(2),
-                        win: (pWin * 100).toFixed(1), draw: (pDraw * 100).toFixed(1), loss: (pLoss * 100).toFixed(1),
-                        kelly: (kelly * 100).toFixed(2), ev: ev.toFixed(2),
-                        bias: (lambdaH - lambdaA).toFixed(2),
-                        ppmDiff: (hPPM - aPPM).toFixed(2),
-                        topScores
+                        total: total.toFixed(2),
+                        btts: btts.toFixed(0),
+                        kelly: (kelly * 100).toFixed(2),
+                        ev: (edge * 100).toFixed(2),
+                        winProb: (probH_Win * 100).toFixed(1),
+                        ppmDiff: diffText,
+                        score: `${Math.round(expH)}:${Math.round(expA)}`,
+                        confidence: Math.min(95, (probH_Win * 150)).toFixed(0) // Simulated score confidence
                     };
-                }).filter(x => x);
-                render();
-            } catch(e) { console.error(e); }
+                }).filter(i => i !== null);
+
+                applyFilters();
+            } catch (e) { console.error(e); }
         }
 
-        function render() {
-            const feed = document.getElementById('feed');
-            feed.innerHTML = RAW_DATA.map(m => `
-                <div class="match-card p-6 md:p-8">
-                    <div class="flex flex-wrap justify-between items-start mb-8 gap-4">
-                        <div>
-                            <span class="text-[10px] font-black bg-slate-100 px-2 py-1 rounded text-slate-500 uppercase tracking-tighter">${m.league}</span>
-                            <div class="flex items-center gap-4 mt-4">
-                                <h2 class="text-2xl font-[900] uppercase tracking-tighter">${m.home}</h2>
-                                <span class="text-slate-300 font-black">VS</span>
-                                <h2 class="text-2xl font-[900] uppercase tracking-tighter">${m.away}</h2>
-                            </div>
-                        </div>
-                        <div class="flex gap-6">
-                            <div class="text-right">
-                                <p class="deep-label">Exp. Total</p>
-                                <p class="text-2xl font-black ${getTotalColor(m.total)}">${m.total}</p>
-                            </div>
-                            <div class="text-right border-l pl-6 border-slate-100">
-                                <p class="deep-label">BTTS Prob %</p>
-                                <p class="text-2xl font-black ${getBttsColor(m.btts)}">${m.btts}%</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="deep-stats-grid mb-6">
-                        <div><p class="deep-label">Kelly Criterion</p><p class="deep-value ${m.kelly > 0 ? 'text-emerald-600' : ''}">${m.kelly}%</p></div>
-                        <div><p class="deep-label">Expected Value (EV)</p><p class="deep-value ${m.ev > 0 ? 'text-emerald-600' : ''}">${m.ev > 0 ? '+' : ''}${m.ev}</p></div>
-                        <div><p class="deep-label">Poisson (H/D/A)</p><p class="deep-value text-[11px]">${m.win}% / ${m.draw}% / ${m.loss}%</p></div>
-                        <div><p class="deep-label">Advantage Bias</p><p class="deep-value">${m.bias > 0 ? 'Home +' : 'Away +'}${Math.abs(m.bias)}</p></div>
-                        <div><p class="deep-label">PPM Diff</p><p class="deep-value">${m.ppmDiff > 0 ? '← ' : ''}${m.ppmDiff}${m.ppmDiff < 0 ? ' →' : ''}</p></div>
-                    </div>
-
-                    <div class="border-t pt-6">
-                        <p class="deep-label mb-3">Top 4 Expected Scores (Probability %)</p>
-                        <div class="flex flex-wrap gap-4">
-                            ${m.topScores.map(s => `
-                                <div class="bg-white border border-slate-100 px-4 py-2 rounded-xl">
-                                    <span class="text-sm font-black text-slate-800">${s.s}</span>
-                                    <span class="ml-2 text-xs font-bold ${getScoreColor(s.p)}">${s.p}%</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+        function setSort(type, btn) {
+            if (currentSort === type) sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+            else { currentSort = type; sortDirection = 'desc'; }
+            document.querySelectorAll('.btn-sort').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilters();
         }
-    </script>
-</body>
-</html>
+
+        function applyFilters() {
+            let filtered = [...RAW_DATA];
+            if (currentSort === 'total') filtered.sort((a, b) => sortDirection === 'desc' ? b.total - a.total : a.total - b.total);
+            render(filtered);
+        }
+
+        const createStat = (label, val, type) => {
+            const color = (type === 'ppm' && val > 1.5) ? 'c-green' : 'c-blue';
+            return `<div class="flex-1">
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">${label}</p>
+                <p class="stat-value ${color}">${val}</p>
+                <div class="w-full bg-slate-100 h-1 rounded-full mt-2"><div class="bg-blue-600 h-1 rounded-full" style
