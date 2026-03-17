@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pinnacle Deep Scanner | All Leagues</title>
+    <title>Pinnacle Brute-Force Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
@@ -12,76 +11,82 @@
         .market-card { background: #070B14; border-radius: 6px; padding: 6px; border: 1px solid #1F2937; text-align: center; }
         .label-u { font-size: 8px; color: #4B5563; font-weight: 800; text-transform: uppercase; display: block; }
         .odds-val { font-size: 14px; font-weight: 800; }
-        .point-val { font-size: 9px; color: #3B82F6; font-weight: 800; }
         .delta-down { color: #10B981; } .delta-up { color: #EF4444; }
         .flash-move { animation: pulse 0.6s infinite; color: #34D399; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .loader-bar { height: 2px; background: #3B82F6; transition: width 0.3s; width: 0%; }
     </style>
 </head>
 <body class="p-4">
 
     <div class="max-w-full mx-auto">
-        <header class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+        <header class="flex justify-between items-center mb-4 border-b border-gray-800 pb-4">
             <div>
-                <h1 class="text-2xl font-black text-blue-500 italic uppercase">Pinnacle<span class="text-white">Ultra</span></h1>
-                <p id="status" class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Leagues detected: 0</p>
+                <h1 class="text-2xl font-black text-blue-500 italic uppercase">Pinnacle<span class="text-white">Brute</span></h1>
+                <p id="status" class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Status: Ready for Brute-Force</p>
             </div>
-            <div class="flex items-center gap-6">
-                <p id="timer" class="text-xl font-black text-blue-400">10:00</p>
-                <button onclick="fullSystemScan()" id="scan-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded font-black text-[10px] uppercase">Force Deep Scan ⚡</button>
-            </div>
+            <button onclick="bruteForceScan()" id="scan-btn" class="bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded font-black text-[10px] uppercase">Deep Brute Scan (Costly) ⚡</button>
         </header>
+        
+        <div class="w-full bg-gray-900 h-[2px] mb-6"><div id="progress" class="loader-bar"></div></div>
 
         <div id="scanner-feed" class="space-y-2">
-            <div class="py-20 text-center text-gray-600 font-bold animate-pulse">Initializing Full Market Access...</div>
+            <div class="py-20 text-center text-gray-600 font-bold uppercase">This mode will request each league individually to bypass "Top-Only" filter.</div>
         </div>
     </div>
 
     <script>
         const API_KEY = 'f3478125e1684304dae1ac720ced58fe';
-        let oddsHistory = JSON.parse(localStorage.getItem('pin_ultra_v1')) || {};
+        let oddsHistory = JSON.parse(localStorage.getItem('pin_brute_v1')) || {};
+        let allMatches = [];
 
-        async function fullSystemScan() {
+        async function bruteForceScan() {
             const btn = document.getElementById('scan-btn');
-            const feed = document.getElementById('scanner-feed');
-            const statusLabel = document.getElementById('status');
+            const status = document.getElementById('status');
+            const progress = document.getElementById('progress');
             btn.disabled = true;
+            allMatches = [];
 
             try {
-                // ШАГ 1: Получаем список ВСЕХ активных ключей лиг для футбола
+                // 1. Получаем список всех лиг
                 const sportsRes = await fetch(`https://api.the-odds-api.com/v4/sports/?apiKey=${API_KEY}`);
                 const sports = await sportsRes.json();
-                
-                const soccerLeagues = sports
-                    .filter(s => s.group === 'Soccer' && s.active === true)
-                    .map(s => s.key);
+                const soccerLeagues = sports.filter(s => s.group === 'Soccer' && s.active === true);
 
-                statusLabel.innerText = `Leagues detected: ${soccerLeagues.length}. Fetching odds...`;
+                status.innerText = `Found ${soccerLeagues.length} leagues. Starting individual requests...`;
 
-                // ШАГ 2: Запрашиваем данные. Мы не используем конкретную лигу в URL,
-                // но запрашиваем через 'soccer', что в V4 при наличии активных ключей должно вернуть расширенный список.
-                // ВАЖНО: Мы добавили параметр &commenceTimeTo, чтобы захватить события на 24 часа вперед.
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                const timeTo = tomorrow.toISOString().split('.')[0] + 'Z';
+                // 2. Цикл по каждой лиге (Осторожно: каждый цикл = 1 запрос квоты!)
+                for (let i = 0; i < soccerLeagues.length; i++) {
+                    const league = soccerLeagues[i];
+                    progress.style.width = `${((i + 1) / soccerLeagues.length) * 100}%`;
+                    status.innerText = `Scanning: ${league.title} (${i+1}/${soccerLeagues.length})`;
 
-                const oddsRes = await fetch(`https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey=${API_KEY}&regions=eu&markets=h2h,spreads,totals&bookmakers=pinnacle&commenceTimeTo=${timeTo}`);
-                const data = await oddsRes.json();
+                    try {
+                        const res = await fetch(`https://api.the-odds-api.com/v4/sports/${league.key}/odds/?apiKey=${API_KEY}&regions=eu&markets=h2h,spreads,totals&bookmakers=pinnacle`);
+                        const data = await res.json();
+                        if (Array.isArray(data)) {
+                            allMatches = [...allMatches, ...data];
+                        }
+                    } catch (e) { console.error(`Error in league ${league.key}`); }
 
-                if (!Array.isArray(data)) throw new Error("API Limit or Response Error");
+                    // Небольшая задержка, чтобы API не заблокировал за слишком частые запросы
+                    await new Promise(r => setTimeout(r, 100)); 
+                }
 
                 const now = new Date();
-                const filtered = data
+                const filtered = allMatches
                     .filter(m => new Date(m.commence_time) > now)
                     .sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
 
-                statusLabel.innerText = `Leagues: ${soccerLeagues.length} | Matches: ${filtered.length}`;
                 render(filtered);
-                resetTimer();
+                status.innerText = `Scan Complete. Total Matches: ${filtered.length}`;
 
             } catch (e) {
-                feed.innerHTML = `<div class="p-20 text-center text-red-500 font-bold uppercase">${e.message}</div>`;
-            } finally { btn.disabled = false; }
+                status.innerText = "Error: " + e.message;
+            } finally { 
+                btn.disabled = false; 
+                progress.style.width = '0%';
+            }
         }
 
         function track(id, k, price) {
@@ -90,44 +95,36 @@
             const h = oddsHistory[key] || { s: price, l: price };
             const diff = (price - h.s).toFixed(2);
             const fresh = (price !== h.l);
-            
             oddsHistory[key] = { s: h.s, l: price };
-            localStorage.setItem('pin_ultra_v1', JSON.stringify(oddsHistory));
-
+            localStorage.setItem('pin_brute_v1', JSON.stringify(oddsHistory));
             let cls = 'text-gray-600';
             if (price < h.s) cls = 'delta-down'; else if (price > h.s) cls = 'delta-up';
-            
-            return {
-                v: price.toFixed(2),
-                d: `<span class="${cls} font-bold text-[9px]">${price < h.s ? '↓' : price > h.s ? '↑' : ''} ${Math.abs(diff)}</span>`,
-                f: fresh
-            };
+            return { v: price.toFixed(2), d: `<span class="${cls} font-bold text-[9px]">${price < h.s ? '↓' : price > h.s ? '↑' : ''} ${Math.abs(diff)}</span>`, f: fresh };
         }
 
         function render(matches) {
             const container = document.getElementById('scanner-feed');
+            if (matches.length === 0) {
+                container.innerHTML = '<div class="text-center py-10">No matches found in Pinnacle for these leagues.</div>';
+                return;
+            }
             container.innerHTML = matches.map(m => {
                 const pin = m.bookmakers.find(b => b.key === 'pinnacle');
                 if (!pin) return '';
-
                 let h2h = {}, spr = {p:''}, tot = {p:''};
                 pin.markets.forEach(mk => {
                     if (mk.key === 'h2h') mk.outcomes.forEach(o => h2h[o.name] = o.price);
                     if (mk.key === 'spreads') { spr.p = mk.outcomes[0]?.point; mk.outcomes.forEach(o => spr[o.name] = o.price); }
                     if (mk.key === 'totals') { tot.p = mk.outcomes.find(o => o.name === 'Over')?.point; mk.outcomes.forEach(o => tot[o.name] = o.price); }
                 });
-
                 const r1 = track(m.id, '1', h2h[m.home_team]), rX = track(m.id, 'X', h2h['Draw']), r2 = track(m.id, '2', h2h[m.away_team]);
-                const sh = track(m.id, 'sh', spr[m.home_team]), sa = track(m.id, 'sa', spr[m.away_team]);
-                const to = track(m.id, 'to', tot['Over']), tu = track(m.id, 'tu', tot['Under']);
-
-                return `
-                <div class="match-row p-2 grid grid-cols-12 gap-2 items-center">
+                const sh = track(m.id, 'sh', spr[m.home_team]), sa = track(m.id, 'sa', spr[m.away_team]), to = track(m.id, 'to', tot['Over']), tu = track(m.id, 'tu', tot['Under']);
+                return `<div class="match-row p-2 grid grid-cols-12 gap-2 items-center">
                     <div class="col-span-3 px-2">
-                        <span class="text-[8px] text-blue-500 font-bold uppercase truncate block">${m.sport_title}</span>
+                        <span class="text-[8px] text-blue-500 font-bold uppercase block">${m.sport_title}</span>
                         <div class="font-black uppercase truncate text-white">${m.home_team}</div>
                         <div class="font-black uppercase truncate text-gray-500">${m.away_team}</div>
-                        <div class="text-[8px] text-gray-600 font-bold">${new Date(m.commence_time).toLocaleString([], {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</div>
+                        <div class="text-[8px] text-gray-600 font-bold">${new Date(m.commence_time).toLocaleString()}</div>
                     </div>
                     <div class="col-span-3 grid grid-cols-3 gap-1">
                         <div class="market-card"><span class="label-u">1</span><span class="${r1.f?'flash-move':''} odds-val">${r1.v}</span><br>${r1.d}</div>
@@ -135,31 +132,18 @@
                         <div class="market-card"><span class="label-u">2</span><span class="${r2.f?'flash-move':''} odds-val">${r2.v}</span><br>${r2.d}</div>
                     </div>
                     <div class="col-span-3 market-card flex justify-around items-center">
-                        <div class="w-full text-center"><span class="label-u">H (${spr.p})</span><span class="${sh.f?'flash-move':''} odds-val">${sh.v}</span><br>${sh.d}</div>
+                        <div class="w-full"><span class="label-u">H (${spr.p})</span><span class="${sh.f?'flash-move':''} odds-val">${sh.v}</span><br>${sh.d}</div>
                         <div class="h-8 border-l border-gray-800"></div>
-                        <div class="w-full text-center"><span class="label-u">A</span><span class="${sa.f?'flash-move':''} odds-val">${sa.v}</span><br>${sa.d}</div>
+                        <div class="w-full"><span class="label-u">A</span><span class="${sa.f?'flash-move':''} odds-val">${sa.v}</span><br>${sa.d}</div>
                     </div>
                     <div class="col-span-3 market-card flex justify-around items-center">
-                        <div class="w-full text-center"><span class="label-u">O (${tot.p})</span><span class="${to.f?'flash-move':''} odds-val">${to.v}</span><br>${to.d}</div>
+                        <div class="w-full"><span class="label-u">O (${tot.p})</span><span class="${to.f?'flash-move':''} odds-val">${to.v}</span><br>${to.d}</div>
                         <div class="h-8 border-l border-gray-800"></div>
-                        <div class="w-full text-center"><span class="label-u">U</span><span class="${tu.f?'flash-move':''} odds-val">${tu.v}</span><br>${tu.d}</div>
+                        <div class="w-full"><span class="label-u">U</span><span class="${tu.f?'flash-move':''} odds-val">${tu.v}</span><br>${tu.d}</div>
                     </div>
                 </div>`;
             }).join('');
         }
-
-        let timeLeft = 600;
-        function resetTimer() {
-            timeLeft = 600; // Увеличил до 10 минут, чтобы сберечь твои лимиты
-            clearInterval(window.refresh);
-            window.refresh = setInterval(() => {
-                timeLeft--;
-                document.getElementById('timer').innerText = `${Math.floor(timeLeft/60).toString().padStart(2,'0')}:${(timeLeft%60).toString().padStart(2,'0')}`;
-                if (timeLeft <= 0) fullSystemScan();
-            }, 1000);
-        }
-
-        fullSystemScan();
     </script>
 </body>
 </html>
