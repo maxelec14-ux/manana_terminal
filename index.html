@@ -2,234 +2,257 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Pinnacle Elite | Smart Scheduler</title>
+    <title>Pinnacle Elite | Pro Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
-        
-        body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #1E293B; }
+        body { background: #F1F5F9; font-family: 'Inter', sans-serif; color: #1E293B; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        
-        .match-card { 
-            background: white; 
-            border-radius: 16px; 
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-            border: 1px solid #E2E8F0;
-            transition: all 0.3s ease;
-        }
-        .match-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        
-        .market-box { background: #F1F5F9; border-radius: 10px; padding: 10px; border: 1px solid #E2E8F0; }
-        .label-u { font-size: 10px; color: #64748B; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
-        
-        .odds-up { background-color: #FEE2E2; color: #EF4444; border-radius: 4px; padding: 0 4px; }
-        .odds-down { background-color: #DCFCE7; color: #10B981; border-radius: 4px; padding: 0 4px; }
-        
-        @keyframes flash-green { 0% { background: #BBF7D0; } 100% { background: transparent; } }
-        @keyframes flash-red { 0% { background: #FECACA; } 100% { background: transparent; } }
+        .match-card { background: white; border-radius: 16px; border: 1px solid #E2E8F0; transition: all 0.2s ease; }
+        .match-card.is-fav { border-left: 4px solid #F59E0B; }
+        .market-box { background: #F8FAFC; border-radius: 10px; padding: 10px; border: 1px solid #E2E8F0; }
+        .label-u { font-size: 9px; color: #64748B; font-weight: 800; text-transform: uppercase; }
         .changed-down { animation: flash-green 2s forwards; }
         .changed-up { animation: flash-red 2s forwards; }
-
-        .update-badge { font-size: 9px; padding: 2px 8px; border-radius: 20px; font-weight: 700; }
-        .badge-waiting { background: #E2E8F0; color: #64748B; }
-        .badge-active { background: #DBEAFE; color: #2563EB; }
+        @keyframes flash-green { 0% { background: #DCFCE7; } 100% { background: transparent; } }
+        @keyframes flash-red { 0% { background: #FEE2E2; } 100% { background: transparent; } }
+        .btn-active { background: #2563EB !important; color: white !important; }
     </style>
 </head>
-<body class="p-6">
+<body class="p-4 md:p-8">
 
-    <div class="max-w-[1400px] mx-auto">
-        <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <div>
-                <h1 class="text-2xl font-black tracking-tighter text-slate-900">PINNACLE<span class="text-blue-600">ELITE</span></h1>
-                <p id="global-status" class="text-xs font-semibold text-slate-400 uppercase tracking-widest mt-1">Smart Scheduling Active</p>
-            </div>
-            <div class="flex gap-4">
-                <div class="text-right mr-4">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">System Status</p>
-                    <p id="api-usage" class="text-sm font-black text-slate-700 italic">Ready</p>
+    <div class="max-w-[1600px] mx-auto">
+        <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                <div>
+                    <h1 class="text-2xl font-black tracking-tighter">PINNACLE<span class="text-blue-600">ELITE</span></h1>
+                    <div id="api-status" class="text-[10px] font-bold text-slate-400 uppercase mt-1 italic">Ready</div>
                 </div>
-                <button onclick="bruteForceScan()" id="scan-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-blue-200">
-                    Full Deep Sync ⚡
-                </button>
+                <div class="flex gap-2">
+                    <button onclick="bruteForceScan()" id="scan-btn" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase hover:bg-slate-800 transition-all">Deep Brute Sync ⚡</button>
+                    <button onclick="toggleFavMode()" id="fav-toggle" class="bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold text-xs uppercase hover:bg-amber-50">Favorites ⭐</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4 border-t pt-6">
+                <input type="text" id="search" oninput="render()" placeholder="Search team or league..." class="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                
+                <select id="date-filter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none">
+                    <option value="all">All Dates</option>
+                    <option value="today">Today</option>
+                    <option value="tomorrow">Tomorrow</option>
+                </select>
+
+                <select id="sort-filter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none">
+                    <option value="time">Sort by Time</option>
+                    <option value="total-desc">Total (High-Low)</option>
+                    <option value="spread-desc">Handicap (High-Low)</option>
+                </select>
+
+                <button onclick="toggleLowOddsFilter()" id="low-odds-btn" class="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 uppercase">Odds < 1.90</button>
             </div>
         </header>
 
-        <div id="scanner-feed" class="grid grid-cols-1 gap-4">
-            </div>
+        <div id="scanner-feed" class="space-y-4"></div>
     </div>
 
     <script>
         const API_KEY = 'f3478125e1684304dae1ac720ced58fe';
-        let db = JSON.parse(localStorage.getItem('pin_elite_db')) || {};
+        let db = JSON.parse(localStorage.getItem('pin_pro_db')) || {};
+        let favorites = JSON.parse(localStorage.getItem('pin_favs')) || [];
+        let favMode = false;
+        let lowOddsFilter = false;
 
-        // 1. Определение интервала обновления
+        // Таймеры обновлений (последнее обновление для каждого матча)
+        let lastUpdateTimes = JSON.parse(localStorage.getItem('pin_updates')) || {};
+
         function getUpdateInterval(commenceTime) {
-            const now = new Date();
-            const start = new Date(commenceTime);
-            const hoursToStart = (start - now) / (1000 * 60 * 60);
+            const hours = (new Date(commenceTime) - new Date()) / (1000 * 60 * 60);
+            if (hours <= 1) return 5;
+            if (hours <= 2) return 15;
+            if (hours <= 6) return 30;
+            if (hours <= 12) return 60;
+            return 240;
+        }
 
-            if (hoursToStart <= 1) return 5;       // 1 час до матча -> 5 мин
-            if (hoursToStart <= 2) return 15;      // 2 часа до матча -> 15 мин
-            if (hoursToStart <= 6) return 30;      // 6 часов до матча -> 30 мин
-            if (hoursToStart <= 12) return 60;     // 12 часов до матча -> 1 час
-            return 240;                            // Более 12 часов -> 4 часа (редко)
+        function toggleFav(id) {
+            if (favorites.includes(id)) favorites = favorites.filter(f => f !== id);
+            else favorites.push(id);
+            localStorage.setItem('pin_favs', JSON.stringify(favorites));
+            render();
+        }
+
+        function toggleFavMode() {
+            favMode = !favMode;
+            document.getElementById('fav-toggle').classList.toggle('btn-active', favMode);
+            render();
+        }
+
+        function toggleLowOddsFilter() {
+            lowOddsFilter = !lowOddsFilter;
+            document.getElementById('low-odds-btn').classList.toggle('btn-active', lowOddsFilter);
+            render();
         }
 
         async function bruteForceScan() {
             const btn = document.getElementById('scan-btn');
-            const apiStatus = document.getElementById('api-usage');
+            const status = document.getElementById('api-status');
             btn.disabled = true;
-            
+
             try {
-                apiStatus.innerText = "Fetching Leagues...";
                 const sportsRes = await fetch(`https://api.the-odds-api.com/v4/sports/?apiKey=${API_KEY}`);
                 const sports = await sportsRes.json();
-                const soccerLeagues = sports.filter(s => s.group === 'Soccer' && s.active === true);
+                const soccer = sports.filter(s => s.group === 'Soccer' && s.active);
 
-                for (let i = 0; i < soccerLeagues.length; i++) {
-                    const league = soccerLeagues[i];
-                    
-                    // Проверяем, нужно ли обновлять эту лигу
-                    // (Для упрощения проверяем время последнего обновления лиги в целом)
-                    const lastUpdate = db[`last_upd_${league.key}`] || 0;
-                    const now = Date.now();
-                    
-                    // Если прошло меньше 5 минут с любого обновления — скипаем (базовая защита)
-                    if (now - lastUpdate < 300000) continue; 
-
-                    apiStatus.innerText = `Syncing: ${league.title}...`;
+                for (let league of soccer) {
+                    status.innerText = `Scanning ${league.title}...`;
                     const res = await fetch(`https://api.the-odds-api.com/v4/sports/${league.key}/odds/?apiKey=${API_KEY}&regions=eu&markets=h2h,spreads,totals&bookmakers=pinnacle`);
                     const matches = await res.json();
-
+                    
                     if (Array.isArray(matches)) {
                         matches.forEach(m => {
-                            const oldData = db[m.id];
-                            db[m.id] = { ...m, last_seen: now };
-                            if (oldData) db[m.id].history = oldData.history || oldData.bookmakers;
+                            db[m.id] = m;
+                            lastUpdateTimes[m.id] = Date.now();
                         });
-                        db[`last_upd_${league.key}`] = now;
+                        localStorage.setItem('pin_pro_db', JSON.stringify(db));
+                        localStorage.setItem('pin_updates', JSON.stringify(lastUpdateTimes));
+                        render();
                     }
-                    localStorage.setItem('pin_elite_db', JSON.stringify(db));
-                    render();
-                    await new Promise(r => setTimeout(r, 200)); 
+                    await new Promise(r => setTimeout(r, 150));
                 }
-                apiStatus.innerText = "All Leagues Synced";
-            } catch (e) {
-                apiStatus.innerText = "Error!";
-            } finally { btn.disabled = false; }
+                status.innerText = "Full Sync Complete";
+            } catch (e) { status.innerText = "Error: " + e.message; }
+            finally { btn.disabled = false; }
         }
 
-        function getOddsDisplay(matchId, marketKey, currentPrice, outcomeName) {
-            if (!currentPrice) return `<span class="text-slate-300">—</span>`;
+        function getOddsUI(matchId, market, price, name) {
+            if (!price) return `<span class="text-slate-300">—</span>`;
+            const key = `h_${matchId}_${market}_${name}`;
+            const prev = parseFloat(localStorage.getItem(key)) || price;
+            const start = parseFloat(localStorage.getItem(key+'_s')) || price;
+            if (!localStorage.getItem(key+'_s')) localStorage.setItem(key+'_s', price);
             
-            const storageKey = `hist_${matchId}_${marketKey}_${outcomeName}`;
-            const startPrice = localStorage.getItem(storageKey + '_start') || currentPrice;
-            const lastPrice = localStorage.getItem(storageKey + '_last') || currentPrice;
-            
-            if (!localStorage.getItem(storageKey + '_start')) {
-                localStorage.setItem(storageKey + '_start', currentPrice);
-            }
+            let flash = "";
+            if (price < prev) flash = "changed-down";
+            if (price > prev) flash = "changed-up";
+            localStorage.setItem(key, price);
 
-            const diff = (currentPrice - startPrice).toFixed(2);
-            let trendClass = "";
-            let flashClass = "";
+            const diff = (price - start).toFixed(2);
+            const trend = diff > 0 ? 'text-red-500' : diff < 0 ? 'text-green-500' : 'text-slate-400';
 
-            if (currentPrice < lastPrice) flashClass = "changed-down";
-            if (currentPrice > lastPrice) flashClass = "changed-up";
-            
-            if (currentPrice < startPrice) trendClass = "odds-down";
-            if (currentPrice > startPrice) trendClass = "odds-up";
-
-            localStorage.setItem(storageKey + '_last', currentPrice);
-
-            return `
-                <div class="p-1 ${flashClass} rounded transition-all duration-1000">
-                    <span class="mono text-lg font-bold">${currentPrice.toFixed(2)}</span>
-                    <div class="text-[10px] font-bold mt-1">
-                        <span class="${trendClass}">${diff > 0 ? '↑' : ''}${diff != 0 ? diff : ''}</span>
-                    </div>
-                </div>
-            `;
+            return `<div class="${flash} p-1 rounded transition-all">
+                <div class="mono text-lg font-bold">${price.toFixed(2)}</div>
+                <div class="text-[9px] font-bold ${trend}">${diff != 0 ? (diff > 0 ? '↑' : '↓') + Math.abs(diff) : '0.00'}</div>
+            </div>`;
         }
 
         function render() {
             const feed = document.getElementById('scanner-feed');
-            const now = Date.now();
-            
-            // Фильтруем и сортируем матчи из БД
-            const matches = Object.values(db)
-                .filter(m => m.id && new Date(m.commence_time) > now)
-                .sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+            const search = document.getElementById('search').value.toLowerCase();
+            const dateVal = document.getElementById('date-filter').value;
+            const sortVal = document.getElementById('sort-filter').value;
+            const now = new Date();
 
-            feed.innerHTML = matches.map(m => {
+            let list = Object.values(db).filter(m => {
+                const mDate = new Date(m.commence_time);
+                if (mDate < now) return false;
+
+                // Избранное
+                if (favMode && !favorites.includes(m.id)) return false;
+
+                // Поиск
+                const matchName = (m.home_team + m.away_team + m.sport_title).toLowerCase();
+                if (search && !matchName.includes(search)) return false;
+
+                // Дата
+                if (dateVal === 'today' && mDate.getDate() !== now.getDate()) return false;
+                if (dateVal === 'tomorrow') {
+                    const tom = new Date(); tom.setDate(tom.getDate() + 1);
+                    if (mDate.getDate() !== tom.getDate()) return false;
+                }
+
+                // Фильтр < 1.90
+                if (lowOddsFilter) {
+                    const pin = m.bookmakers.find(b => b.key === 'pinnacle');
+                    const hasLow = pin?.markets.some(mk => mk.outcomes.some(o => o.price < 1.90));
+                    if (!hasLow) return false;
+                }
+
+                return true;
+            });
+
+            // Сортировка
+            list.sort((a, b) => {
+                const pinA = a.bookmakers.find(bk => bk.key === 'pinnacle');
+                const pinB = b.bookmakers.find(bk => bk.key === 'pinnacle');
+                
+                if (sortVal === 'total-desc') {
+                    const tA = pinA?.markets.find(m => m.key === 'totals')?.outcomes[0]?.point || 0;
+                    const tB = pinB?.markets.find(m => m.key === 'totals')?.outcomes[0]?.point || 0;
+                    return tB - tA;
+                }
+                if (sortVal === 'spread-desc') {
+                    const sA = Math.abs(pinA?.markets.find(m => m.key === 'spreads')?.outcomes[0]?.point || 0);
+                    const sB = Math.abs(pinB?.markets.find(m => m.key === 'spreads')?.outcomes[0]?.point || 0);
+                    return sB - sA;
+                }
+                return new Date(a.commence_time) - new Date(b.commence_time);
+            });
+
+            feed.innerHTML = list.map(m => {
                 const pin = m.bookmakers.find(b => b.key === 'pinnacle');
                 if (!pin) return '';
 
-                let h2h = {}, spr = {p:''}, tot = {p:''};
+                let h2h = {}, spr = {p:0}, tot = {p:0};
                 pin.markets.forEach(mk => {
                     if (mk.key === 'h2h') mk.outcomes.forEach(o => h2h[o.name] = o.price);
                     if (mk.key === 'spreads') { spr.p = mk.outcomes[0]?.point; mk.outcomes.forEach(o => spr[o.name] = o.price); }
                     if (mk.key === 'totals') { tot.p = mk.outcomes.find(o => o.name === 'Over')?.point; mk.outcomes.forEach(o => tot[o.name] = o.price); }
                 });
 
-                const interval = getUpdateInterval(m.commence_time);
+                const isFav = favorites.includes(m.id);
+                const nextUpd = lastUpdateTimes[m.id] ? (getUpdateInterval(m.commence_time) * 60) - Math.floor((Date.now() - lastUpdateTimes[m.id]) / 1000) : 0;
 
                 return `
-                <div class="match-card p-6 grid grid-cols-12 gap-6 items-center">
-                    <div class="col-span-12 md:col-span-3 border-r border-slate-100">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="update-badge badge-active italic">Every ${interval}m</span>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">${m.sport_title}</span>
+                <div class="match-card p-5 grid grid-cols-12 gap-4 items-center ${isFav ? 'is-fav' : ''}">
+                    <div class="col-span-3">
+                        <div class="flex items-center gap-2 mb-1">
+                            <button onclick="toggleFav('${m.id}')" class="text-lg">${isFav ? '⭐' : '☆'}</button>
+                            <span class="text-[9px] font-black text-blue-600 uppercase truncate">${m.sport_title}</span>
                         </div>
-                        <h3 class="text-base font-extrabold text-slate-900 leading-tight uppercase">${m.home_team}</h3>
-                        <h3 class="text-base font-extrabold text-slate-400 leading-tight uppercase mb-2">${m.away_team}</h3>
-                        <div class="text-[11px] font-semibold text-slate-500 bg-slate-100 inline-block px-2 py-1 rounded">
-                            ${new Date(m.commence_time).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}
-                        </div>
-                    </div>
-
-                    <div class="col-span-12 md:col-span-3 grid grid-cols-3 gap-2">
-                        <div class="market-box text-center"><span class="label-u text-blue-600">Home</span>${getOddsDisplay(m.id, 'h2h', h2h[m.home_team], '1')}</div>
-                        <div class="market-box text-center"><span class="label-u">Draw</span>${getOddsDisplay(m.id, 'h2h', h2h['Draw'], 'X')}</div>
-                        <div class="market-box text-center"><span class="label-u text-red-400">Away</span>${getOddsDisplay(m.id, 'h2h', h2h[m.away_team], '2')}</div>
-                    </div>
-
-                    <div class="col-span-12 md:col-span-3 market-box">
-                        <div class="flex justify-between items-center mb-2 px-2">
-                            <span class="label-u">Handicap</span>
-                            <span class="mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">${spr.p || 0}</span>
-                        </div>
-                        <div class="flex justify-around items-center">
-                            <div class="text-center w-full">${getOddsDisplay(m.id, 'spread', spr[m.home_team], 'H')}</div>
-                            <div class="w-px h-8 bg-slate-200"></div>
-                            <div class="text-center w-full">${getOddsDisplay(m.id, 'spread', spr[m.away_team], 'A')}</div>
+                        <div class="font-extrabold text-sm uppercase">${m.home_team}</div>
+                        <div class="font-extrabold text-sm uppercase text-slate-400">${m.away_team}</div>
+                        <div class="mt-2 flex items-center gap-2">
+                            <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded font-bold">${new Date(m.commence_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                            <span class="text-[10px] text-blue-500 font-bold mono">🔄 ${nextUpd > 0 ? Math.floor(nextUpd/60)+':'+(nextUpd%60).toString().padStart(2,'0') : 'Next Scan'}</span>
                         </div>
                     </div>
+                    
+                    <div class="col-span-3 grid grid-cols-3 gap-1">
+                        <div class="market-box text-center"><span class="label-u">1</span>${getOddsUI(m.id, 'h2h', h2h[m.home_team], '1')}</div>
+                        <div class="market-box text-center"><span class="label-u">X</span>${getOddsUI(m.id, 'h2h', h2h['Draw'], 'X')}</div>
+                        <div class="market-box text-center"><span class="label-u">2</span>${getOddsUI(m.id, 'h2h', h2h[m.away_team], '2')}</div>
+                    </div>
 
-                    <div class="col-span-12 md:col-span-3 market-box">
-                        <div class="flex justify-between items-center mb-2 px-2">
-                            <span class="label-u">Total Goals</span>
-                            <span class="mono text-xs font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">${tot.p || 0}</span>
-                        </div>
-                        <div class="flex justify-around items-center">
-                            <div class="text-center w-full">${getOddsDisplay(m.id, 'total', tot['Over'], 'O')}</div>
-                            <div class="w-px h-8 bg-slate-200"></div>
-                            <div class="text-center w-full">${getOddsDisplay(m.id, 'total', tot['Under'], 'U')}</div>
-                        </div>
+                    <div class="col-span-3 market-box">
+                        <div class="flex justify-between items-center mb-1"><span class="label-u">Handicap</span><span class="text-xs font-bold text-blue-600">${spr.p}</span></div>
+                        <div class="flex justify-around">${getOddsUI(m.id, 'spr', spr[m.home_team], 'H')} ${getOddsUI(m.id, 'spr', spr[m.away_team], 'A')}</div>
+                    </div>
+
+                    <div class="col-span-3 market-box">
+                        <div class="flex justify-between items-center mb-1"><span class="label-u">Total</span><span class="text-xs font-bold text-orange-600">${tot.p}</span></div>
+                        <div class="flex justify-around">${getOddsUI(m.id, 'tot', tot['Over'], 'O')} ${getOddsUI(m.id, 'tot', tot['Under'], 'U')}</div>
                     </div>
                 </div>`;
             }).join('');
         }
 
-        // Автозапуск отрисовки из кэша
-        render();
-
-        // Фоновый планировщик
+        // Живой таймер для всех матчей
         setInterval(() => {
-            console.log("Checking for smart updates...");
-            // Здесь можно добавить логику автоматического вызова bruteForceScan() 
-            // для конкретных лиг на основе их getUpdateInterval
-        }, 60000);
+            render(); 
+        }, 1000);
+
+        render();
     </script>
 </body>
 </html>
