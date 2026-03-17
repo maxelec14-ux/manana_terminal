@@ -3,74 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pinnacle Full-Depth Scanner</title>
+    <title>Pinnacle Deep Scanner | All Leagues</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
-        body { background: #070B14; font-family: 'JetBrains Mono', monospace; color: #F1F5F9; font-size: 13px; }
-        .match-row { background: #111827; border: 1px solid #1F2937; border-radius: 12px; margin-bottom: 8px; }
-        .market-card { background: #070B14; border-radius: 8px; padding: 8px; border: 1px solid #1F2937; text-align: center; }
-        .label-u { font-size: 8px; color: #4B5563; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 4px; }
-        .odds-val { font-size: 15px; font-weight: 800; }
-        .point-val { font-size: 10px; color: #3B82F6; font-weight: 800; background: rgba(59, 130, 246, 0.1); padding: 1px 4px; border-radius: 3px; }
+        body { background: #070B14; font-family: 'JetBrains Mono', monospace; color: #F1F5F9; font-size: 12px; }
+        .match-row { background: #111827; border: 1px solid #1F2937; border-radius: 8px; margin-bottom: 6px; }
+        .market-card { background: #070B14; border-radius: 6px; padding: 6px; border: 1px solid #1F2937; text-align: center; }
+        .label-u { font-size: 8px; color: #4B5563; font-weight: 800; text-transform: uppercase; display: block; }
+        .odds-val { font-size: 14px; font-weight: 800; }
+        .point-val { font-size: 9px; color: #3B82F6; font-weight: 800; }
         .delta-down { color: #10B981; } .delta-up { color: #EF4444; }
-        .flash-move { animation: pulse-alert 0.8s infinite; color: #34D399; }
-        @keyframes pulse-alert { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .flash-move { animation: pulse 0.6s infinite; color: #34D399; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body class="p-4">
 
-    <div class="max-w-[1600px] mx-auto">
+    <div class="max-w-full mx-auto">
         <header class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
             <div>
-                <h1 class="text-2xl font-black text-blue-500 italic">PINNACLE<span class="text-white">FULL</span></h1>
-                <p id="counter" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Scanning all soccer markets...</p>
+                <h1 class="text-2xl font-black text-blue-500 italic uppercase">Pinnacle<span class="text-white">Ultra</span></h1>
+                <p id="status" class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Leagues detected: 0</p>
             </div>
             <div class="flex items-center gap-6">
-                <p id="timer" class="text-xl font-black text-blue-400">05:00</p>
-                <button onclick="scanAll()" id="scan-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded font-black text-[10px] uppercase">Force Refresh ⚡</button>
+                <p id="timer" class="text-xl font-black text-blue-400">10:00</p>
+                <button onclick="fullSystemScan()" id="scan-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded font-black text-[10px] uppercase">Force Deep Scan ⚡</button>
             </div>
         </header>
 
         <div id="scanner-feed" class="space-y-2">
-            <div class="py-20 text-center text-gray-600 font-bold animate-pulse uppercase">Fetching all available leagues...</div>
+            <div class="py-20 text-center text-gray-600 font-bold animate-pulse">Initializing Full Market Access...</div>
         </div>
     </div>
 
     <script>
         const API_KEY = 'f3478125e1684304dae1ac720ced58fe';
-        let oddsHistory = JSON.parse(localStorage.getItem('pin_full_v1')) || {};
+        let oddsHistory = JSON.parse(localStorage.getItem('pin_ultra_v1')) || {};
 
-        async function scanAll() {
+        async function fullSystemScan() {
             const btn = document.getElementById('scan-btn');
             const feed = document.getElementById('scanner-feed');
-            const counter = document.getElementById('counter');
+            const statusLabel = document.getElementById('status');
             btn.disabled = true;
 
             try {
-                // 1. Получаем список ВСЕХ активных футбольных лиг (включая смол-маркеты)
+                // ШАГ 1: Получаем список ВСЕХ активных ключей лиг для футбола
                 const sportsRes = await fetch(`https://api.the-odds-api.com/v4/sports/?apiKey=${API_KEY}`);
                 const sports = await sportsRes.json();
                 
-                // Фильтруем только футбол. Ключи вроде 'soccer_brazil_campeonato', 'soccer_chile_primera_division' и т.д.
-                const soccerKeys = sports
+                const soccerLeagues = sports
                     .filter(s => s.group === 'Soccer' && s.active === true)
                     .map(s => s.key);
 
-                // 2. В документации указано, что можно запрашивать группу 'soccer' целиком.
-                // Чтобы получить БОЛЬШЕ матчей, мы НЕ используем 'upcoming', а используем 'soccer' эндпоинт.
-                const oddsRes = await fetch(`https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey=${API_KEY}&regions=eu&markets=h2h,spreads,totals&bookmakers=pinnacle`);
+                statusLabel.innerText = `Leagues detected: ${soccerLeagues.length}. Fetching odds...`;
+
+                // ШАГ 2: Запрашиваем данные. Мы не используем конкретную лигу в URL,
+                // но запрашиваем через 'soccer', что в V4 при наличии активных ключей должно вернуть расширенный список.
+                // ВАЖНО: Мы добавили параметр &commenceTimeTo, чтобы захватить события на 24 часа вперед.
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const timeTo = tomorrow.toISOString().split('.')[0] + 'Z';
+
+                const oddsRes = await fetch(`https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey=${API_KEY}&regions=eu&markets=h2h,spreads,totals&bookmakers=pinnacle&commenceTimeTo=${timeTo}`);
                 const data = await oddsRes.json();
 
-                if (!Array.isArray(data)) throw new Error("API Limit reached");
+                if (!Array.isArray(data)) throw new Error("API Limit or Response Error");
 
-                // Фильтруем только те, что еще не начались
-                const preMatch = data
-                    .filter(m => new Date(m.commence_time) > new Date())
+                const now = new Date();
+                const filtered = data
+                    .filter(m => new Date(m.commence_time) > now)
                     .sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
 
-                counter.innerText = `Detected ${soccerKeys.length} active leagues. Displaying ${preMatch.length} matches from Pinnacle.`;
-                render(preMatch);
+                statusLabel.innerText = `Leagues: ${soccerLeagues.length} | Matches: ${filtered.length}`;
+                render(filtered);
                 resetTimer();
 
             } catch (e) {
@@ -86,7 +92,7 @@
             const fresh = (price !== h.l);
             
             oddsHistory[key] = { s: h.s, l: price };
-            localStorage.setItem('pin_full_v1', JSON.stringify(oddsHistory));
+            localStorage.setItem('pin_ultra_v1', JSON.stringify(oddsHistory));
 
             let cls = 'text-gray-600';
             if (price < h.s) cls = 'delta-down'; else if (price > h.s) cls = 'delta-up';
@@ -104,7 +110,7 @@
                 const pin = m.bookmakers.find(b => b.key === 'pinnacle');
                 if (!pin) return '';
 
-                let h2h = {}, spr = {p:0}, tot = {p:0};
+                let h2h = {}, spr = {p:''}, tot = {p:''};
                 pin.markets.forEach(mk => {
                     if (mk.key === 'h2h') mk.outcomes.forEach(o => h2h[o.name] = o.price);
                     if (mk.key === 'spreads') { spr.p = mk.outcomes[0]?.point; mk.outcomes.forEach(o => spr[o.name] = o.price); }
@@ -116,44 +122,44 @@
                 const to = track(m.id, 'to', tot['Over']), tu = track(m.id, 'tu', tot['Under']);
 
                 return `
-                <div class="match-row p-3 grid grid-cols-12 gap-4 items-center">
-                    <div class="col-span-3">
+                <div class="match-row p-2 grid grid-cols-12 gap-2 items-center">
+                    <div class="col-span-3 px-2">
                         <span class="text-[8px] text-blue-500 font-bold uppercase truncate block">${m.sport_title}</span>
-                        <div class="font-black uppercase truncate">${m.home_team}</div>
+                        <div class="font-black uppercase truncate text-white">${m.home_team}</div>
                         <div class="font-black uppercase truncate text-gray-500">${m.away_team}</div>
-                        <div class="text-[8px] text-gray-600 mt-1">${new Date(m.commence_time).toLocaleString()}</div>
+                        <div class="text-[8px] text-gray-600 font-bold">${new Date(m.commence_time).toLocaleString([], {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</div>
                     </div>
                     <div class="col-span-3 grid grid-cols-3 gap-1">
                         <div class="market-card"><span class="label-u">1</span><span class="${r1.f?'flash-move':''} odds-val">${r1.v}</span><br>${r1.d}</div>
                         <div class="market-card"><span class="label-u">X</span><span class="${rX.f?'flash-move':''} odds-val">${rX.v}</span><br>${rX.d}</div>
                         <div class="market-card"><span class="label-u">2</span><span class="${r2.f?'flash-move':''} odds-val">${r2.v}</span><br>${r2.d}</div>
                     </div>
-                    <div class="col-span-3 market-card flex justify-around">
-                        <div><span class="label-u">H (${spr.p})</span><span class="${sh.f?'flash-move':''} odds-val">${sh.v}</span><br>${sh.info || sh.d}</div>
-                        <div class="border-l border-gray-800"></div>
-                        <div><span class="label-u">A</span><span class="${sa.f?'flash-move':''} odds-val">${sa.v}</span><br>${sa.info || sa.d}</div>
+                    <div class="col-span-3 market-card flex justify-around items-center">
+                        <div class="w-full text-center"><span class="label-u">H (${spr.p})</span><span class="${sh.f?'flash-move':''} odds-val">${sh.v}</span><br>${sh.d}</div>
+                        <div class="h-8 border-l border-gray-800"></div>
+                        <div class="w-full text-center"><span class="label-u">A</span><span class="${sa.f?'flash-move':''} odds-val">${sa.v}</span><br>${sa.d}</div>
                     </div>
-                    <div class="col-span-3 market-card flex justify-around">
-                        <div><span class="label-u">O (${tot.p})</span><span class="${to.f?'flash-move':''} odds-val">${to.v}</span><br>${to.info || to.d}</div>
-                        <div class="border-l border-gray-800"></div>
-                        <div><span class="label-u">U</span><span class="${tu.f?'flash-move':''} odds-val">${tu.v}</span><br>${tu.info || tu.d}</div>
+                    <div class="col-span-3 market-card flex justify-around items-center">
+                        <div class="w-full text-center"><span class="label-u">O (${tot.p})</span><span class="${to.f?'flash-move':''} odds-val">${to.v}</span><br>${to.d}</div>
+                        <div class="h-8 border-l border-gray-800"></div>
+                        <div class="w-full text-center"><span class="label-u">U</span><span class="${tu.f?'flash-move':''} odds-val">${tu.v}</span><br>${tu.d}</div>
                     </div>
                 </div>`;
             }).join('');
         }
 
-        let timeLeft = 300;
+        let timeLeft = 600;
         function resetTimer() {
-            timeLeft = 300;
+            timeLeft = 600; // Увеличил до 10 минут, чтобы сберечь твои лимиты
             clearInterval(window.refresh);
             window.refresh = setInterval(() => {
                 timeLeft--;
                 document.getElementById('timer').innerText = `${Math.floor(timeLeft/60).toString().padStart(2,'0')}:${(timeLeft%60).toString().padStart(2,'0')}`;
-                if (timeLeft <= 0) scanAll();
+                if (timeLeft <= 0) fullSystemScan();
             }, 1000);
         }
 
-        scanAll();
+        fullSystemScan();
     </script>
 </body>
 </html>
