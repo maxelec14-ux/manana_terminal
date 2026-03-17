@@ -3,220 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MananaAI | Pinnacle Sharp-Line Tracker</title>
+    <title>Pinnacle Pro Scanner | Live Line Movement</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-        body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #1E293B; margin: 0; }
-        .match-card { background: white; border: 1px solid #E2E8F0; border-radius: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        
-        .c-red { color: #EF4444; } .bg-red { background: #EF4444; }
-        .c-yellow { color: #D97706; } .bg-yellow { background: #D97706; }
-        .c-blue { color: #2563EB; } .bg-blue { background: #2563EB; }
-        .c-green { color: #059669; } .bg-green { background: #059669; }
-
-        .progress-container { width: 100%; height: 6px; background: #F1F5F9; border-radius: 10px; margin-top: 8px; overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: 10px; transition: width 0.8s ease-out; }
-        .stat-value { font-size: 1.8rem; font-weight: 900; line-height: 1; }
-
-        .market-badge { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 16px; text-align: center; min-width: 100px; }
-        .label-xs { font-size: 8px; font-weight: 800; color: #94A3B8; text-transform: uppercase; margin-bottom: 4px; display: block; }
-        .odds-now { font-size: 16px; font-weight: 900; display: block; color: #1E293B; }
-        .odds-start { font-size: 10px; color: #94A3B8; font-weight: 600; }
-        .delta { font-size: 10px; font-weight: 900; margin-top: 2px; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
+        body { background: #0F172A; font-family: 'JetBrains Mono', monospace; color: #F1F5F9; }
+        .match-row { background: #1E293B; border-bottom: 1px solid #334155; transition: 0.2s; }
+        .match-row:hover { background: #262F45; }
+        .delta-up { color: #EF4444; }
+        .delta-down { color: #22C55E; }
+        .market-cell { background: #0F172A; border: 1px solid #334155; padding: 10px; border-radius: 8px; text-align: center; }
+        .label-u { font-size: 9px; color: #64748B; font-weight: 800; text-transform: uppercase; }
+        .val-main { font-size: 18px; font-weight: 800; display: block; }
+        .val-start { font-size: 11px; color: #475569; }
+        @keyframes pulse-green { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .flash-move { animation: pulse-green 1s infinite; color: #4ADE80; }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="p-4 md:p-8">
 
-    <div class="max-w-7xl mx-auto">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+    <div class="max-w-[1400px] mx-auto">
+        <header class="flex justify-between items-end mb-8 border-b border-slate-700 pb-6">
             <div>
-                <h1 class="text-4xl font-[900] italic tracking-tighter text-blue-600 uppercase">PINNACLE<span class="text-slate-800">SCAN</span></h1>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Sharp Money Line Movements (Pinnacle)</p>
+                <h1 class="text-3xl font-black italic tracking-tighter text-blue-500 uppercase">PINNACLE<span class="text-white">SHARP</span></h1>
+                <p class="text-xs font-bold text-slate-500 uppercase mt-1">Global Soccer Market Monitor • f3478125...</p>
             </div>
-            <div class="flex items-center gap-6">
+            <div class="flex gap-8 items-center">
                 <div class="text-right">
-                    <p class="text-[9px] font-black text-slate-400 uppercase">Next Sync</p>
-                    <p id="timer" class="text-lg font-black text-blue-600">15:00</p>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase">Auto-Refresh</p>
+                    <p id="timer" class="text-xl font-black text-blue-400">15:00</p>
                 </div>
-                <button onclick="updateAllData()" id="update-btn" class="bg-slate-900 text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 transition duration-300 cursor-pointer">Scan Now ⚡</button>
+                <button onclick="scanPinnacle()" id="scan-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all">Force Scan ⚡</button>
             </div>
         </header>
 
-        <div id="feed" class="space-y-8">
-            <div class="text-center py-20 border-2 border-dashed border-slate-200 rounded-[40px] text-slate-400 font-bold uppercase text-xs tracking-widest">
-                Waiting for scan...
-            </div>
+        <div class="grid grid-cols-12 gap-4 mb-4 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <div class="col-span-4">Event / League</div>
+            <div class="col-span-2 text-center">Home (1)</div>
+            <div class="col-span-2 text-center">Draw (X)</div>
+            <div class="col-span-2 text-center">Away (2)</div>
+            <div class="col-span-2 text-center">Total Over</div>
         </div>
+
+        <div id="scanner-feed" class="space-y-2">
+            </div>
     </div>
 
     <script>
         const API_KEY = 'f3478125e1684304dae1ac720ced58fe';
-        const SPORT = 'soccer'; // Все футбольные матчи
-        const ODDS_URL = `https://api.the-odds-api.com/v4/sports/${SPORT}/odds/?apiKey=${API_KEY}&regions=eu&markets=h2h,totals&bookmakers=pinnacle`;
+        const ODDS_URL = `https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey=${API_KEY}&regions=eu&markets=h2h,totals&bookmakers=pinnacle`;
         
-        let oddsHistory = JSON.parse(localStorage.getItem('pinnacle_opening_odds')) || {};
+        let oddsHistory = JSON.parse(localStorage.getItem('pin_v3_history')) || {};
 
-        async function updateAllData() {
-            const btn = document.getElementById('update-btn');
-            const feed = document.getElementById('feed');
+        async function scanPinnacle() {
+            const btn = document.getElementById('scan-btn');
             btn.disabled = true;
-            feed.innerHTML = '<div class="text-center py-20 animate-pulse text-blue-600 font-black uppercase text-xs tracking-widest">Fetching Data from API...</div>';
-
+            
             try {
-                // 1. Запрос к Odds API
-                const oddsRes = await fetch(ODDS_URL);
-                const oddsData = await oddsRes.json();
-
-                // Проверка на ошибку API (ключ или лимиты)
-                if (!Array.isArray(oddsData)) {
-                    throw new Error(oddsData.message || "Invalid API response format");
-                }
-
-                // 2. Запрос к твоему Football API (статистика)
-                const statsRes = await fetch('/api/matches');
-                const statsData = await statsRes.json();
-
-                if (!statsData || !statsData.matches) {
-                    throw new Error("Stats API returned no matches");
-                }
-
-                renderUI(statsData, oddsData);
-                startCountdown();
+                const response = await fetch(ODDS_URL);
+                const data = await response.json();
+                
+                if (!Array.isArray(data)) throw new Error("API Limit reached or key error");
+                
+                renderScanner(data);
+                resetTimer();
             } catch (e) {
-                console.error(e);
-                feed.innerHTML = `<div class="text-red-500 text-center py-20 font-bold uppercase">Error: ${e.message}</div>`;
+                document.getElementById('scanner-feed').innerHTML = `<div class="p-20 text-center text-red-500 font-bold">${e.message}</div>`;
             } finally {
                 btn.disabled = false;
             }
         }
 
-        function getOddsDisplay(matchId, marketKey, currentVal) {
-            if (!currentVal) return '<span class="odds-now text-slate-300">—</span><span class="odds-start">N/A</span>';
+        function getOddsInfo(matchId, marketKey, currentPrice) {
+            if (!currentPrice) return `<span class="val-main text-slate-800">—</span>`;
             
-            const historyKey = `${matchId}_${marketKey}`;
-            const openingVal = oddsHistory[historyKey];
+            const key = `${matchId}_${marketKey}`;
+            const history = oddsHistory[key] || { start: currentPrice, last: currentPrice };
 
-            // Если коэффициента еще нет в истории - сохраняем его
-            if (!openingVal) {
-                oddsHistory[historyKey] = currentVal;
-                localStorage.setItem('pinnacle_opening_odds', JSON.stringify(oddsHistory));
-                return `<span class="odds-now">${currentVal.toFixed(2)}</span><span class="odds-start text-blue-500">NEW</span>`;
-            }
+            // Движение относительно открытия
+            const totalDiff = (currentPrice - history.start).toFixed(2);
+            // Движение за последние 15 минут
+            const isFreshMove = currentPrice < history.last;
 
-            const diff = (currentVal - openingVal).toFixed(2);
+            // Обновляем историю
+            oddsHistory[key] = { start: history.start, last: currentPrice };
+            localStorage.setItem('pin_v3_history', JSON.stringify(oddsHistory));
+
             let colorClass = 'text-slate-400';
-            let icon = '';
+            let arrow = '';
 
-            if (currentVal < openingVal) { colorClass = 'c-green'; icon = '↓'; }
-            else if (currentVal > openingVal) { colorClass = 'c-red'; icon = '↑'; }
+            if (currentPrice < history.start) { colorClass = 'delta-down'; arrow = '↓'; }
+            else if (currentPrice > history.start) { colorClass = 'delta-up'; arrow = '↑'; }
 
             return `
-                <span class="odds-now">${currentVal.toFixed(2)}</span>
-                <span class="odds-start">Start: ${openingVal.toFixed(2)}</span>
-                <div class="delta ${colorClass} font-black">${icon} ${Math.abs(diff)}</div>
+                <span class="val-main ${isFreshMove ? 'flash-move' : ''}">${currentPrice.toFixed(2)}</span>
+                <div class="flex justify-between items-center mt-1 px-1">
+                    <span class="val-start">S: ${history.start.toFixed(2)}</span>
+                    <span class="text-[10px] font-bold ${colorClass}">${arrow} ${Math.abs(totalDiff)}</span>
+                </div>
             `;
         }
 
-        const createMetric = (label, val, type) => {
-            const num = parseFloat(val) || 0;
-            const color = (num >= 2.0 || (type === 'conceded' && num <= 0.8)) ? 'bg-green' : (num >= 1.5 ? 'bg-blue' : 'bg-red');
-            const percentage = Math.min(100, (num / 3) * 100);
-            return `<div class="flex-1">
-                <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">${label}</p>
-                <p class="stat-value ${color.replace('bg-', 'c-')}">${num.toFixed(2)}</p>
-                <div class="progress-container"><div class="progress-fill ${color}" style="width: ${percentage}%"></div></div>
-            </div>`;
-        };
-
-        function renderUI(stats, odds) {
-            const feed = document.getElementById('feed');
+        function renderScanner(matches) {
+            const container = document.getElementById('scanner-feed');
             
-            const html = stats.matches.map(m => {
-                const hT = stats.standings[m.homeTeam.id];
-                const aT = stats.standings[m.awayTeam.id];
-                if (!hT || !aT) return '';
-
-                // Сопоставление команд (фуззи-поиск по названию)
-                const matchOdds = odds.find(o => 
-                    o.home_team.toLowerCase().includes(m.homeTeam.shortName.toLowerCase()) || 
-                    m.homeTeam.shortName.toLowerCase().includes(o.home_team.toLowerCase())
-                );
+            const html = matches.map(m => {
+                const pin = m.bookmakers.find(b => b.key === 'pinnacle');
+                if (!pin) return '';
 
                 let o1 = null, oX = null, o2 = null, oOver = null;
+                
+                const h2h = pin.markets.find(mk => mk.key === 'h2h');
+                if (h2h) {
+                    o1 = h2h.outcomes.find(oc => oc.name === m.home_team)?.price;
+                    o2 = h2h.outcomes.find(oc => oc.name === m.away_team)?.price;
+                    oX = h2h.outcomes.find(oc => oc.name === 'Draw')?.price;
+                }
 
-                if (matchOdds && matchOdds.bookmakers && matchOdds.bookmakers[0]) {
-                    const markets = matchOdds.bookmakers[0].markets;
-                    const h2h = markets.find(mk => mk.key === 'h2h');
-                    if (h2h) {
-                        o1 = h2h.outcomes.find(oc => oc.name === matchOdds.home_team)?.price;
-                        o2 = h2h.outcomes.find(oc => oc.name === matchOdds.away_team)?.price;
-                        oX = h2h.outcomes.find(oc => oc.name === 'Draw')?.price;
-                    }
-                    const totals = markets.find(mk => mk.key === 'totals');
-                    if (totals) {
-                        // Берем Over 2.5 если он есть, иначе первый попавшийся Over
-                        const overOutcome = totals.outcomes.find(oc => oc.name === 'Over' && oc.point === 2.5) || totals.outcomes.find(oc => oc.name === 'Over');
-                        oOver = overOutcome?.price;
-                    }
+                const totals = pin.markets.find(mk => mk.key === 'totals');
+                if (totals) {
+                    oOver = totals.outcomes.find(oc => oc.name === 'Over')?.price;
                 }
 
                 return `
-                <div class="match-card p-10">
-                    <div class="flex justify-between items-start mb-10">
-                        <span class="text-[11px] font-black text-blue-600 bg-blue-50 px-4 py-1.5 rounded-xl uppercase tracking-wider">${m.competition.name}</span>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${new Date(m.utcDate).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} | Pinnacle Live</span>
+                <div class="match-row grid grid-cols-12 gap-4 p-4 items-center rounded-xl">
+                    <div class="col-span-4">
+                        <p class="text-[10px] text-blue-500 font-bold uppercase mb-1">${m.sport_title}</p>
+                        <p class="text-sm font-black uppercase tracking-tight">${m.home_team}</p>
+                        <p class="text-sm font-black uppercase tracking-tight text-slate-500">${m.away_team}</p>
+                        <p class="text-[9px] text-slate-600 mt-2 font-bold">${new Date(m.commence_time).toLocaleString()}</p>
                     </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
-                        <div class="space-y-8">
-                            <div class="space-y-4">
-                                <h3 class="text-3xl font-[900] tracking-tighter uppercase">${m.homeTeam.shortName}</h3>
-                                <div class="flex gap-4">
-                                    ${createMetric('PPM', (hT.points/hT.playedGames), 'ppm')}
-                                    ${createMetric('Scored', (hT.goalsFor/hT.playedGames), 'scored')}
-                                </div>
-                            </div>
-                            <div class="space-y-4">
-                                <h3 class="text-3xl font-[900] tracking-tighter uppercase text-slate-400">${m.awayTeam.shortName}</h3>
-                                <div class="flex gap-4">
-                                    ${createMetric('PPM', (aT.points/aT.playedGames), 'ppm')}
-                                    ${createMetric('Scored', (aT.goalsFor/aT.playedGames), 'scored')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-slate-50 p-6 rounded-[32px] grid grid-cols-2 sm:grid-cols-4 gap-4 items-center">
-                            <div class="market-badge"><span class="label-xs">Home (1)</span>${getOddsDisplay(m.id, '1', o1)}</div>
-                            <div class="market-badge"><span class="label-xs">Draw (X)</span>${getOddsDisplay(m.id, 'X', oX)}</div>
-                            <div class="market-badge"><span class="label-xs">Away (2)</span>${getOddsDisplay(m.id, '2', o2)}</div>
-                            <div class="market-badge"><span class="label-xs">Total Over</span>${getOddsDisplay(m.id, 'O25', oOver)}</div>
-                        </div>
-                    </div>
+                    <div class="col-span-2 market-cell">${getOddsInfo(m.id, '1', o1)}</div>
+                    <div class="col-span-2 market-cell">${getOddsInfo(m.id, 'X', oX)}</div>
+                    <div class="col-span-2 market-cell">${getOddsInfo(m.id, '2', o2)}</div>
+                    <div class="col-span-2 market-cell">${getOddsInfo(m.id, 'T', oOver)}</div>
                 </div>`;
             }).join('');
             
-            feed.innerHTML = html || '<div class="text-center py-20 text-slate-400 font-bold uppercase">No matching events found on Pinnacle.</div>';
+            container.innerHTML = html || '<div class="p-20 text-center text-slate-500 uppercase font-bold">No Pinnacle Data Available</div>';
         }
 
-        let timer;
-        function startCountdown() {
-            if (timer) clearInterval(timer);
-            let seconds = 900; // 15 минут
-            timer = setInterval(() => {
-                seconds--;
-                const m = Math.floor(seconds / 60);
-                const s = seconds % 60;
+        let timeLeft = 900;
+        function resetTimer() {
+            timeLeft = 900;
+            clearInterval(window.timerInterval);
+            window.timerInterval = setInterval(() => {
+                timeLeft--;
+                const m = Math.floor(timeLeft / 60);
+                const s = timeLeft % 60;
                 document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-                if (seconds <= 0) {
-                    clearInterval(timer);
-                    updateAllData();
-                }
+                if (timeLeft <= 0) scanPinnacle();
             }, 1000);
         }
 
-        // Автозапуск при загрузке
-        updateAllData();
+        scanPinnacle();
     </script>
 </body>
 </html>
