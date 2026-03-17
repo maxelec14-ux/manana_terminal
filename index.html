@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pinnacle Full-Access Scanner</title>
+    <title>Pinnacle Full-Depth Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
-        body { background: #070B14; font-family: 'JetBrains Mono', monospace; color: #F1F5F9; }
-        .match-row { background: #111827; border: 1px solid #1F2937; border-radius: 12px; margin-bottom: 8px; transition: all 0.2s; }
-        .match-row:hover { border-color: #3B82F6; background: #161E2E; }
-        .market-card { background: #070B14; border-radius: 8px; padding: 8px; border: 1px solid #1F2937; }
+        body { background: #070B14; font-family: 'JetBrains Mono', monospace; color: #F1F5F9; font-size: 13px; }
+        .match-row { background: #111827; border: 1px solid #1F2937; border-radius: 12px; margin-bottom: 8px; }
+        .market-card { background: #070B14; border-radius: 8px; padding: 8px; border: 1px solid #1F2937; text-align: center; }
         .label-u { font-size: 8px; color: #4B5563; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 4px; }
         .odds-val { font-size: 15px; font-weight: 800; }
         .point-val { font-size: 10px; color: #3B82F6; font-weight: 800; background: rgba(59, 130, 246, 0.1); padding: 1px 4px; border-radius: 3px; }
         .delta-down { color: #10B981; } .delta-up { color: #EF4444; }
         .flash-move { animation: pulse-alert 0.8s infinite; color: #34D399; }
         @keyframes pulse-alert { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .status-bar { font-size: 10px; font-weight: 800; color: #6B7280; padding: 10px; border-top: 1px solid #1F2937; margin-top: 20px; }
     </style>
 </head>
 <body class="p-4">
@@ -25,83 +23,77 @@
     <div class="max-w-[1600px] mx-auto">
         <header class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
             <div>
-                <h1 class="text-2xl font-black text-blue-500 italic">PINNACLE<span class="text-white">DEEP</span></h1>
-                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.3em]">Deep Market Scan • Pre-Match Only</p>
+                <h1 class="text-2xl font-black text-blue-500 italic">PINNACLE<span class="text-white">FULL</span></h1>
+                <p id="counter" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Scanning all soccer markets...</p>
             </div>
             <div class="flex items-center gap-6">
-                <div class="text-right">
-                    <p id="timer" class="text-xl font-black text-blue-400">05:00</p>
-                </div>
-                <button onclick="deepScan()" id="scan-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded font-black text-[10px] uppercase tracking-tighter transition-all">Deep Scan ⚡</button>
+                <p id="timer" class="text-xl font-black text-blue-400">05:00</p>
+                <button onclick="scanAll()" id="scan-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded font-black text-[10px] uppercase">Force Refresh ⚡</button>
             </div>
         </header>
 
         <div id="scanner-feed" class="space-y-2">
-            <div class="py-20 text-center text-gray-600 font-bold uppercase text-xs">Press "Deep Scan" to fetch all leagues...</div>
+            <div class="py-20 text-center text-gray-600 font-bold animate-pulse uppercase">Fetching all available leagues...</div>
         </div>
-
-        <div id="status" class="status-bar">Ready.</div>
     </div>
 
     <script>
         const API_KEY = 'f3478125e1684304dae1ac720ced58fe';
-        let oddsHistory = JSON.parse(localStorage.getItem('pin_deep_v1')) || {};
+        let oddsHistory = JSON.parse(localStorage.getItem('pin_full_v1')) || {};
 
-        async function deepScan() {
+        async function scanAll() {
             const btn = document.getElementById('scan-btn');
-            const status = document.getElementById('status');
             const feed = document.getElementById('scanner-feed');
-            
+            const counter = document.getElementById('counter');
             btn.disabled = true;
-            status.innerText = "Step 1: Fetching all active football leagues...";
 
             try {
-                // Чтобы получить ВООБЩЕ ВСЕ лиги, мы сначала спрашиваем список доступных видов спорта
+                // 1. Получаем список ВСЕХ активных футбольных лиг (включая смол-маркеты)
                 const sportsRes = await fetch(`https://api.the-odds-api.com/v4/sports/?apiKey=${API_KEY}`);
                 const sports = await sportsRes.json();
                 
-                // Фильтруем только футбол (любой регион)
-                const footballLeagues = sports
+                // Фильтруем только футбол. Ключи вроде 'soccer_brazil_campeonato', 'soccer_chile_primera_division' и т.д.
+                const soccerKeys = sports
                     .filter(s => s.group === 'Soccer' && s.active === true)
                     .map(s => s.key);
 
-                status.innerText = `Step 2: Scanning ${footballLeagues.length} leagues in Pinnacle...`;
-                
-                // Чтобы не спамить 100 запросов, мы используем 'upcoming' но с увеличенным лимитом 
-                // и фильтруем все полученные данные.
+                // 2. В документации указано, что можно запрашивать группу 'soccer' целиком.
+                // Чтобы получить БОЛЬШЕ матчей, мы НЕ используем 'upcoming', а используем 'soccer' эндпоинт.
                 const oddsRes = await fetch(`https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey=${API_KEY}&regions=eu&markets=h2h,spreads,totals&bookmakers=pinnacle`);
-                const oddsData = await oddsRes.json();
+                const data = await oddsRes.json();
 
-                if (!Array.isArray(oddsData)) throw new Error("API Error");
+                if (!Array.isArray(data)) throw new Error("API Limit reached");
 
-                const now = new Date();
-                const filtered = oddsData.filter(m => new Date(m.commence_time) > now);
-                
-                render(filtered);
-                status.innerText = `Done. Displaying ${filtered.length} upcoming matches across all detected leagues.`;
+                // Фильтруем только те, что еще не начались
+                const preMatch = data
+                    .filter(m => new Date(m.commence_time) > new Date())
+                    .sort((a, b) => new Date(a.commence_time) - new Date(b.commence_time));
+
+                counter.innerText = `Detected ${soccerKeys.length} active leagues. Displaying ${preMatch.length} matches from Pinnacle.`;
+                render(preMatch);
                 resetTimer();
 
             } catch (e) {
-                status.innerText = "Error: " + e.message;
+                feed.innerHTML = `<div class="p-20 text-center text-red-500 font-bold uppercase">${e.message}</div>`;
             } finally { btn.disabled = false; }
         }
 
-        function track(matchId, key, price) {
+        function track(id, k, price) {
             if (!price) return { v: '—', d: '', f: false };
-            const k = `${matchId}_${key}`;
-            const h = oddsHistory[k] || { s: price, l: price };
+            const key = `${id}_${k}`;
+            const h = oddsHistory[key] || { s: price, l: price };
             const diff = (price - h.s).toFixed(2);
-            const fresh = price !== h.l;
+            const fresh = (price !== h.l);
             
-            oddsHistory[k] = { s: h.s, l: price };
-            localStorage.setItem('pin_deep_v1', JSON.stringify(oddsHistory));
+            oddsHistory[key] = { s: h.s, l: price };
+            localStorage.setItem('pin_full_v1', JSON.stringify(oddsHistory));
 
             let cls = 'text-gray-600';
             if (price < h.s) cls = 'delta-down'; else if (price > h.s) cls = 'delta-up';
             
             return {
                 v: price.toFixed(2),
-                d: `<span class="text-[9px] ${cls} font-bold">${price < h.s ? '↓' : price > h.s ? '↑' : ''} ${Math.abs(diff)}</span>`,
+                d: `<span class="${cls} font-bold text-[9px]">${price < h.s ? '↓' : price > h.s ? '↑' : ''} ${Math.abs(diff)}</span>`,
                 f: fresh
             };
         }
@@ -112,7 +104,7 @@
                 const pin = m.bookmakers.find(b => b.key === 'pinnacle');
                 if (!pin) return '';
 
-                let h2h = {}, spr = {}, tot = {};
+                let h2h = {}, spr = {p:0}, tot = {p:0};
                 pin.markets.forEach(mk => {
                     if (mk.key === 'h2h') mk.outcomes.forEach(o => h2h[o.name] = o.price);
                     if (mk.key === 'spreads') { spr.p = mk.outcomes[0]?.point; mk.outcomes.forEach(o => spr[o.name] = o.price); }
@@ -120,31 +112,31 @@
                 });
 
                 const r1 = track(m.id, '1', h2h[m.home_team]), rX = track(m.id, 'X', h2h['Draw']), r2 = track(m.id, '2', h2h[m.away_team]);
-                const rsH = track(m.id, 'sh', spr[m.home_team]), rsA = track(m.id, 'sa', spr[m.away_team]);
-                const rtO = track(m.id, 'to', tot['Over']), rtU = track(m.id, 'tu', tot['Under']);
+                const sh = track(m.id, 'sh', spr[m.home_team]), sa = track(m.id, 'sa', spr[m.away_team]);
+                const to = track(m.id, 'to', tot['Over']), tu = track(m.id, 'tu', tot['Under']);
 
                 return `
-                <div class="match-row p-3">
-                    <div class="grid grid-cols-12 gap-4 items-center">
-                        <div class="col-span-3">
-                            <span class="text-[8px] text-blue-500 font-bold uppercase truncate block">${m.sport_title}</span>
-                            <div class="text-[11px] font-black uppercase truncate">${m.home_team}</div>
-                            <div class="text-[11px] font-black uppercase truncate text-gray-500">${m.away_team}</div>
-                            <div class="text-[8px] text-gray-600 font-bold mt-1">${new Date(m.commence_time).toLocaleString([], {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'})}</div>
-                        </div>
-                        <div class="col-span-3 grid grid-cols-3 gap-1">
-                            <div class="market-card text-center"><span class="label-u">1</span><span class="${r1.f?'flash-move':''} odds-val">${r1.v}</span><br>${r1.d}</div>
-                            <div class="market-card text-center"><span class="label-u">X</span><span class="${rX.f?'flash-move':''} odds-val">${rX.v}</span><br>${rX.d}</div>
-                            <div class="market-card text-center"><span class="label-u">2</span><span class="${r2.f?'flash-move':''} odds-val">${r2.v}</span><br>${r2.d}</div>
-                        </div>
-                        <div class="col-span-3 market-card flex justify-between items-center px-4">
-                            <div class="text-center"><span class="label-u">H (${spr.p||0})</span><span class="${rsH.f?'flash-move':''} odds-val">${rsH.v}</span><br>${rsH.d}</div>
-                            <div class="text-center"><span class="label-u">A</span><span class="${rsA.f?'flash-move':''} odds-val">${rsA.v}</span><br>${rsA.d}</div>
-                        </div>
-                        <div class="col-span-3 market-card flex justify-between items-center px-4">
-                            <div class="text-center"><span class="label-u">O (${tot.p||0})</span><span class="${rtO.f?'flash-move':''} odds-val">${rtO.v}</span><br>${rtO.d}</div>
-                            <div class="text-center"><span class="label-u">U</span><span class="${rtU.f?'flash-move':''} odds-val">${rtU.v}</span><br>${rtU.d}</div>
-                        </div>
+                <div class="match-row p-3 grid grid-cols-12 gap-4 items-center">
+                    <div class="col-span-3">
+                        <span class="text-[8px] text-blue-500 font-bold uppercase truncate block">${m.sport_title}</span>
+                        <div class="font-black uppercase truncate">${m.home_team}</div>
+                        <div class="font-black uppercase truncate text-gray-500">${m.away_team}</div>
+                        <div class="text-[8px] text-gray-600 mt-1">${new Date(m.commence_time).toLocaleString()}</div>
+                    </div>
+                    <div class="col-span-3 grid grid-cols-3 gap-1">
+                        <div class="market-card"><span class="label-u">1</span><span class="${r1.f?'flash-move':''} odds-val">${r1.v}</span><br>${r1.d}</div>
+                        <div class="market-card"><span class="label-u">X</span><span class="${rX.f?'flash-move':''} odds-val">${rX.v}</span><br>${rX.d}</div>
+                        <div class="market-card"><span class="label-u">2</span><span class="${r2.f?'flash-move':''} odds-val">${r2.v}</span><br>${r2.d}</div>
+                    </div>
+                    <div class="col-span-3 market-card flex justify-around">
+                        <div><span class="label-u">H (${spr.p})</span><span class="${sh.f?'flash-move':''} odds-val">${sh.v}</span><br>${sh.info || sh.d}</div>
+                        <div class="border-l border-gray-800"></div>
+                        <div><span class="label-u">A</span><span class="${sa.f?'flash-move':''} odds-val">${sa.v}</span><br>${sa.info || sa.d}</div>
+                    </div>
+                    <div class="col-span-3 market-card flex justify-around">
+                        <div><span class="label-u">O (${tot.p})</span><span class="${to.f?'flash-move':''} odds-val">${to.v}</span><br>${to.info || to.d}</div>
+                        <div class="border-l border-gray-800"></div>
+                        <div><span class="label-u">U</span><span class="${tu.f?'flash-move':''} odds-val">${tu.v}</span><br>${tu.info || tu.d}</div>
                     </div>
                 </div>`;
             }).join('');
@@ -157,11 +149,11 @@
             window.refresh = setInterval(() => {
                 timeLeft--;
                 document.getElementById('timer').innerText = `${Math.floor(timeLeft/60).toString().padStart(2,'0')}:${(timeLeft%60).toString().padStart(2,'0')}`;
-                if (timeLeft <= 0) deepScan();
+                if (timeLeft <= 0) scanAll();
             }, 1000);
         }
 
-        deepScan();
+        scanAll();
     </script>
 </body>
 </html>
