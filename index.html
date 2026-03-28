@@ -33,7 +33,7 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap gap-4 border-t pt-8">
+            <div class="flex flex-wrap items-center gap-4 border-t pt-8">
                 <div class="flex bg-slate-100 p-1.5 rounded-2xl">
                     <button onclick="setSport('all')" class="sport-btn px-6 py-2.5 text-xs font-bold uppercase rounded-xl btn-active" data-sport="all">All</button>
                     <button onclick="setSport('1')" class="sport-btn px-6 py-2.5 text-xs font-bold uppercase rounded-xl" data-sport="1">Soccer</button>
@@ -41,6 +41,10 @@
                     <button onclick="setSport('3')" class="sport-btn px-6 py-2.5 text-xs font-bold uppercase rounded-xl" data-sport="3">Basketball</button>
                 </div>
                 <input type="text" id="search" oninput="render()" placeholder="Search team or league..." class="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none flex-grow">
+                
+                <button onclick="handleSort('time')" class="sort-btn bg-slate-50 border border-slate-200 px-6 py-3 rounded-2xl text-xs font-bold uppercase hover:bg-slate-100 transition-all">Time ↕</button>
+                <button onclick="handleSort('total')" class="sort-btn bg-slate-50 border border-slate-200 px-6 py-3 rounded-2xl text-xs font-bold uppercase hover:bg-slate-100 transition-all">Total ↕</button>
+                <button onclick="handleSort('spread')" class="sort-btn bg-slate-50 border border-slate-200 px-6 py-3 rounded-2xl text-xs font-bold uppercase hover:bg-slate-100 transition-all">Handicap ↕</button>
             </div>
         </header>
 
@@ -55,6 +59,8 @@
         let favorites = JSON.parse(localStorage.getItem('pin_favs_final')) || [];
         let currentSport = 'all';
         let favMode = false;
+        let sortField = 'time';
+        let sortOrder = 'asc';
         let charts = {};
 
         async function fetchRapid(endpoint) {
@@ -76,6 +82,9 @@
                 
                 if (eventsRes && eventsRes.data) {
                     for (let event of eventsRes.data) {
+                        // ФИЛЬТР: ТОЛЬКО ФУТБОЛ (1), ХОККЕЙ (4), БАСКЕТБОЛ (3)
+                        if (![1, 3, 4].includes(event.sport.id)) continue;
+
                         status.innerText = `Loading Odds: ${event.team_home.name}`;
                         const marketsRes = await fetchRapid(`/api/v1/events/markets?event_id=${event.id}`);
                         if (marketsRes && marketsRes.data) {
@@ -95,10 +104,11 @@
             const now = Date.now();
             if (!db[event.id]) {
                 db[event.id] = {
-                    id: event.id,
+                    id: String(event.id), // Принудительно в строку для избранного
                     home: event.team_home.name,
                     away: event.team_away.name,
-                    league: event.league?.name || event.league_name || "International",
+                    // ИСПРАВЛЕНИЕ ЛИГ: Берем tournament.name (часто используется в этом API)
+                    league: event.tournament?.name || event.league?.name || event.league_name || "Unknown League",
                     sport_id: event.sport.id,
                     start: event.start_at,
                     history: { h2h: [], spr: [], tot: [] },
@@ -110,11 +120,40 @@
             pinMarkets.forEach(m => {
                 const book = m.market_books.find(b => b.book === 'PINNACLE');
                 const val = m.value || 0;
-                if (m.market_name === '1X2') db[event.id].history.h2h.push({ t: now, v1: book.outcome_0, vx: book.outcome_x || '-', v2: book.outcome_1 });
-                if (m.market_name === 'ASIAN_HANDICAP') db[event.id].history.spr.push({ t: now, h: book.outcome_0, a: book.outcome_1, n: val });
-                if (m.market_name === 'OVER_UNDER') db[event.id].history.tot.push({ t: now, o: book.outcome_0, u: book.outcome_1, n: val });
+                
+                // ИСПРАВЛЕНИЕ ИСХОДОВ 1X2 (Учитываем ключи API: outcome_1, outcome_X, outcome_2)
+                if (m.market_name === '1X2') {
+                    const v1 = book.outcome_1 || book.outcome_0;
+                    const vx = book.outcome_X || book.outcome_x || book.outcome_draw || '-';
+                    const v2 = book.outcome_2 || book.outcome_1;
+                    db[event.id].history.h2h.push({ t: now, v1: v1, vx: vx, v2: v2 });
+                }
+                
+                if (m.market_name === 'ASIAN_HANDICAP') {
+                    // ИСПРАВЛЕНИЕ ГАНДИКАПА (outcome_1=Home, outcome_2=Away)
+                    const h = book.outcome_1 || book.outcome_0;
+                    const a = book.outcome_2 || book.outcome_1;
+                    db[event.id].history.spr.push({ t: now, h: h, a: a, n: val });
+                }
+                
+                if (m.market_name === 'OVER_UNDER') {
+                    // ИСПРАВЛЕНИЕ ТОТАЛА (outcome_1=Over, outcome_2=Under)
+                    const o = book.outcome_1 || book.outcome_0;
+                    const u = book.outcome_2 || book.outcome_1;
+                    db[event.id].history.tot.push({ t: now, o: o, u: u, n: val });
+                }
             });
             db[event.id].lastUpdate = now;
+        }
+
+        function handleSort(field) {
+            if (sortField === field) {
+                sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortField = field;
+                sortOrder = 'desc'; // По умолчанию от большего к меньшему при первом клике
+            }
+            render();
         }
 
         function render() {
@@ -125,16 +164,33 @@
             let list = Object.values(db).filter(m => {
                 if (new Date(m.start).getTime() < now - 3600000) return false;
                 if (currentSport !== 'all' && m.sport_id.toString() !== currentSport) return false;
-                if (favMode && !favorites.includes(m.id)) return false;
+                if (favMode && !favorites.includes(String(m.id))) return false;
                 const matchName = (m.home + m.away + m.league).toLowerCase();
                 return searchStr ? matchName.includes(searchStr) : true;
-            }).sort((a, b) => new Date(a.start) - new Date(b.start));
+            });
+
+            // ЛОГИКА СОРТИРОВКИ (в обе стороны)
+            list.sort((a, b) => {
+                let res = 0;
+                if (sortField === 'time') {
+                    res = new Date(a.start) - new Date(b.start);
+                } else if (sortField === 'total') {
+                    const tA = a.history.tot.slice(-1)[0]?.n || 0;
+                    const tB = b.history.tot.slice(-1)[0]?.n || 0;
+                    res = tA - tB;
+                } else if (sortField === 'spread') {
+                    const sA = Math.abs(a.history.spr.slice(-1)[0]?.n || 0);
+                    const sB = Math.abs(b.history.spr.slice(-1)[0]?.n || 0);
+                    res = sA - sB;
+                }
+                return sortOrder === 'asc' ? res : -res;
+            });
 
             feed.innerHTML = list.map(m => {
                 const h = m.history.h2h.slice(-1)[0] || {};
                 const s = m.history.spr.slice(-1)[0] || {};
                 const t = m.history.tot.slice(-1)[0] || {};
-                const isFav = favorites.includes(m.id);
+                const isFav = favorites.includes(String(m.id));
 
                 return `
                 <div class="match-card ${isFav ? 'is-fav' : ''}">
@@ -144,7 +200,7 @@
                             <div class="text-xl font-black text-slate-900 leading-tight uppercase">${m.home}</div>
                             <div class="text-xl font-black text-slate-400 leading-tight uppercase mb-4">${m.away}</div>
                             <div class="flex gap-4">
-                                <button onclick="toggleFav('${m.id}')" class="text-[11px] font-bold uppercase px-4 py-1.5 rounded-lg border ${isFav ? 'bg-amber-400 border-amber-400 text-white' : 'border-slate-200 text-slate-400'} transition-all">
+                                <button onclick="toggleFav('${m.id}')" class="text-[11px] font-bold uppercase px-4 py-1.5 rounded-lg border ${isFav ? 'bg-amber-400 border-amber-400 text-white' : 'border-slate-200 text-slate-400 hover:bg-slate-50'} transition-all">
                                     ${isFav ? '★ Favorited' : '☆ Favorite'}
                                 </button>
                                 <span class="text-[11px] font-bold text-slate-400 py-1.5 mono italic uppercase">Update: ${Math.floor((now - m.lastUpdate)/1000)}s ago</span>
@@ -183,12 +239,23 @@
             sets.forEach(s => {
                 const ctx = document.getElementById(s.id);
                 if (!ctx) return;
+                
+                // Фильтруем пустые значения (тире) чтобы графики не ломались
+                const validDatasets = s.data.map(ds => ({
+                    data: ds.d.map(val => val === '-' ? null : parseFloat(val)),
+                    borderColor: ds.c,
+                    borderWidth: 2.5,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    spanGaps: true // Соединять линию, если есть пустые точки
+                }));
+
                 if (charts[s.id]) charts[s.id].destroy();
                 charts[s.id] = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: s.data[0].d.map(() => ''),
-                        datasets: s.data.map(ds => ({ data: ds.d, borderColor: ds.c, borderWidth: 2.5, pointRadius: 0, tension: 0.4 }))
+                        datasets: validDatasets
                     },
                     options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { ticks: { font: { size: 9, weight: 'bold' } }, grid: { color: '#E2E8F0' } } } }
                 });
@@ -196,9 +263,10 @@
         }
 
         function toggleFav(id) {
-            const idx = favorites.indexOf(id);
+            const strId = String(id);
+            const idx = favorites.indexOf(strId);
             if (idx > -1) favorites.splice(idx, 1);
-            else favorites.push(id);
+            else favorites.push(strId);
             localStorage.setItem('pin_favs_final', JSON.stringify(favorites));
             render();
         }
