@@ -2,21 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Pinnacle Elite | RapidAPI Edition</title>
+    <title>Pinnacle Elite | Pro Monitor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
         body { background: #F1F5F9; font-family: 'Inter', sans-serif; color: #1E293B; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .match-card { background: white; border-radius: 16px; border: 1px solid #E2E8F0; transition: all 0.2s ease; overflow: hidden; margin-bottom: 1rem; }
-        .match-card.is-fav { border-left: 4px solid #F59E0B; }
-        .market-box { background: #F8FAFC; border-radius: 10px; padding: 10px; border: 1px solid #E2E8F0; }
-        .label-u { font-size: 9px; color: #64748B; font-weight: 800; text-transform: uppercase; }
+        .match-card { background: white; border-radius: 16px; border: 1px solid #E2E8F0; transition: all 0.2s ease; overflow: hidden; margin-bottom: 1.5rem; }
+        .match-card.is-fav { border-left: 5px solid #F59E0B; }
+        .market-box { background: #F8FAFC; border-radius: 10px; padding: 10px; border: 1px solid #E2E8F0; flex: 1; }
+        .label-u { font-size: 9px; color: #64748B; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 4px; }
         .btn-active { background: #2563EB !important; color: white !important; }
-        .chart-container { height: 120px; width: 100%; }
+        .chart-container { height: 130px; width: 100%; }
         .nominal-up { color: #EF4444; font-weight: 800; }
         .nominal-down { color: #10B981; font-weight: 800; }
+        .odds-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.1rem; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -25,8 +26,8 @@
         <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
             <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
                 <div>
-                    <h1 class="text-2xl font-black tracking-tighter">PINNACLE<span class="text-blue-600">ELITE</span></h1>
-                    <div id="api-status" class="text-[10px] font-bold text-slate-400 uppercase mt-1 italic">Ready to Sync</div>
+                    <h1 class="text-2xl font-black tracking-tighter italic">PINNACLE<span class="text-blue-600 underline">ELITE</span></h1>
+                    <div id="api-status" class="text-[10px] font-bold text-slate-400 uppercase mt-1 italic">System Ready</div>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="fullSync()" id="scan-btn" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase hover:bg-slate-800 transition-all">Full 24h Sync ⚡</button>
@@ -42,7 +43,7 @@
                     <button onclick="setSport('3')" class="sport-btn px-4 py-2 text-xs font-bold uppercase rounded-lg" data-sport="3">Basketball</button>
                 </div>
 
-                <input type="text" id="search" oninput="render()" placeholder="Search team..." class="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none flex-grow">
+                <input type="text" id="search" oninput="render()" placeholder="Search team or league..." class="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none flex-grow">
                 
                 <button onclick="handleSort('time')" class="sort-btn bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-xs font-bold uppercase">Time ↕</button>
                 <button onclick="handleSort('total')" class="sort-btn bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-xs font-bold uppercase">Total ↕</button>
@@ -57,7 +58,7 @@
         const API_KEY = "fd36bdc679msh21fa7b256e2dda5p13662cjsnbdbf4c2ed8c6";
         const API_HOST = "odds-feed.p.rapidapi.com";
         
-        let db = JSON.parse(localStorage.getItem('pin_rapid_db')) || {};
+        let db = JSON.parse(localStorage.getItem('pin_rapid_db_v3')) || {};
         let favorites = JSON.parse(localStorage.getItem('pin_favs')) || [];
         let currentSport = 'all';
         let favMode = false;
@@ -75,43 +76,33 @@
             const btn = document.getElementById('scan-btn');
             const status = document.getElementById('api-status');
             btn.disabled = true;
-            status.innerText = "Fetching Events...";
-
+            
             try {
-                // Получаем события на ближайшие 24 часа
                 const now = new Date();
                 const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-                const dateMin = now.toISOString().replace('T', ' ').split('.')[0];
-                const dateMax = tomorrow.toISOString().replace('T', ' ').split('.')[0];
+                const dMin = now.toISOString().split('T')[0] + " 00:00:00";
+                const dMax = tomorrow.toISOString().split('T')[0] + " 23:59:59";
 
-                const eventsRes = await fetchRapid(`/api/v1/events?status=SCHEDULED&start_at_min=${dateMin}&start_at_max=${dateMax}`);
+                status.innerText = "Fetching Events List...";
+                const eventsRes = await fetchRapid(`/api/v1/events?status=SCHEDULED&start_at_min=${dMin}&start_at_max=${dMax}`);
                 
                 if (eventsRes && eventsRes.data) {
                     for (let event of eventsRes.data) {
-                        status.innerText = `Loading Odds: ${event.team_home.name}`;
-                        
-                        // Получаем маркеты для события (только Pinnacle)
-                        const marketsRes = await fetchRapid(`/api/v1/events/markets?event_id=${event.id}&placing=PREMATCH`);
+                        status.innerText = `Updating Odds: ${event.team_home.name}`;
+                        const marketsRes = await fetchRapid(`/api/v1/events/markets?event_id=${event.id}`);
                         
                         if (marketsRes && marketsRes.data) {
-                            const pinMarkets = marketsRes.data.filter(m => m.market_books.some(b => b.book === 'PINNACLE'));
-                            
-                            if (pinMarkets.length > 0) {
-                                processEventData(event, pinMarkets);
-                            }
+                            processEventData(event, marketsRes.data);
                         }
-                        // Небольшая задержка, чтобы не превысить лимиты RapidAPI
-                        await new Promise(r => setTimeout(r, 100));
+                        await new Promise(r => setTimeout(r, 120)); // Anti-rate limit
                     }
-                    localStorage.setItem('pin_rapid_db', JSON.stringify(db));
+                    localStorage.setItem('pin_rapid_db_v3', JSON.stringify(db));
                     render();
                     status.innerText = "Sync Complete";
                 }
             } catch (e) {
                 status.innerText = "Error: " + e.message;
-            } finally {
-                btn.disabled = false;
-            }
+            } finally { btn.disabled = false; }
         }
 
         function processEventData(event, markets) {
@@ -121,37 +112,177 @@
                     id: event.id,
                     home: event.team_home.name,
                     away: event.team_away.name,
+                    league: event.league?.name || "Other League",
                     sport_id: event.sport.id,
                     sport_name: event.sport.name,
                     start: event.start_at,
-                    history: { h2h: [], spread: [], total: [] },
-                    lastFullSync: now
+                    history: { h2h: [], spr: [], tot: [] },
+                    lastUpdate: now
                 };
             }
-
-            markets.forEach(m => {
+            
+            const pin = markets.filter(m => m.market_books.some(b => b.book === 'PINNACLE'));
+            
+            pin.forEach(m => {
                 const book = m.market_books.find(b => b.book === 'PINNACLE');
-                const dataPoint = { t: now, v: book.outcome_0, n: m.value };
-
-                if (m.market_name === '1X2') db[event.id].history.h2h.push(dataPoint);
-                if (m.market_name === 'ASIAN_HANDICAP') db[event.id].history.spread.push(dataPoint);
-                if (m.market_name === 'OVER_UNDER') db[event.id].history.total.push(dataPoint);
+                const point = m.value || 0;
+                
+                if (m.market_name === '1X2') {
+                    db[event.id].history.h2h.push({ t: now, v1: book.outcome_0, vx: book.outcome_x, v2: book.outcome_1 });
+                }
+                if (m.market_name === 'ASIAN_HANDICAP') {
+                    db[event.id].history.spr.push({ t: now, h: book.outcome_0, a: book.outcome_1, n: point });
+                }
+                if (m.market_name === 'OVER_UNDER') {
+                    db[event.id].history.tot.push({ t: now, o: book.outcome_0, u: book.outcome_1, n: point });
+                }
             });
+            db[event.id].lastUpdate = now;
+        }
+
+        function getTimeLeft(target) {
+            const diff = new Date(target) - new Date();
+            if (diff <= 0) return "Started";
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            return `${h}h ${m}m left`;
         }
 
         function getNominalUI(history) {
-            if (!history || history.length < 2) return history.length > 0 ? history[history.length-1].n : '—';
-            const curr = history[history.length - 1];
-            const prev = history[history.length - 2];
-            
-            if (curr.n > prev.n) return `<span class="nominal-up">↑ ${curr.n}</span>`;
-            if (curr.n < prev.n) return `<span class="nominal-down">↓ ${curr.n}</span>`;
-            return curr.n;
+            if (!history || history.length < 2) return history.length > 0 ? history[history.length-1].n : '0';
+            const curr = history[history.length - 1].n;
+            const prev = history[history.length - 2].n;
+            if (curr > prev) return `<span class="nominal-up">↑ ${curr}</span>`;
+            if (curr < prev) return `<span class="nominal-down">↓ ${curr}</span>`;
+            return curr;
         }
 
-        function handleSort(field) {
-            if (sortField === field) sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-            else { sortField = field; sortOrder = 'desc'; }
+        function render() {
+            const feed = document.getElementById('scanner-feed');
+            const search = document.getElementById('search').value.toLowerCase();
+            const now = Date.now();
+
+            let list = Object.values(db).filter(m => {
+                if (new Date(m.start).getTime() < now - 3600000) return false;
+                if (currentSport !== 'all' && m.sport_id.toString() !== currentSport) return false;
+                if (favMode && !favorites.includes(m.id)) return false;
+                const searchStr = (m.home + m.away + m.league).toLowerCase();
+                if (search && !searchStr.includes(search)) return false;
+                return true;
+            });
+
+            // Sorting logic
+            list.sort((a, b) => {
+                let res = 0;
+                if (sortField === 'time') res = new Date(a.start) - new Date(b.start);
+                else {
+                    const valA = a.history[sortField === 'total' ? 'tot' : 'spr'].slice(-1)[0]?.n || 0;
+                    const valB = b.history[sortField === 'total' ? 'tot' : 'spr'].slice(-1)[0]?.n || 0;
+                    res = valA - valB;
+                }
+                return sortOrder === 'asc' ? res : -res;
+            });
+
+            feed.innerHTML = list.map(m => {
+                const lastH = m.history.h2h.slice(-1)[0] || {};
+                const lastS = m.history.spr.slice(-1)[0] || {};
+                const lastT = m.history.tot.slice(-1)[0] || {};
+                const nextUpd = Math.max(0, Math.floor((m.lastUpdate + 540000 - now) / 1000));
+
+                return `
+                <div class="match-card ${favorites.includes(m.id) ? 'is-fav' : ''}">
+                    <div class="p-6 grid grid-cols-12 gap-6 items-center">
+                        <div class="col-span-3">
+                            <div class="text-[10px] font-black text-blue-600 uppercase mb-1 tracking-widest">${m.league}</div>
+                            <div class="font-black text-lg leading-tight uppercase">${m.home}</div>
+                            <div class="font-black text-lg leading-tight uppercase text-slate-400 mb-2">${m.away}</div>
+                            <div class="flex flex-col gap-1">
+                                <span class="text-xs font-bold text-orange-600">⏳ ${getTimeLeft(m.start)}</span>
+                                <span class="text-[10px] font-bold text-slate-400 mono italic">Next sync in: ${nextUpd}s</span>
+                                <button onclick="toggleFav('${m.id}')" class="text-left text-xs font-bold mt-1 underline">${favorites.includes(m.id) ? 'Remove ⭐' : 'Add to Favorites ⭐'}</button>
+                            </div>
+                        </div>
+
+                        <div class="col-span-9 flex gap-3">
+                            <div class="market-box">
+                                <span class="label-u">1X2 Odds</span>
+                                <div class="flex justify-between gap-2">
+                                    <div class="text-center">
+                                        <div class="text-[9px] font-bold">1</div>
+                                        <div class="odds-val">${lastH.v1 || '—'}</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-[9px] font-bold">X</div>
+                                        <div class="odds-val">${lastH.vx || '—'}</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-[9px] font-bold">2</div>
+                                        <div class="odds-val">${lastH.v2 || '—'}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="market-box">
+                                <span class="label-u">Handicap (${getNominalUI(m.history.spr)})</span>
+                                <div class="flex justify-between">
+                                    <div class="text-center">
+                                        <div class="text-[9px] font-bold">HOME</div>
+                                        <div class="odds-val text-blue-700">${lastS.h || '—'}</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-[9px] font-bold">AWAY</div>
+                                        <div class="odds-val text-blue-700">${lastS.a || '—'}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="market-box">
+                                <span class="label-u">Total (${getNominalUI(m.history.tot)})</span>
+                                <div class="flex justify-between">
+                                    <div class="text-center">
+                                        <div class="text-[9px] font-bold">OVER</div>
+                                        <div class="odds-val text-orange-700">${lastT.o || '—'}</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-[9px] font-bold">UNDER</div>
+                                        <div class="odds-val text-orange-700">${lastT.u || '—'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-6 p-4 bg-slate-50 border-t">
+                        <div class="chart-container"><canvas id="ch-h2h-${m.id}"></canvas></div>
+                        <div class="chart-container"><canvas id="ch-spr-${m.id}"></canvas></div>
+                        <div class="chart-container"><canvas id="ch-tot-${m.id}"></canvas></div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            list.forEach(m => {
+                initChart(`ch-h2h-${m.id}`, m.history.h2h.map(x => x.v1), '#1E293B');
+                initChart(`ch-spr-${m.id}`, m.history.spr.map(x => x.h), '#2563EB');
+                initChart(`ch-tot-${m.id}`, m.history.tot.map(x => x.o), '#EA580C');
+            });
+        }
+
+        function initChart(id, data, color) {
+            const ctx = document.getElementById(id);
+            if (!ctx || data.length === 0) return;
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(() => ''),
+                    datasets: [{ data: data, borderColor: color, borderWidth: 2, pointRadius: 0, tension: 0.3 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { ticks: { font: { size: 9 } } } } }
+            });
+        }
+
+        function handleSort(f) {
+            if (sortField === f) sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+            else { sortField = f; sortOrder = 'desc'; }
             render();
         }
 
@@ -168,92 +299,6 @@
             render();
         }
 
-        function render() {
-            const feed = document.getElementById('scanner-feed');
-            const searchTerm = document.getElementById('search').value.toLowerCase();
-            const now = Date.now();
-
-            let list = Object.values(db).filter(m => {
-                if (new Date(m.start).getTime() < now - 7200000) return false; // Убираем старые
-                if (currentSport !== 'all' && m.sport_id.toString() !== currentSport) return false;
-                if (favMode && !favorites.includes(m.id)) return false;
-                if (searchTerm && !(m.home + m.away).toLowerCase().includes(searchTerm)) return false;
-                return true;
-            });
-
-            // Сортировка
-            list.sort((a, b) => {
-                let res = 0;
-                if (sortField === 'time') res = new Date(a.start) - new Date(b.start);
-                else {
-                    const valA = a.history[sortField === 'total' ? 'total' : 'spread'].slice(-1)[0]?.n || 0;
-                    const valB = b.history[sortField === 'total' ? 'total' : 'spread'].slice(-1)[0]?.n || 0;
-                    res = valA - valB;
-                }
-                return sortOrder === 'asc' ? res : -res;
-            });
-
-            feed.innerHTML = list.map(m => `
-                <div class="match-card ${favorites.includes(m.id) ? 'is-fav' : ''}">
-                    <div class="p-5 grid grid-cols-12 gap-4 items-center">
-                        <div class="col-span-3">
-                            <div class="flex items-center gap-2 mb-1">
-                                <button onclick="toggleFav('${m.id}')" class="text-lg">${favorites.includes(m.id) ? '⭐' : '☆'}</button>
-                                <span class="text-[9px] font-black text-blue-600 uppercase">${m.sport_name}</span>
-                            </div>
-                            <div class="font-extrabold text-sm uppercase">${m.home}</div>
-                            <div class="font-extrabold text-sm uppercase text-slate-400">${m.away}</div>
-                            <div class="mt-2 text-[10px] font-bold text-slate-500">${new Date(m.start).toLocaleString()}</div>
-                        </div>
-                        <div class="col-span-3 market-box text-center">
-                            <span class="label-u">1X2 (Home)</span>
-                            <div class="text-xl font-black mono">${m.history.h2h.slice(-1)[0]?.v || '—'}</div>
-                        </div>
-                        <div class="col-span-3 market-box text-center">
-                            <span class="label-u">Handicap</span>
-                            <div class="text-xs font-bold mb-1">${getNominalUI(m.history.spread)}</div>
-                            <div class="text-xl font-black mono">${m.history.spread.slice(-1)[0]?.v || '—'}</div>
-                        </div>
-                        <div class="col-span-3 market-box text-center">
-                            <span class="label-u">Total</span>
-                            <div class="text-xs font-bold mb-1">${getNominalUI(m.history.total)}</div>
-                            <div class="text-xl font-black mono">${m.history.total.slice(-1)[0]?.v || '—'}</div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-4 p-4 bg-slate-50 border-t">
-                        <div class="chart-container"><canvas id="c-h2h-${m.id}"></canvas></div>
-                        <div class="chart-container"><canvas id="c-spr-${m.id}"></canvas></div>
-                        <div class="chart-container"><canvas id="c-tot-${m.id}"></canvas></div>
-                    </div>
-                </div>
-            `).join('');
-
-            list.forEach(m => {
-                renderChart(`c-h2h-${m.id}`, m.history.h2h);
-                renderChart(`c-spr-${m.id}`, m.history.spread);
-                renderChart(`c-tot-${m.id}`, m.history.total);
-            });
-        }
-
-        function renderChart(id, history) {
-            const ctx = document.getElementById(id);
-            if (!ctx || history.length === 0) return;
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: history.map(h => ''),
-                    datasets: [{
-                        data: history.map(h => h.v),
-                        borderColor: '#2563EB',
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        tension: 0.2
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { ticks: { font: { size: 8 } } } } }
-            });
-        }
-
         function toggleFav(id) {
             if (favorites.includes(id)) favorites = favorites.filter(f => f !== id);
             else favorites.push(id);
@@ -261,18 +306,7 @@
             render();
         }
 
-        // Авто-обновление каждые 9 минут для активных матчей
-        setInterval(() => {
-            const now = Date.now();
-            Object.values(db).forEach(m => {
-                const startTime = new Date(m.start).getTime();
-                if (startTime - now < 3600000 && startTime - now > 0) {
-                    // Здесь можно добавить логику дозагрузки конкретного матча
-                }
-            });
-            render();
-        }, 1000);
-
+        setInterval(render, 1000);
         render();
     </script>
 </body>
