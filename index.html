@@ -2,52 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Pinnacle Elite | Pro Monitor</title>
+    <title>Pinnacle Elite | Final Stable</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
-        body { background: #F1F5F9; font-family: 'Inter', sans-serif; color: #1E293B; }
+        body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #1E293B; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .match-card { background: white; border-radius: 16px; border: 1px solid #E2E8F0; transition: all 0.2s ease; overflow: hidden; margin-bottom: 1.5rem; }
-        .match-card.is-fav { border-left: 5px solid #F59E0B; }
-        .market-box { background: #F8FAFC; border-radius: 10px; padding: 10px; border: 1px solid #E2E8F0; flex: 1; }
-        .label-u { font-size: 9px; color: #64748B; font-weight: 800; text-transform: uppercase; display: block; margin-bottom: 4px; }
+        .match-card { background: white; border-radius: 20px; border: 1px solid #E2E8F0; margin-bottom: 1.5rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .is-fav { border-left: 6px solid #F59E0B !important; }
+        .market-box { background: #F1F5F9; border-radius: 12px; padding: 12px; border: 1px solid #E2E8F0; flex: 1; }
+        .label-u { font-size: 10px; color: #64748B; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; display: block; }
+        .odds-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.15rem; color: #0F172A; }
+        .chart-container { height: 150px; width: 100%; position: relative; padding: 10px; }
         .btn-active { background: #2563EB !important; color: white !important; }
-        .chart-container { height: 140px; width: 100%; position: relative; }
-        .nominal-up { color: #EF4444; font-weight: 800; }
-        .nominal-down { color: #10B981; font-weight: 800; }
-        .odds-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.1rem; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-10">
 
     <div class="max-w-[1600px] mx-auto">
-        <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
-            <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <header class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 mb-8">
+            <div class="flex flex-wrap justify-between items-center gap-6 mb-8">
                 <div>
-                    <h1 class="text-2xl font-black tracking-tighter italic">PINNACLE<span class="text-blue-600 underline">ELITE</span></h1>
-                    <div id="api-status" class="text-[10px] font-bold text-slate-400 uppercase mt-1 italic">System Ready</div>
+                    <h1 class="text-3xl font-black tracking-tighter italic text-slate-900">PINNACLE<span class="text-blue-600">ELITE</span></h1>
+                    <div id="api-status" class="text-[11px] font-bold text-slate-400 uppercase mt-1 tracking-widest italic">System Ready</div>
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="fullSync()" id="scan-btn" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase hover:bg-slate-800 transition-all">Full 24h Sync ⚡</button>
-                    <button onclick="toggleFavMode()" id="fav-toggle" class="bg-white border border-slate-200 px-6 py-2.5 rounded-xl font-bold text-xs uppercase hover:bg-amber-50">Favorites ⭐</button>
+                <div class="flex gap-3">
+                    <button onclick="fullSync()" id="scan-btn" class="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold text-sm uppercase hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">Full 24h Sync ⚡</button>
+                    <button onclick="toggleFavMode()" id="fav-toggle" class="bg-white border border-slate-200 px-8 py-3 rounded-2xl font-bold text-sm uppercase hover:bg-amber-50 transition-all">Favorites ⭐</button>
                 </div>
             </div>
 
-            <div class="flex flex-wrap gap-4 border-t pt-6">
-                <div class="flex bg-slate-100 p-1 rounded-xl">
-                    <button onclick="setSport('all')" class="sport-btn px-4 py-2 text-xs font-bold uppercase rounded-lg btn-active" data-sport="all">All</button>
-                    <button onclick="setSport('1')" class="sport-btn px-4 py-2 text-xs font-bold uppercase rounded-lg" data-sport="1">Soccer</button>
-                    <button onclick="setSport('4')" class="sport-btn px-4 py-2 text-xs font-bold uppercase rounded-lg" data-sport="4">Hockey</button>
-                    <button onclick="setSport('3')" class="sport-btn px-4 py-2 text-xs font-bold uppercase rounded-lg" data-sport="3">Basketball</button>
+            <div class="flex flex-wrap gap-4 border-t pt-8">
+                <div class="flex bg-slate-100 p-1.5 rounded-2xl">
+                    <button onclick="setSport('all')" class="sport-btn px-6 py-2.5 text-xs font-bold uppercase rounded-xl btn-active" data-sport="all">All</button>
+                    <button onclick="setSport('1')" class="sport-btn px-6 py-2.5 text-xs font-bold uppercase rounded-xl" data-sport="1">Soccer</button>
+                    <button onclick="setSport('4')" class="sport-btn px-6 py-2.5 text-xs font-bold uppercase rounded-xl" data-sport="4">Hockey</button>
+                    <button onclick="setSport('3')" class="sport-btn px-6 py-2.5 text-xs font-bold uppercase rounded-xl" data-sport="3">Basketball</button>
                 </div>
-
-                <input type="text" id="search" oninput="render()" placeholder="Search team or league..." class="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:outline-none flex-grow">
-                
-                <button onclick="handleSort('time')" class="sort-btn bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-xs font-bold uppercase">Time ↕</button>
-                <button onclick="handleSort('total')" class="sort-btn bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-xs font-bold uppercase">Total ↕</button>
-                <button onclick="handleSort('spread')" class="sort-btn bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-xs font-bold uppercase">Handicap ↕</button>
+                <input type="text" id="search" oninput="render()" placeholder="Search team or league..." class="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none flex-grow">
             </div>
         </header>
 
@@ -58,13 +51,11 @@
         const API_KEY = "fd36bdc679msh21fa7b256e2dda5p13662cjsnbdbf4c2ed8c6";
         const API_HOST = "odds-feed.p.rapidapi.com";
         
-        let db = JSON.parse(localStorage.getItem('pin_rapid_db_v4')) || {};
-        let favorites = JSON.parse(localStorage.getItem('pin_favs')) || [];
+        let db = JSON.parse(localStorage.getItem('pin_db_final')) || {};
+        let favorites = JSON.parse(localStorage.getItem('pin_favs_final')) || [];
         let currentSport = 'all';
         let favMode = false;
-        let sortField = 'time';
-        let sortOrder = 'asc';
-        let activeCharts = {};
+        let charts = {};
 
         async function fetchRapid(endpoint) {
             const res = await fetch(`https://${API_HOST}${endpoint}`, {
@@ -80,16 +71,19 @@
             try {
                 const now = new Date();
                 const dMin = now.toISOString().split('T')[0] + " 00:00:00";
+                status.innerText = "Syncing Events...";
                 const eventsRes = await fetchRapid(`/api/v1/events?status=SCHEDULED&start_at_min=${dMin}`);
                 
                 if (eventsRes && eventsRes.data) {
                     for (let event of eventsRes.data) {
-                        status.innerText = `Sync: ${event.team_home.name}`;
+                        status.innerText = `Loading Odds: ${event.team_home.name}`;
                         const marketsRes = await fetchRapid(`/api/v1/events/markets?event_id=${event.id}`);
-                        if (marketsRes && marketsRes.data) processEventData(event, marketsRes.data);
-                        await new Promise(r => setTimeout(r, 100));
+                        if (marketsRes && marketsRes.data) {
+                            processData(event, marketsRes.data);
+                        }
+                        await new Promise(r => setTimeout(r, 150));
                     }
-                    localStorage.setItem('pin_rapid_db_v4', JSON.stringify(db));
+                    localStorage.setItem('pin_db_final', JSON.stringify(db));
                     render();
                     status.innerText = "Sync Complete";
                 }
@@ -97,115 +91,132 @@
             finally { btn.disabled = false; }
         }
 
-        function processEventData(event, markets) {
+        function processData(event, markets) {
             const now = Date.now();
             if (!db[event.id]) {
                 db[event.id] = {
                     id: event.id,
-                    home: event.team_home.name, away: event.team_away.name,
-                    league: event.league?.name || event.league_name || "Unknown League",
-                    sport_id: event.sport.id, start: event.start_at,
-                    history: { h2h: [], spr: [], tot: [] }, lastUpdate: now
+                    home: event.team_home.name,
+                    away: event.team_away.name,
+                    league: event.league?.name || event.league_name || "International",
+                    sport_id: event.sport.id,
+                    start: event.start_at,
+                    history: { h2h: [], spr: [], tot: [] },
+                    lastUpdate: now
                 };
             }
             
-            const pin = markets.filter(m => m.market_books.some(b => b.book === 'PINNACLE'));
-            pin.forEach(m => {
+            const pinMarkets = markets.filter(m => m.market_books.some(b => b.book === 'PINNACLE'));
+            pinMarkets.forEach(m => {
                 const book = m.market_books.find(b => b.book === 'PINNACLE');
+                const val = m.value || 0;
                 if (m.market_name === '1X2') db[event.id].history.h2h.push({ t: now, v1: book.outcome_0, vx: book.outcome_x || '-', v2: book.outcome_1 });
-                if (m.market_name === 'ASIAN_HANDICAP') db[event.id].history.spr.push({ t: now, h: book.outcome_0, a: book.outcome_1, n: m.value });
-                if (m.market_name === 'OVER_UNDER') db[event.id].history.tot.push({ t: now, o: book.outcome_0, u: book.outcome_1, n: m.value });
+                if (m.market_name === 'ASIAN_HANDICAP') db[event.id].history.spr.push({ t: now, h: book.outcome_0, a: book.outcome_1, n: val });
+                if (m.market_name === 'OVER_UNDER') db[event.id].history.tot.push({ t: now, o: book.outcome_0, u: book.outcome_1, n: val });
             });
             db[event.id].lastUpdate = now;
         }
 
         function render() {
             const feed = document.getElementById('scanner-feed');
-            const search = document.getElementById('search').value.toLowerCase();
+            const searchStr = document.getElementById('search').value.toLowerCase();
             const now = Date.now();
 
             let list = Object.values(db).filter(m => {
                 if (new Date(m.start).getTime() < now - 3600000) return false;
                 if (currentSport !== 'all' && m.sport_id.toString() !== currentSport) return false;
                 if (favMode && !favorites.includes(m.id)) return false;
-                const searchStr = (m.home + m.away + m.league).toLowerCase();
-                if (search && !searchStr.includes(search)) return false;
-                return true;
-            });
-
-            list.sort((a, b) => {
-                let res = (sortField === 'time') ? new Date(a.start) - new Date(b.start) : (a.history[sortField === 'total' ? 'tot' : 'spr'].slice(-1)[0]?.n || 0) - (b.history[sortField === 'total' ? 'tot' : 'spr'].slice(-1)[0]?.n || 0);
-                return sortOrder === 'asc' ? res : -res;
-            });
+                const matchName = (m.home + m.away + m.league).toLowerCase();
+                return searchStr ? matchName.includes(searchStr) : true;
+            }).sort((a, b) => new Date(a.start) - new Date(b.start));
 
             feed.innerHTML = list.map(m => {
-                const lastH = m.history.h2h.slice(-1)[0] || {};
-                const lastS = m.history.spr.slice(-1)[0] || {};
-                const lastT = m.history.tot.slice(-1)[0] || {};
-                const nextUpd = Math.max(0, Math.floor((m.lastUpdate + 540000 - now) / 1000));
-                
+                const h = m.history.h2h.slice(-1)[0] || {};
+                const s = m.history.spr.slice(-1)[0] || {};
+                const t = m.history.tot.slice(-1)[0] || {};
+                const isFav = favorites.includes(m.id);
+
                 return `
-                <div class="match-card ${favorites.includes(m.id) ? 'is-fav' : ''}">
-                    <div class="p-6 grid grid-cols-12 gap-6 items-center">
-                        <div class="col-span-3">
-                            <div class="text-[10px] font-black text-blue-600 uppercase mb-1 tracking-widest">${m.league}</div>
-                            <div class="font-black text-lg leading-tight uppercase">${m.home}</div>
-                            <div class="font-black text-lg leading-tight uppercase text-slate-400 mb-2">${m.away}</div>
-                            <div class="flex flex-col gap-1 text-[10px] font-bold">
-                                <span class="text-orange-600 italic">Next sync: ${nextUpd}s</span>
-                                <button onclick="toggleFav('${m.id}')" class="text-left underline">${favorites.includes(m.id) ? 'Remove ⭐' : 'Add ⭐'}</button>
+                <div class="match-card ${isFav ? 'is-fav' : ''}">
+                    <div class="p-8 grid grid-cols-12 gap-8 items-center">
+                        <div class="col-span-4">
+                            <div class="text-[11px] font-black text-blue-600 uppercase mb-2 tracking-widest">${m.league}</div>
+                            <div class="text-xl font-black text-slate-900 leading-tight uppercase">${m.home}</div>
+                            <div class="text-xl font-black text-slate-400 leading-tight uppercase mb-4">${m.away}</div>
+                            <div class="flex gap-4">
+                                <button onclick="toggleFav('${m.id}')" class="text-[11px] font-bold uppercase px-4 py-1.5 rounded-lg border ${isFav ? 'bg-amber-400 border-amber-400 text-white' : 'border-slate-200 text-slate-400'} transition-all">
+                                    ${isFav ? '★ Favorited' : '☆ Favorite'}
+                                </button>
+                                <span class="text-[11px] font-bold text-slate-400 py-1.5 mono italic uppercase">Update: ${Math.floor((now - m.lastUpdate)/1000)}s ago</span>
                             </div>
                         </div>
-                        <div class="col-span-9 flex gap-3">
+                        <div class="col-span-8 flex gap-4">
                             <div class="market-box"><span class="label-u">1X2 Odds</span>
-                                <div class="flex justify-between text-center"><div class="flex-1">1<div class="odds-val">${lastH.v1 || '-'}</div></div><div class="flex-1">X<div class="odds-val">${lastH.vx || '-'}</div></div><div class="flex-1">2<div class="odds-val">${lastH.v2 || '-'}</div></div></div>
+                                <div class="flex text-center"><div class="flex-1">1<div class="odds-val">${h.v1 || '-'}</div></div><div class="flex-1">X<div class="odds-val">${h.vx || '-'}</div></div><div class="flex-1">2<div class="odds-val">${h.v2 || '-'}</div></div></div>
                             </div>
-                            <div class="market-box"><span class="label-u">Handicap (${lastS.n || 0})</span>
-                                <div class="flex justify-between text-center"><div class="flex-1">H<div class="odds-val text-blue-700">${lastS.h || '-'}</div></div><div class="flex-1">A<div class="odds-val text-blue-700">${lastS.a || '-'}</div></div></div>
+                            <div class="market-box"><span class="label-u">Handicap (${s.n || 0})</span>
+                                <div class="flex text-center"><div class="flex-1">Home<div class="odds-val text-blue-600">${s.h || '-'}</div></div><div class="flex-1">Away<div class="odds-val text-blue-600">${s.a || '-'}</div></div></div>
                             </div>
-                            <div class="market-box"><span class="label-u">Total (${lastT.n || 0})</span>
-                                <div class="flex justify-between text-center"><div class="flex-1">O<div class="odds-val text-orange-700">${lastT.o || '-'}</div></div><div class="flex-1">U<div class="odds-val text-orange-700">${lastT.u || '-'}</div></div></div>
+                            <div class="market-box"><span class="label-u">Total (${t.n || 0})</span>
+                                <div class="flex text-center"><div class="flex-1">Over<div class="odds-val text-orange-600">${t.o || '-'}</div></div><div class="flex-1">Under<div class="odds-val text-emerald-600">${t.u || '-'}</div></div></div>
                             </div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-3 gap-6 p-4 bg-slate-50 border-t">
-                        <div class="chart-container"><canvas id="ch-h2h-${m.id}"></canvas></div>
-                        <div class="chart-container"><canvas id="ch-spr-${m.id}"></canvas></div>
-                        <div class="chart-container"><canvas id="ch-tot-${m.id}"></canvas></div>
+                    <div class="grid grid-cols-3 gap-8 p-6 bg-slate-50/50 border-t border-slate-100">
+                        <div class="chart-container"><canvas id="ch-h-${m.id}"></canvas></div>
+                        <div class="chart-container"><canvas id="ch-s-${m.id}"></canvas></div>
+                        <div class="chart-container"><canvas id="ch-t-${m.id}"></canvas></div>
                     </div>
                 </div>`;
             }).join('');
-            list.forEach(m => initMultiCharts(m));
+            
+            list.forEach(m => updateCharts(m));
         }
 
-        function initMultiCharts(m) {
-            const configs = [
-                { id: `ch-h2h-${m.id}`, datasets: [{ label: '1', data: m.history.h2h.map(x=>x.v1), color: '#2563EB' }, { label: 'X', data: m.history.h2h.map(x=>x.vx), color: '#94A3B8' }, { label: '2', data: m.history.h2h.map(x=>x.v2), color: '#EF4444' }] },
-                { id: `ch-spr-${m.id}`, datasets: [{ label: 'H', data: m.history.spr.map(x=>x.h), color: '#2563EB' }, { label: 'A', data: m.history.spr.map(x=>x.a), color: '#60A5FA' }] },
-                { id: `ch-tot-${m.id}`, datasets: [{ label: 'O', data: m.history.tot.map(x=>x.o), color: '#EA580C' }, { label: 'U', data: m.history.tot.map(x=>x.u), color: '#10B981' }] }
+        function updateCharts(m) {
+            const sets = [
+                { id: `ch-h-${m.id}`, data: [{ d: m.history.h2h.map(x=>x.v1), c: '#2563EB' }, { d: m.history.h2h.map(x=>x.vx), c: '#94A3B8' }, { d: m.history.h2h.map(x=>x.v2), c: '#F43F5E' }] },
+                { id: `ch-s-${m.id}`, data: [{ d: m.history.spr.map(x=>x.h), c: '#2563EB' }, { d: m.history.spr.map(x=>x.a), c: '#60A5FA' }] },
+                { id: `ch-t-${m.id}`, data: [{ d: m.history.tot.map(x=>x.o), c: '#F59E0B' }, { d: m.history.tot.map(x=>x.u), c: '#10B981' }] }
             ];
 
-            configs.forEach(cfg => {
-                const ctx = document.getElementById(cfg.id);
+            sets.forEach(s => {
+                const ctx = document.getElementById(s.id);
                 if (!ctx) return;
-                if (activeCharts[cfg.id]) activeCharts[cfg.id].destroy();
-                activeCharts[cfg.id] = new Chart(ctx, {
+                if (charts[s.id]) charts[s.id].destroy();
+                charts[s.id] = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: m.history.h2h.map(() => ''),
-                        datasets: cfg.datasets.map(d => ({ data: d.data, borderColor: d.color, borderWidth: 2, pointRadius: 0, tension: 0.3 }))
+                        labels: s.data[0].d.map(() => ''),
+                        datasets: s.data.map(ds => ({ data: ds.d, borderColor: ds.c, borderWidth: 2.5, pointRadius: 0, tension: 0.4 }))
                     },
-                    options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { ticks: { font: { size: 9 } } } } }
+                    options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { ticks: { font: { size: 9, weight: 'bold' } }, grid: { color: '#E2E8F0' } } } }
                 });
             });
         }
 
-        function handleSort(f) { if (sortField === f) sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'; else { sortField = f; sortOrder = 'desc'; } render(); }
-        function setSport(id) { currentSport = id; document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('btn-active')); document.querySelector(`[data-sport="${id}"]`).classList.add('btn-active'); render(); }
-        function toggleFavMode() { favMode = !favMode; document.getElementById('fav-toggle').classList.toggle('btn-active', favMode); render(); }
-        function toggleFav(id) { if (favorites.includes(id)) favorites = favorites.filter(f => f !== id); else favorites.push(id); localStorage.setItem('pin_favs', JSON.stringify(favorites)); render(); }
-        
-        setInterval(() => { render(); }, 30000); // Реже рендер для стабильности графиков
+        function toggleFav(id) {
+            const idx = favorites.indexOf(id);
+            if (idx > -1) favorites.splice(idx, 1);
+            else favorites.push(id);
+            localStorage.setItem('pin_favs_final', JSON.stringify(favorites));
+            render();
+        }
+
+        function setSport(id) {
+            currentSport = id;
+            document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('btn-active'));
+            document.querySelector(`[data-sport="${id}"]`).classList.add('btn-active');
+            render();
+        }
+
+        function toggleFavMode() {
+            favMode = !favMode;
+            document.getElementById('fav-toggle').classList.toggle('btn-active', favMode);
+            render();
+        }
+
+        setInterval(render, 30000);
         render();
     </script>
 </body>
