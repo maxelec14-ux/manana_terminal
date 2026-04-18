@@ -50,6 +50,16 @@
         .page-section.active { display: block; }
         .chart-line { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 2s forwards ease-out; }
         @keyframes draw { to { stroke-dashoffset: 0; } }
+
+        /* Стили для строк результатов в статистике */
+        .row-win { @apply bg-emerald-50/40 dark:bg-emerald-900/10 border-l-4 border-emerald-500; }
+        .row-loss { @apply bg-rose-50/40 dark:bg-rose-900/10 border-l-4 border-rose-500; }
+        .row-push { @apply bg-amber-50/40 dark:bg-amber-900/10 border-l-4 border-amber-500; }
+
+        /* Кастомные бейджи статусов */
+        .badge-win { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-500 dark:text-white px-3 py-1 rounded-md font-bold text-[10px] uppercase tracking-wider; }
+        .badge-loss { @apply bg-rose-100 text-rose-700 dark:bg-rose-500 dark:text-white px-3 py-1 rounded-md font-bold text-[10px] uppercase tracking-wider; }
+        .badge-push { @apply bg-amber-100 text-amber-700 dark:bg-amber-500 dark:text-white px-3 py-1 rounded-md font-bold text-[10px] uppercase tracking-wider; }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -135,85 +145,96 @@
     </div>
 
     <div id="statistics-page" class="page-section">
-        <div class="max-w-5xl mx-auto space-y-10">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <h2 class="text-3xl font-black italic uppercase text-[var(--primary)]">Performance Hub</h2>
-                <div class="flex gap-2 bg-[var(--bg-card)] p-1 rounded-xl border border-[var(--border)]">
-                    <button class="px-5 py-2 text-xs font-bold bg-[var(--primary)] text-white rounded-lg">Week</button>
-                    <button class="px-5 py-2 text-xs font-bold text-slate-500">Month</button>
-                    <button class="px-5 py-2 text-xs font-bold text-slate-500">All Time</button>
+        <div class="max-w-6xl mx-auto space-y-8">
+            <div class="flex flex-col md:flex-row justify-between items-end gap-4 px-2">
+                <div>
+                    <h2 class="text-3xl font-black italic uppercase text-[var(--primary)]">Analytics Archive</h2>
+                    <p class="text-sm text-slate-500 font-medium">Verified historical performance and signal accuracy.</p>
+                </div>
+                <div class="flex gap-2 bg-[var(--bg-card)] p-1.5 rounded-2xl border border-[var(--border)] shadow-sm">
+                    <button class="px-6 py-2 text-xs font-bold bg-[var(--primary)] text-white rounded-xl shadow-lg shadow-emerald-500/20">Week</button>
+                    <button class="px-6 py-2 text-xs font-bold text-slate-500 hover:text-[var(--primary)] transition-colors">Month</button>
+                    <button class="px-6 py-2 text-xs font-bold text-slate-500 hover:text-[var(--primary)] transition-colors">All Time</button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)]">
-                    <p class="text-xs font-bold text-slate-400 uppercase mb-2">Average ROI</p>
-                    <p class="text-4xl font-black text-[var(--primary)]">+142.4%</p>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-sm">
+                    <span class="material-symbols-outlined text-[var(--primary)] mb-2">trending_up</span>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total ROI</p>
+                    <p class="text-2xl font-black text-[var(--text-main)]">+142.4%</p>
                 </div>
-                <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)]">
-                    <p class="text-xs font-bold text-slate-400 uppercase mb-2">Win Rate</p>
-                    <p class="text-4xl font-black">74.8%</p>
+                <div class="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-sm">
+                    <span class="material-symbols-outlined text-blue-500 mb-2">verified</span>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Win Rate</p>
+                    <p class="text-2xl font-black text-[var(--text-main)]">74.8%</p>
                 </div>
-                <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)]">
-                    <p class="text-xs font-bold text-slate-400 uppercase mb-2">Net Profit</p>
-                    <p class="text-4xl font-black">+12.4k u</p>
+                <div class="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-sm">
+                    <span class="material-symbols-outlined text-amber-500 mb-2">account_balance_wallet</span>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Profit Units</p>
+                    <p class="text-2xl font-black text-[var(--text-main)]">+12.4k</p>
                 </div>
-            </div>
-
-            <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)]">
-                <h4 class="font-bold mb-8">Profit Growth Curve</h4>
-                <div class="w-full h-64">
-                    <svg viewBox="0 0 1000 200" class="w-full h-full">
-                        <polyline fill="none" stroke="url(#gradient)" stroke-width="4" stroke-linecap="round" class="chart-line"
-                            points="0,180 100,160 200,170 300,120 400,130 500,80 600,90 700,40 800,60 900,20 1000,30" />
-                        <defs>
-                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" style="stop-color:var(--primary);stop-opacity:0.2" />
-                                <stop offset="100%" style="stop-color:var(--primary);stop-opacity:1" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
+                <div class="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-sm">
+                    <span class="material-symbols-outlined text-purple-500 mb-2">monitoring</span>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Odds</p>
+                    <p class="text-2xl font-black text-[var(--text-main)]">1.92</p>
                 </div>
             </div>
 
-            <div class="bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] overflow-hidden">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-50 dark:bg-slate-800/50">
-                        <tr>
-                            <th class="p-6 font-bold uppercase text-[10px] text-slate-400">Match Details</th>
-                            <th class="p-6 font-bold uppercase text-[10px] text-slate-400">Score</th>
-                            <th class="p-6 font-bold uppercase text-[10px] text-slate-400">Target Line</th>
-                            <th class="p-6 font-bold uppercase text-[10px] text-slate-400">Result</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-[var(--border)]">
-                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                            <td class="p-6">
-                                <p class="font-bold">Arsenal vs Man City</p>
-                                <p class="text-[10px] text-slate-500">England: Premier League</p>
-                            </td>
-                            <td class="p-6 font-mono font-bold text-lg">2 : 2</td>
-                            <td class="p-6 text-slate-500 font-medium">BTTS - Yes</td>
-                            <td class="p-6"><span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 font-bold text-xs">WIN</span></td>
-                        </tr>
-                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                            <td class="p-6">
-                                <p class="font-bold">Real Madrid vs Barcelona</p>
-                                <p class="text-[10px] text-slate-500">Spain: La Liga</p>
-                            </td>
-                            <td class="p-6 font-mono font-bold text-lg">0 : 1</td>
-                            <td class="p-6 text-slate-500 font-medium">Over 2.5</td>
-                            <td class="p-6"><span class="px-3 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 font-bold text-xs">LOSS</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="p-6 border-t border-[var(--border)] flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
-                    <button class="text-xs font-bold text-slate-400 hover:text-[var(--primary)]">Previous</button>
-                    <div class="flex gap-2">
-                        <span class="w-6 h-6 flex items-center justify-center bg-[var(--primary)] text-white text-[10px] font-bold rounded">1</span>
-                        <span class="w-6 h-6 flex items-center justify-center text-[10px] font-bold rounded border border-[var(--border)]">2</span>
+            <div class="bg-[var(--bg-card)] rounded-[32px] border border-[var(--border)] shadow-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-[var(--border)]">
+                                <th class="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Match & League</th>
+                                <th class="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Final Score</th>
+                                <th class="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Target Line</th>
+                                <th class="p-6 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[var(--border)]">
+                            <tr class="row-win transition-colors">
+                                <td class="p-6">
+                                    <div class="font-bold text-[var(--text-main)]">Arsenal vs Man City</div>
+                                    <div class="text-[10px] text-slate-500 font-semibold uppercase tracking-tighter">England: Premier League</div>
+                                </td>
+                                <td class="p-6 text-center font-black text-lg text-[var(--text-main)]">2 : 2</td>
+                                <td class="p-6 italic font-medium text-slate-600 dark:text-slate-400">BTTS - YES @ 1.85</td>
+                                <td class="p-6 text-right"><span class="badge-win">Win</span></td>
+                            </tr>
+                            <tr class="row-loss transition-colors">
+                                <td class="p-6">
+                                    <div class="font-bold text-[var(--text-main)]">Real Madrid vs Barcelona</div>
+                                    <div class="text-[10px] text-slate-500 font-semibold uppercase tracking-tighter">Spain: La Liga</div>
+                                </td>
+                                <td class="p-6 text-center font-black text-lg text-[var(--text-main)]">0 : 1</td>
+                                <td class="p-6 italic font-medium text-slate-600 dark:text-slate-400">Over 2.5 @ 1.98</td>
+                                <td class="p-6 text-right"><span class="badge-loss">Loss</span></td>
+                            </tr>
+                            <tr class="row-push transition-colors">
+                                <td class="p-6">
+                                    <div class="font-bold text-[var(--text-main)]">Bayern vs Dortmund</div>
+                                    <div class="text-[10px] text-slate-500 font-semibold uppercase tracking-tighter">Germany: Bundesliga</div>
+                                </td>
+                                <td class="p-6 text-center font-black text-lg text-[var(--text-main)]">2 : 0</td>
+                                <td class="p-6 italic font-medium text-slate-600 dark:text-slate-400">Asian Total 2.0 @ 1.90</td>
+                                <td class="p-6 text-right"><span class="badge-push">Push</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="p-6 bg-slate-50/30 dark:bg-slate-800/30 border-t border-[var(--border)] flex justify-between items-center">
+                    <button class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[var(--primary)] flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">arrow_back_ios</span> Prev
+                    </button>
+                    <div class="flex gap-3">
+                        <span class="w-8 h-8 flex items-center justify-center bg-[var(--primary)] text-white text-xs font-black rounded-xl shadow-md shadow-emerald-500/20 cursor-pointer">1</span>
+                        <span class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-[var(--primary)] text-xs font-black rounded-xl border border-[var(--border)] cursor-pointer transition-colors">2</span>
                     </div>
-                    <button class="text-xs font-bold text-slate-400 hover:text-[var(--primary)]">Next</button>
+                    <button class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[var(--primary)] flex items-center gap-2">
+                        Next <span class="material-symbols-outlined text-sm">arrow_forward_ios</span>
+                    </button>
                 </div>
             </div>
         </div>
