@@ -1,392 +1,376 @@
 <!DOCTYPE html>
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Pinnacolada | Elite Soccer Analytics & Betting Value Signals</title>
-<meta name="description" content="Professional soccer analytics platform providing high-value dropping odds signals, math-based predictions, and ROI-focused sports betting strategies."/>
-<meta name="keywords" content="soccer analytics, dropping odds, value betting, football signals, betting ROI, sports statistics"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<style type="text/tailwindcss">
-    @layer base {
-        :root {
-            --primary: #10b981;
-            --primary-dark: #059669;
-            --bg-main: #f8fafc;
-            --bg-card: #ffffff;
-            --text-main: #0f172a;
-            --border: #f1f5f9;
-            --tg-bubble: #ffffff;
-        }
-        .dark {
-            --bg-main: #020617;
-            --bg-card: #0f172a;
-            --text-main: #f1f5f9;
-            --border: #1e293b;
-            --tg-bubble: #1e293b;
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Pinnacolada | Elite Soccer Analytics & Betting Signals</title>
+    <meta name="description" content="Pinnacolada provides high-precision soccer betting analytics, dropping odds signals, and mathematical forecasts for professional bettors. Boost your ROI with our live predictions.">
+    <meta name="keywords" content="soccer analytics, betting signals, dropping odds, football predictions, ROI betting, Pinnacolada, sports data">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style type="text/tailwindcss">
+        @layer base {
+            :root {
+                --primary: #10b981;
+                --primary-dark: #059669;
+                --bg-main: #f8fafc;
+                --bg-card: #ffffff;
+                --text-main: #0f172a;
+                --border: #f1f5f9;
+                --tg-bubble: #ffffff;
+            }
+            .dark {
+                --bg-main: #020617;
+                --bg-card: #0f172a;
+                --text-main: #f8fafc;
+                --border: #1e293b;
+                --tg-bubble: #1e293b;
+            }
         }
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg-main); 
             color: var(--text-main);
-            @apply transition-colors duration-200 antialiased;
+            @apply transition-colors duration-200;
         }
-    }
-    .material-symbols-outlined { 
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; 
-    }
-    .tg-bubble {
-        background: var(--tg-bubble);
-        border-radius: 12px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-        position: relative;
-        border: 1px solid var(--border);
-    }
-    .tg-bubble::before {
-        content: '';
-        position: absolute;
-        left: -8px;
-        top: 12px;
-        width: 0;
-        height: 0;
-        border-style: solid;
-        border-width: 0 8px 10px 0;
-        border-color: transparent var(--tg-bubble) transparent transparent;
-    }
-    .new-signal-status {
-        box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
-        border-color: var(--primary);
-    }
-    .page-section { display: none; }
-    .page-section.active { display: block; }
-    .fav-active { color: #f59e0b !important; font-variation-settings: 'FILL' 1 !important; }
-</style>
+        .material-symbols-outlined { 
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; 
+        }
+        .tg-bubble {
+            background: var(--tg-bubble);
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+            position: relative;
+            border: 1px solid var(--border);
+        }
+        .tg-bubble::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 12px;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 8px 10px 0;
+            border-color: transparent var(--tg-bubble) transparent transparent;
+        }
+        .new-signal {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+            border: 1px solid var(--primary);
+        }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+        .fav-active { font-variation-settings: 'FILL' 1 !important; color: #f59e0b !important; }
+    </style>
 </head>
 <body class="overflow-x-hidden">
 
-<nav class="fixed top-0 w-full z-50 bg-[var(--bg-card)] border-b border-[var(--border)]">
-<div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-<div class="flex items-center gap-8">
-<span class="text-xl font-black tracking-tight text-[var(--primary)] uppercase italic cursor-pointer" onclick="showPage('predictions')">Pinnacolada</span>
-<div class="hidden md:flex items-center gap-6">
-<a class="nav-link text-sm font-bold border-b-2 border-[var(--primary)] text-[var(--text-main)] pb-1" href="javascript:void(0)" onclick="showPage('predictions', this)">Predictions</a>
-<a class="nav-link text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors" href="javascript:void(0)" onclick="showPage('statistics', this)">Statistics</a>
-<a class="nav-link text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors" href="javascript:void(0)" onclick="showPage('subscription', this)">Subscription</a>
-<a class="nav-link text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors" href="javascript:void(0)" onclick="showPage('favourites', this)">Favourites</a>
-</div>
-</div>
-<div class="flex items-center gap-4">
-<button onclick="toggleTheme()" class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-[var(--primary)]">contrast</button>
-<span class="material-symbols-outlined text-slate-400 cursor-pointer">notifications</span>
-<div class="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-<span class="material-symbols-outlined text-slate-500 text-sm">person</span>
-</div>
-</div>
-</div>
-</nav>
+<header>
+    <nav class="fixed top-0 w-full z-50 bg-[var(--bg-card)] border-b border-[var(--border)]">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <span class="text-xl font-black tracking-tight text-[var(--primary)] uppercase italic cursor-pointer" onclick="switchPage('predictions')">Pinnacolada</span>
+                <div class="hidden md:flex items-center gap-6">
+                    <a class="nav-link text-sm font-bold border-b-2 border-[var(--primary)] text-[var(--text-main)] pb-1" href="javascript:void(0)" onclick="switchPage('predictions', this)">Predictions</a>
+                    <a class="nav-link text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors" href="javascript:void(0)" onclick="switchPage('statistics', this)">Statistics</a>
+                    <a class="nav-link text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors" href="javascript:void(0)" onclick="switchPage('subscription', this)">Subscription</a>
+                    <a class="nav-link text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors flex items-center gap-1" href="javascript:void(0)" onclick="switchPage('favourites', this)">
+                        Favourites
+                    </a>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-[var(--primary)]" onclick="toggleTheme()">contrast</span>
+                <span class="material-symbols-outlined text-slate-400 cursor-pointer">notifications</span>
+                <div class="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-slate-500 text-sm">person</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+</header>
 
 <main class="pt-24 pb-12 px-4 max-w-7xl mx-auto">
-
-<div id="predictions-page" class="page-section active">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <aside class="hidden lg:block lg:col-span-3 space-y-6">
-            <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Stats</h3>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-end">
-                        <span class="text-sm text-slate-500">Monthly ROI</span>
-                        <span class="text-lg font-black text-[var(--primary)]">+24.8%</span>
+    <div id="predictions-page" class="page-section active">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <aside class="hidden lg:block lg:col-span-3 space-y-6">
+                <div class="bg-[var(--bg-card)] p-6 rounded-2xl shadow-sm border border-[var(--border)]">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Stats</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-end">
+                            <span class="text-sm text-slate-500">Monthly ROI</span>
+                            <span class="text-lg font-black text-[var(--primary)]">+24.8%</span>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <span class="text-sm text-slate-500">Win Rate</span>
+                            <span class="text-lg font-black">72%</span>
+                        </div>
                     </div>
-                    <div class="flex justify-between items-end">
-                        <span class="text-sm text-slate-500">Win Rate</span>
-                        <span class="text-lg font-black">72%</span>
+                </div>
+                <div class="relative rounded-2xl overflow-hidden aspect-[3/4] bg-slate-900 shadow-xl group cursor-pointer">
+                    <img alt="Premium Betting Offer" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYjkmVCx9oOUKXhgOoV3rnhFwJS7gb1dPZ4XgViYD1R0Tp0DSSPUfrirBMqHgdoX0Op_ON0DayzqkeGRc9dTRaVrNNRpMraB9ac4TwSzyHqqt7dvgBgMqHUzf1U7O0JDsYeXEhw_R3-TzXWZVz85_6eTFkg5pxrPo0N7Yun7qbBcEzGRV1GyYCB4k826Ql7sooX7OY0T0XthtinGPHhMXgeiGoIOlK-CVMWTUt35CglNfHH5KGcOHuLqRq_D6AuSiWv7rJk4YvGPSO"/>
+                    <div class="absolute inset-0 p-6 flex flex-col justify-end">
+                        <p class="text-[10px] text-[var(--primary)] font-bold uppercase mb-2">Partner Offer</p>
+                        <h4 class="text-xl font-bold text-white mb-4">Get 100% Welcome Bonus</h4>
+                        <button class="bg-[var(--primary)] text-white text-xs font-bold py-3 rounded-xl uppercase tracking-widest hover:bg-[var(--primary-dark)] transition-colors">Claim Now</button>
                     </div>
                 </div>
-            </div>
-            <div class="relative rounded-2xl overflow-hidden aspect-[3/4] bg-slate-900 shadow-xl group cursor-pointer">
-                <img alt="Professional Soccer Analytics Partner" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=600"/>
-                <div class="absolute inset-0 p-6 flex flex-col justify-end">
-                    <p class="text-[10px] text-[var(--primary)] font-bold uppercase mb-2">Partner Offer</p>
-                    <h4 class="text-xl font-bold text-white mb-4">Get 100% Welcome Bonus</h4>
-                    <button class="bg-[var(--primary)] text-white text-xs font-bold py-3 rounded-xl uppercase tracking-widest hover:bg-[var(--primary-dark)]">Claim Now</button>
-                </div>
-            </div>
-        </aside>
+            </aside>
 
-        <section class="lg:col-span-6 space-y-8">
-            <div class="flex items-center justify-between mb-4 px-2">
-                <h2 class="text-lg font-extrabold flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse"></span>
-                    Live Predictions
-                </h2>
-                <span class="text-xs font-medium text-slate-400">142 users online</span>
-            </div>
-
-            <article class="flex gap-3 signal-card" data-id="101">
-                <div class="w-10 h-10 rounded-full bg-[var(--primary)] flex-shrink-0 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-white text-xl">analytics</span>
+            <div class="lg:col-span-6 space-y-8">
+                <h1 class="sr-only">Soccer Betting Predictions and Analytics</h1>
+                <div class="flex items-center justify-between mb-4 px-2">
+                    <h2 class="text-lg font-extrabold flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse"></span>
+                        Live Predictions
+                    </h2>
+                    <span class="text-xs font-medium text-slate-400">142 users online</span>
                 </div>
-                <div class="flex-1 space-y-2 max-w-[90%]">
-                    <div class="tg-bubble p-5 new-signal-status" id="signal-new">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center gap-1">
-                                <span class="text-xs font-bold text-[var(--primary)]">Math Signal</span>
-                                <span class="material-symbols-outlined text-[var(--primary)] text-sm fill-current" style="font-variation-settings: 'FILL' 1;">verified</span>
+
+                <article class="flex gap-3 signal-item">
+                    <div class="w-10 h-10 rounded-full bg-[var(--primary)] flex-shrink-0 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-white text-xl">analytics</span>
+                    </div>
+                    <div class="flex-1 space-y-2 max-w-[90%]">
+                        <div id="new-signal-target" class="tg-bubble p-5 new-signal transition-all duration-1000">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-xs font-bold text-[var(--primary)]">Math Signal</span>
+                                    <span class="material-symbols-outlined text-[var(--primary)] text-sm fill-current" style="font-variation-settings: 'FILL' 1;">verified</span>
+                                </div>
+                                <button onclick="toggleFav(this)" class="material-symbols-outlined text-slate-300 hover:text-amber-500 transition-colors text-xl">star</button>
                             </div>
-                            <button onclick="toggleFav('101')" class="material-symbols-outlined text-slate-300 hover:text-amber-500 transition-colors cursor-pointer">star</button>
+                            <div class="font-mono text-sm leading-relaxed space-y-1 text-[var(--text-main)] opacity-90">
+                                <p>🏆 Honduras: Liga Nacional</p>
+                                <p>📅 Start: 2026-04-17 01:30:00</p>
+                                <br/>
+                                <p>🏠 Victoria</p>
+                                <p>🚀 Motagua</p>
+                                <br/>
+                                <p>🎯 Target Line: 2.75</p>
+                                <p class="font-bold">💎 Side: OVER @ <span class="text-[var(--primary-dark)]">1.93</span></p>
+                            </div>
+                            <div class="mt-2 text-[10px] text-slate-400 text-right">09:15</div>
                         </div>
-                        <div class="font-mono text-sm leading-relaxed space-y-1 opacity-90">
-                            <p>🏆 Honduras: Liga Nacional</p>
-                            <p>📅 Start: 2026-04-17 01:30:00</p>
-                            <br/>
-                            <p>🏠 Victoria</p>
-                            <p>🚀 Motagua</p>
-                            <br/>
-                            <p>🎯 Target Line: 2.75</p>
-                            <p class="font-bold">💎 Side: OVER @ <span class="text-[var(--primary-dark)]">1.93</span></p>
-                        </div>
-                        <div class="mt-2 text-[10px] text-slate-400 text-right">09:15</div>
+                        <button class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">payments</span>
+                            BET AT BEST ODDS & GET BONUS
+                        </button>
                     </div>
-                    <button class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined">payments</span>
-                        BET AT BEST ODDS & GET BONUS
-                    </button>
-                </div>
-            </article>
+                </article>
 
-            <div class="bg-[var(--bg-card)] border-2 border-dashed border-[var(--primary)]/20 rounded-2xl p-6 text-center">
-                <p class="text-xs font-bold text-slate-400 uppercase mb-2">Advertisement</p>
-                <h4 class="text-lg font-bold mb-3">Claim Your $500 Free Bet Today!</h4>
-                <a class="inline-block bg-[var(--text-main)] text-[var(--bg-card)] px-8 py-3 rounded-xl font-bold text-sm" href="#">Register & Play</a>
-            </div>
-        </section>
-
-        <aside class="lg:col-span-3 space-y-6">
-            <div class="bg-[var(--bg-card)] rounded-2xl p-6 border border-[var(--border)] shadow-sm">
-                <h4 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-tighter">Performance Tracking</h4>
-                <div class="h-20 flex items-end justify-between gap-1">
-                    <div class="w-full bg-emerald-500/20 rounded-t-sm h-[30%]"></div>
-                    <div class="w-full bg-emerald-500/40 rounded-t-sm h-[45%]"></div>
-                    <div class="w-full bg-[var(--primary)] rounded-t-sm h-[80%]"></div>
-                    <div class="w-full bg-[var(--primary-dark)] rounded-t-sm h-[95%]"></div>
+                <div class="bg-[var(--bg-card)] border-2 border-dashed border-emerald-100 dark:border-emerald-900/30 rounded-2xl p-6 text-center">
+                    <p class="text-xs font-bold text-slate-400 uppercase mb-2">Advertisement</p>
+                    <img alt="Bookmaker Bonus" class="mx-auto h-12 mb-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrG9Er8AeYzw2EWhopBn4zm0P7looynEmZtInAuHTA0eAM7pqi7i6Y4DpH0hY5FDTL60iKn3kNeHIbAYUV6xdCwnqhtAE313pzWyybrcy8Kc13nG-ucxamoZAAGU0wapGp3uwyr0XpYIxWFSTshF3JhRt65MJ6d8_Ct1NwCqzgImqV-dGMX7HpwTpQnzp0G2Dccx55ZXGRBXhB4XAn4g_DjKhlALlLpc7HwJ0QeC6EuYWD6RhkVhziV3IxzT5J7i6BlX9KY6Iqw-jS"/>
+                    <h4 class="text-lg font-bold mb-3">Claim Your $500 Free Bet Today!</h4>
+                    <a class="inline-block bg-slate-900 text-white px-8 py-3 rounded-xl font-bold text-sm" href="#">Register & Play</a>
                 </div>
             </div>
-        </aside>
+
+            <aside class="lg:col-span-3 space-y-6">
+                <div class="bg-[var(--bg-card)] rounded-2xl p-6 border border-[var(--border)] shadow-sm">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-tighter">Performance Tracking</h4>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="flex-1">
+                            <p class="text-2xl font-black text-[var(--text-main)]">+142%</p>
+                            <p class="text-[10px] text-slate-500 font-medium">ROI Yearly</p>
+                        </div>
+                    </div>
+                    <div class="h-20 flex items-end justify-between gap-1">
+                        <div class="w-full bg-emerald-50 dark:bg-emerald-900/20 rounded-t-sm h-[30%]"></div>
+                        <div class="w-full bg-emerald-100 dark:bg-emerald-900/40 rounded-t-sm h-[45%]"></div>
+                        <div class="w-full bg-emerald-200 dark:bg-emerald-800/60 rounded-t-sm h-[60%]"></div>
+                        <div class="w-full bg-[var(--primary)] rounded-t-sm h-[80%]"></div>
+                    </div>
+                </div>
+            </aside>
+        </div>
     </div>
-</div>
 
-<div id="statistics-page" class="page-section">
-    <div class="max-w-5xl mx-auto space-y-8">
-        <header class="flex flex-col md:flex-row justify-between items-center gap-4">
-            <h2 class="text-3xl font-black italic uppercase">Performance Analytics</h2>
-            <div class="flex gap-2 bg-[var(--bg-card)] p-1 rounded-xl border border-[var(--border)]">
-                <button class="px-4 py-2 text-xs font-bold bg-[var(--primary)] text-white rounded-lg">Week</button>
-                <button class="px-4 py-2 text-xs font-bold text-slate-500">Month</button>
-                <button class="px-4 py-2 text-xs font-bold text-slate-500">All Time</button>
+    <div id="statistics-page" class="page-section">
+        <div class="max-w-4xl mx-auto space-y-8">
+            <div class="flex justify-between items-center">
+                <h2 class="text-3xl font-black italic uppercase">Analytics</h2>
+                <div class="flex gap-2 bg-[var(--bg-card)] p-1 rounded-xl border border-[var(--border)]">
+                    <button class="px-4 py-1 text-xs font-bold bg-[var(--primary)] text-white rounded-lg">Month</button>
+                    <button class="px-4 py-1 text-xs font-bold text-slate-500">Year</button>
+                </div>
             </div>
-        </header>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Total ROI</p>
-                <p class="text-2xl font-black text-[var(--primary)]">+142%</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
+                    <p class="text-xs font-bold text-slate-400 uppercase mb-1">Total ROI</p>
+                    <p class="text-3xl font-black text-[var(--primary)]">+142.4%</p>
+                </div>
+                <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
+                    <p class="text-xs font-bold text-slate-400 uppercase mb-1">Winrate</p>
+                    <p class="text-3xl font-black">68.2%</p>
+                </div>
+                <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
+                    <p class="text-xs font-bold text-slate-400 uppercase mb-1">Avg Odds</p>
+                    <p class="text-3xl font-black">1.92</p>
+                </div>
             </div>
-            <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Winrate</p>
-                <p class="text-2xl font-black">68.4%</p>
-            </div>
-            <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Avg Odds</p>
-                <p class="text-2xl font-black">1.92</p>
-            </div>
-            <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Profit Units</p>
-                <p class="text-2xl font-black">12.4k</p>
-            </div>
-        </div>
 
-        <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)]">
-            <h3 class="font-bold mb-6">Equity Curve (Value Growth)</h3>
-            <div class="h-64 flex items-end justify-between gap-2">
-                <div class="w-full bg-[var(--primary)]/10 h-[20%] rounded-t-lg"></div>
-                <div class="w-full bg-[var(--primary)]/20 h-[35%] rounded-t-lg"></div>
-                <div class="w-full bg-[var(--primary)]/30 h-[25%] rounded-t-lg"></div>
-                <div class="w-full bg-[var(--primary)]/50 h-[60%] rounded-t-lg"></div>
-                <div class="w-full bg-[var(--primary)]/70 h-[50%] rounded-t-lg"></div>
-                <div class="w-full bg-[var(--primary)] h-[90%] rounded-t-lg"></div>
+            <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)]">
+                <h3 class="font-bold mb-6 italic uppercase text-sm">Equity Growth Curve</h3>
+                <div class="h-64 w-full relative">
+                    <svg class="w-full h-full" viewBox="0 0 1000 100" preserveAspectRatio="none">
+                        <path d="M0,80 L200,70 L400,75 L600,40 L800,45 L1000,10" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M0,80 L200,70 L400,75 L600,40 L800,45 L1000,10 L1000,100 L0,100 Z" fill="url(#grad)" opacity="0.1"/>
+                        <defs>
+                            <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#10b981;stop-opacity:0" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
             </div>
-        </div>
 
-        <div class="space-y-4">
-            <h3 class="font-bold text-lg">Signal History</h3>
-            <div class="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden">
+            <div class="bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] overflow-hidden">
                 <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-400 text-[10px] uppercase">
+                    <thead class="bg-slate-50 dark:bg-slate-800/50">
                         <tr>
-                            <th class="p-4">Event</th>
-                            <th class="p-4">Market</th>
-                            <th class="p-4">Odds</th>
-                            <th class="p-4">Result</th>
+                            <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Event</th>
+                            <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Pick</th>
+                            <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Odds</th>
+                            <th class="p-4 font-bold uppercase text-[10px] text-slate-400 text-right">Result</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-[var(--border)]">
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                            <td class="p-4 font-semibold">Arsenal vs Man City</td>
-                            <td class="p-4">BTTS - Yes</td>
-                            <td class="p-4 font-mono">1.85</td>
-                            <td class="p-4"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-md text-[10px] font-bold uppercase">Win</span></td>
+                        <tr>
+                            <td class="p-4 font-medium italic">Arsenal vs Man City</td>
+                            <td class="p-4 opacity-70 font-mono">BTTS: YES</td>
+                            <td class="p-4 font-bold">1.85</td>
+                            <td class="p-4 text-right"><span class="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-3 py-1 rounded-full text-[10px] font-black uppercase">Win</span></td>
                         </tr>
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                            <td class="p-4 font-semibold">Real Madrid vs Barca</td>
-                            <td class="p-4">Over 2.5</td>
-                            <td class="p-4 font-mono">1.72</td>
-                            <td class="p-4"><span class="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 rounded-md text-[10px] font-bold uppercase">Loss</span></td>
+                        <tr>
+                            <td class="p-4 font-medium italic">Victoria vs Motagua</td>
+                            <td class="p-4 opacity-70 font-mono">Over 2.75</td>
+                            <td class="p-4 font-bold">1.93</td>
+                            <td class="p-4 text-right"><span class="bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 px-3 py-1 rounded-full text-[10px] font-black uppercase">Push</span></td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-medium italic">Real Madrid vs Barca</td>
+                            <td class="p-4 opacity-70 font-mono">Home -0.5</td>
+                            <td class="p-4 font-bold">2.10</td>
+                            <td class="p-4 text-right"><span class="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-3 py-1 rounded-full text-[10px] font-black uppercase">Loss</span></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="flex justify-center gap-2 pt-4">
-                <button class="w-10 h-10 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center font-bold">1</button>
-                <button class="w-10 h-10 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center text-slate-400">2</button>
-            </div>
         </div>
     </div>
-</div>
 
-<div id="subscription-page" class="page-section">
-    <div class="max-w-4xl mx-auto py-10">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-black mb-4 italic uppercase">Unlock Premium Analytics</h2>
-            <p class="text-slate-500">Join the top 1% of bettors with real-time math-driven signals.</p>
-        </div>
-        <div class="grid md:grid-cols-2 gap-8">
-            <div class="bg-[var(--bg-card)] p-10 rounded-[40px] border-2 border-[var(--primary)] shadow-2xl shadow-emerald-500/10 relative overflow-hidden">
-                <div class="absolute top-0 right-0 bg-[var(--primary)] text-white text-[10px] font-bold px-6 py-2 rounded-bl-3xl uppercase tracking-tighter">Recommended</div>
-                <h3 class="text-2xl font-bold mb-4 italic">PREMIUM ANALYST</h3>
-                <div class="text-5xl font-black mb-8">$49.99<span class="text-sm font-medium text-slate-400 uppercase">/mo</span></div>
-                <ul class="space-y-4 mb-10">
-                    <li class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> Instant 24/7 Signals</li>
-                    <li class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> Bankroll Management Tool</li>
-                    <li class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> Zero Ads Experience</li>
-                </ul>
-                <div class="space-y-3">
-                    <a href="https://t.me/yourchannel" class="w-full py-4 bg-[#0088cc] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-all uppercase tracking-tight">
-                        <span class="material-symbols-outlined">send</span> Buy via Telegram
-                    </a>
-                    <a href="https://wa.me/yournumber" class="w-full py-4 bg-[#25D366] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-all uppercase tracking-tight">
-                        <span class="material-symbols-outlined">chat_bubble</span> WhatsApp Admin
-                    </a>
+    <div id="subscription-page" class="page-section">
+        <div class="max-w-4xl mx-auto">
+            <section class="text-center mb-16">
+                <h2 class="text-4xl font-black italic mb-4 uppercase">Upgrade to Premium</h2>
+                <p class="text-slate-500 max-w-xl mx-auto">Gain a competitive edge with our most accurate analytical engine and instant telegram notifications.</p>
+            </section>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-[var(--bg-card)] p-10 rounded-3xl border border-[var(--border)] shadow-sm">
+                    <h3 class="text-xl font-bold mb-4 uppercase italic">Standard</h3>
+                    <div class="text-4xl font-black mb-6">Free</div>
+                    <ul class="space-y-4 mb-8 text-slate-500 text-sm">
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-[var(--primary)] text-sm">check</span> 3-5 signals daily</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-[var(--primary)] text-sm">check</span> Limited stats access</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-slate-300 text-sm">close</span> No direct support</li>
+                    </ul>
+                    <button class="w-full py-4 border border-[var(--border)] rounded-2xl font-bold opacity-50 cursor-not-allowed">Active Plan</button>
+                </div>
+                <div class="bg-[var(--bg-card)] p-10 rounded-3xl border-2 border-[var(--primary)] shadow-2xl shadow-emerald-500/10 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-[var(--primary)] text-white text-[10px] font-bold px-4 py-1 rounded-bl-xl uppercase">Best Value</div>
+                    <h3 class="text-xl font-bold mb-4 uppercase italic">Premium Pro</h3>
+                    <div class="text-4xl font-black mb-6">$49.99<span class="text-sm font-medium opacity-40">/mo</span></div>
+                    <ul class="space-y-4 mb-8 text-sm">
+                        <li class="flex items-center gap-2 font-bold"><span class="material-symbols-outlined text-[var(--primary)] text-sm">verified_user</span> 15-20 verified signals daily</li>
+                        <li class="flex items-center gap-2 font-bold"><span class="material-symbols-outlined text-[var(--primary)] text-sm">verified_user</span> Real-time Dropping Odds</li>
+                        <li class="flex items-center gap-2 font-bold"><span class="material-symbols-outlined text-[var(--primary)] text-sm">verified_user</span> Private Telegram Bot Access</li>
+                    </ul>
+                    <div class="space-y-3">
+                        <a href="https://t.me/yourchannel" class="w-full py-4 bg-[#0088cc] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity uppercase text-xs">
+                             Buy via Telegram
+                        </a>
+                        <a href="https://wa.me/yournumber" class="w-full py-4 bg-[#25D366] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity uppercase text-xs">
+                             WhatsApp Support
+                        </a>
+                    </div>
                 </div>
             </div>
-            <div class="bg-[var(--bg-card)] p-10 rounded-[40px] border border-[var(--border)] flex flex-col">
-                <h3 class="text-2xl font-bold mb-4">Standard</h3>
-                <div class="text-5xl font-black mb-8">Free</div>
-                <ul class="space-y-4 mb-10 flex-1">
-                    <li class="flex items-center gap-3 text-slate-500"><span class="material-symbols-outlined text-[var(--primary)]">check_circle</span> 3 Daily Live Signals</li>
-                    <li class="flex items-center gap-3 text-slate-400"><span class="material-symbols-outlined">cancel</span> No Dropping Odds Scanner</li>
-                </ul>
-                <button class="w-full py-4 border-2 border-[var(--border)] rounded-2xl font-bold text-slate-400">Current Plan</button>
+        </div>
+    </div>
+
+    <div id="favourites-page" class="page-section">
+        <div class="max-w-2xl mx-auto">
+            <h2 class="text-2xl font-black mb-8 italic uppercase flex items-center gap-2">
+                <span class="material-symbols-outlined text-amber-500">star</span> Your Saved Signals
+            </h2>
+            <div id="fav-container" class="space-y-6">
+                <p class="text-slate-400 text-center py-12 italic">No signals saved yet. Click the star on any prediction to save it here.</p>
             </div>
         </div>
     </div>
-</div>
-
-<div id="favourites-page" class="page-section">
-    <div class="max-w-3xl mx-auto space-y-6">
-        <h2 class="text-2xl font-black italic uppercase">Your Favourites</h2>
-        <div id="fav-container" class="space-y-6">
-            <p class="text-slate-400 text-center py-20 italic">You haven't added any signals to your favourites yet.</p>
-        </div>
-    </div>
-</div>
-
 </main>
 
 <footer class="bg-[var(--bg-card)] border-t border-[var(--border)] py-12 mt-20">
-<div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
-<div>
-<span class="text-xl font-black text-[var(--primary)] mb-2 block uppercase italic">Pinnacolada</span>
-<p class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Elite Soccer Forecasts © 2026</p>
-</div>
-<div class="flex flex-wrap justify-center gap-x-8 gap-y-4">
-<a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Privacy Policy</a>
-<a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Affiliate Terms</a>
-<a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Contact Support</a>
-<a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Responsible Gambling</a>
-</div>
-</div>
+    <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
+        <div>
+            <span class="text-xl font-black text-[var(--primary)] mb-2 block uppercase italic">Pinnacolada</span>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Elite Soccer Forecasts © 2026</p>
+        </div>
+        <div class="flex flex-wrap justify-center gap-x-8 gap-y-4">
+            <a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Privacy Policy</a>
+            <a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Affiliate Terms</a>
+            <a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Contact Support</a>
+            <a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Responsible Gambling</a>
+        </div>
+    </div>
 </footer>
 
-<div class="sr-only">
-    <h3>Professional Football Analytics</h3>
-    <p>Pinnacolada offers premium soccer betting signals based on math models and dropping odds analytics. Our platform helps you track ROI and win rate for Liga Nacional, Premier League, and La Liga.</p>
-</div>
-
 <script>
-    // Theme Toggle
     function toggleTheme() {
         document.documentElement.classList.toggle('dark');
-        localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
     }
 
-    // Page Switcher
-    function showPage(pageId, element) {
-        document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    function switchPage(pageId, element) {
+        document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
         document.getElementById(pageId + '-page').classList.add('active');
         
-        document.querySelectorAll('.nav-link').forEach(l => {
-            l.classList.remove('font-bold', 'border-b-2', 'border-[var(--primary)]', 'text-[var(--text-main)]', 'pb-1');
-            l.classList.add('font-semibold', 'text-slate-500');
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('font-bold', 'border-b-2', 'border-[var(--primary)]', 'text-[var(--text-main)]', 'pb-1');
+            link.classList.add('font-semibold', 'text-slate-500');
         });
+        
         if(element) {
             element.classList.remove('font-semibold', 'text-slate-500');
             element.classList.add('font-bold', 'border-b-2', 'border-[var(--primary)]', 'text-[var(--text-main)]', 'pb-1');
         }
+        window.scrollTo(0, 0);
     }
 
-    // Favourites Logic
-    let favs = JSON.parse(localStorage.getItem('pinnacolada_favs') || '[]');
-    
-    function toggleFav(id) {
-        const btn = document.querySelector(`[data-id="${id}"] .material-symbols-outlined.cursor-pointer`);
-        if (favs.includes(id)) {
-            favs = favs.filter(i => i !== id);
-            btn?.classList.remove('fav-active');
-        } else {
-            favs.push(id);
-            btn?.classList.add('fav-active');
-        }
-        localStorage.setItem('pinnacolada_favs', JSON.stringify(favs));
-        renderFavs();
-    }
-
-    function renderFavs() {
+    function toggleFav(btn) {
+        btn.classList.toggle('fav-active');
+        const card = btn.closest('.signal-item').cloneNode(true);
         const container = document.getElementById('fav-container');
-        if (favs.length === 0) {
-            container.innerHTML = `<p class="text-slate-400 text-center py-20 italic">Your favourites list is empty.</p>`;
-            return;
+        
+        if(btn.classList.contains('fav-active')) {
+            if(container.querySelector('p')) container.innerHTML = '';
+            container.appendChild(card);
+        } else {
+            // Logic to remove from list could be added here
         }
-        container.innerHTML = "";
-        favs.forEach(id => {
-            // В реальном проекте здесь будет поиск данных по ID. Тут для примера клонируем первый сигнал.
-            const original = document.querySelector(`[data-id="${id}"]`);
-            if (original) {
-                const clone = original.cloneNode(true);
-                clone.querySelector('button.material-symbols-outlined').classList.add('fav-active');
-                container.appendChild(clone);
-            }
-        });
     }
 
-    // Initial load
-    if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
-
-    // Remove "New" glow after 60 seconds
+    // Effect removal after 60 seconds
     setTimeout(() => {
-        const newEl = document.getElementById('signal-new');
-        if (newEl) newEl.classList.remove('new-signal-status');
+        const newSignal = document.getElementById('new-signal-target');
+        if(newSignal) newSignal.classList.remove('new-signal');
     }, 60000);
 </script>
 
-</body></html>
+</body>
+</html>
