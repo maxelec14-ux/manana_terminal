@@ -1,33 +1,67 @@
 <!DOCTYPE html>
-<html class="dark" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Pinnacolada | Elite Soccer Analytics</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<style type="text/tailwindcss">
-        :root {
-            --primary: #06b6d4;
-            --primary-dark: #0891b2;
-            --bg-main: #0f172a;
-            --card-bg: #1e293b;
-            --telegram-bg: #1e293b;
-            --gradient-cta: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Pinnacolada | Elite Soccer Analytics</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script>
+        // Функция для переключения темы
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                html.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
         }
+        
+        // Проверка сохраненной темы при загрузке
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer base {
+            :root {
+                --primary: #10b981;
+                --primary-dark: #059669;
+                --bg-main: #f8fafc;
+                --card-bg: #ffffff;
+                --text-main: #0f172a;
+                --border-color: #f1f5f9;
+            }
+            .dark {
+                --bg-main: #020617;
+                --card-bg: #0f172a;
+                --text-main: #f8fafc;
+                --border-color: #1e293b;
+            }
+        }
+
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-main); 
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: all 0.3s ease;
         }
-        .material-symbols-outlined { 
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; 
-        }
+
         .tg-bubble {
             background: var(--card-bg);
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             position: relative;
+            border: 1px solid var(--border-color);
         }
+
         .tg-bubble::before {
             content: '';
             position: absolute;
@@ -39,120 +73,138 @@
             border-width: 0 8px 10px 0;
             border-color: transparent var(--card-bg) transparent transparent;
         }
-        .gradient-btn { background: var(--gradient-cta); }
-        .verified-badge {
-            background: var(--gradient-cta);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        
+        .nav-link {
+            @apply text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors dark:text-slate-400 dark:hover:text-white;
         }
     </style>
 </head>
-<body class="text-slate-100 overflow-x-hidden">
-<nav class="fixed top-0 w-full z-50 bg-[#0f172a]/80 backdrop-blur-md border-b border-slate-800">
-<div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-<div class="flex items-center gap-8">
-<span class="text-xl font-black tracking-tight text-[var(--primary)] uppercase">Pinnacolada.</span>
-<div class="hidden md:flex items-center gap-6">
-<a class="text-sm font-bold border-b-2 border-[var(--primary)] text-white pb-1" href="#predictions">Predictions</a>
-<a class="text-sm font-semibold text-slate-400 hover:text-[var(--primary)] transition-colors" href="#statistics">Statistics</a>
-<a class="text-sm font-semibold text-slate-400 hover:text-[var(--primary)] transition-colors" href="#subscription">Subscription</a>
-</div>
-</div>
-<div class="flex items-center gap-4">
-<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-[var(--primary)]">notifications</span>
-<div class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
-<span class="material-symbols-outlined text-slate-400 text-sm">person</span>
-</div>
-</div>
-</div>
+<body class="overflow-x-hidden">
+
+<nav class="fixed top-0 w-full z-50 bg-[var(--card-bg)] border-b border-[var(--border-color)] transition-colors">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-8">
+            <span class="text-xl font-black tracking-tight text-[var(--primary)] uppercase italic">Pinnacolada.</span>
+            <div class="hidden md:flex items-center gap-6">
+                <a class="text-sm font-bold border-b-2 border-[var(--primary)] text-[var(--text-main)] pb-1" href="#predictions">Predictions</a>
+                <a class="nav-link" href="#statistics">Statistics</a>
+                <a class="nav-link" href="#subscription">Subscription</a>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:scale-110 transition-all">
+                <span class="material-symbols-outlined text-[20px] dark:hidden">dark_mode</span>
+                <span class="material-symbols-outlined text-[20px] hidden dark:block text-yellow-400">light_mode</span>
+            </button>
+            <span class="material-symbols-outlined text-slate-400 cursor-pointer">notifications</span>
+            <div class="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                <span class="material-symbols-outlined text-slate-500 dark:text-slate-400 text-sm">person</span>
+            </div>
+        </div>
+    </div>
 </nav>
 
 <main class="pt-24 pb-12 px-4 max-w-7xl mx-auto">
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-<aside class="hidden lg:block lg:col-span-3 space-y-6">
-<div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-800">
-<h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Market Health</h3>
-<div class="space-y-4">
-<div class="flex justify-between items-end">
-<span class="text-sm text-slate-400">Monthly ROI</span>
-<span class="text-lg font-black text-[var(--primary)]">+24.8%</span>
-</div>
-<div class="flex justify-between items-end">
-<span class="text-sm text-slate-400">Win Rate</span>
-<span class="text-lg font-black text-white">72%</span>
-</div>
-</div>
-</div>
-<div class="relative rounded-2xl overflow-hidden aspect-[3/4] bg-slate-900 shadow-xl border border-slate-800 group cursor-pointer">
-<div class="absolute inset-0 p-6 flex flex-col justify-end bg-gradient-to-t from-slate-900 to-transparent">
-<p class="text-[10px] text-[var(--primary)] font-bold uppercase mb-2">Pinnacle Exclusive</p>
-<h4 class="text-xl font-bold text-white mb-4">Master the Dropping Odds Strategy</h4>
-<button class="gradient-btn text-white text-xs font-bold py-3 rounded-xl uppercase tracking-widest">Learn More</button>
-</div>
-</div>
-</aside>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <aside class="hidden lg:block lg:col-span-3 space-y-6">
+            <div class="bg-[var(--card-bg)] p-6 rounded-2xl shadow-sm border border-[var(--border-color)]">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Stats</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-end">
+                        <span class="text-sm text-slate-500">Monthly ROI</span>
+                        <span class="text-lg font-black text-[var(--primary)]">+24.8%</span>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <span class="text-sm text-slate-500">Win Rate</span>
+                        <span class="text-lg font-black">72%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="relative rounded-2xl overflow-hidden aspect-[3/4] bg-slate-900 shadow-xl group cursor-pointer">
+                <div class="absolute inset-0 p-6 flex flex-col justify-end bg-gradient-to-t from-black to-transparent">
+                    <p class="text-[10px] text-[var(--primary)] font-bold uppercase mb-2">Pinnacle Exclusive</p>
+                    <h4 class="text-xl font-bold text-white mb-4">Dropping Odds Strategy</h4>
+                    <button class="bg-[var(--primary)] text-white text-xs font-bold py-3 rounded-xl uppercase tracking-widest hover:bg-[var(--primary-dark)]">Learn More</button>
+                </div>
+            </div>
+        </aside>
 
-<div class="lg:col-span-6 space-y-8" id="predictions">
-<div class="flex items-center justify-between mb-4 px-2">
-<h2 class="text-lg font-extrabold flex items-center gap-2 text-white">
-<span class="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse shadow-[0_0_8px_var(--primary)]"></span>
+        <div class="lg:col-span-6 space-y-8" id="predictions">
+            <div class="flex items-center justify-between mb-4 px-2">
+                <h2 class="text-lg font-extrabold flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse shadow-[0_0_8px_var(--primary)]"></span>
                     Live Predictions
                 </h2>
-<span class="text-xs font-medium text-slate-500">142 users online</span>
-</div>
+                <span class="text-xs font-medium text-slate-400">142 users online</span>
+            </div>
 
-<div class="flex gap-3">
-<div class="w-10 h-10 rounded-full gradient-btn flex-shrink-0 flex items-center justify-center">
-<span class="material-symbols-outlined text-white text-xl">analytics</span>
-</div>
-<div class="flex-1 space-y-2 max-w-[90%]">
-<div class="tg-bubble p-5 border border-slate-700/50">
-<div class="flex items-center gap-1 mb-3">
-<span class="text-xs font-bold text-[var(--primary)]">Hot Drop Scanner</span>
-<span class="material-symbols-outlined text-sm fill-current verified-badge" style="font-variation-settings: 'FILL' 1;">verified</span>
-</div>
-<div class="font-mono text-sm leading-relaxed space-y-1 text-slate-300">
-<p>🏆 England: Premier League</p>
-<p>📅 Start: Today, 20:00</p>
-<br/>
-<p>🏠 Arsenal</p>
-<p>🚀 Man City</p>
-<br/>
-<p>🎯 Target: OVER 2.5</p>
-<p class="font-bold">💎 Side: YES @ <span class="text-[var(--primary)]">1.98</span></p>
-<br/>
-<p class="text-[10px] text-slate-500 italic">! Drop 10% detected in 60 min window</p>
-</div>
-<div class="mt-2 text-[10px] text-slate-500 text-right">09:15</div>
-</div>
-<button class="w-full gradient-btn text-white font-bold py-4 rounded-xl shadow-lg shadow-cyan-900/20 transition-all active:scale-95 flex items-center justify-center gap-2">
-<span class="material-symbols-outlined">payments</span>
-                        BET AT PINNACLE
+            <div class="flex gap-3">
+                <div class="w-10 h-10 rounded-full bg-[var(--primary)] flex-shrink-0 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-white text-xl">analytics</span>
+                </div>
+                <div class="flex-1 space-y-2 max-w-[90%]">
+                    <div class="tg-bubble p-5">
+                        <div class="flex items-center gap-1 mb-3">
+                            <span class="text-xs font-bold text-[var(--primary)]">Hot Drop Scanner</span>
+                            <span class="material-symbols-outlined text-[var(--primary)] text-sm fill-current" style="font-variation-settings: 'FILL' 1;">verified</span>
+                        </div>
+                        <div class="font-mono text-sm leading-relaxed space-y-1 dark:text-slate-300">
+                            <p>🏆 England: Premier League</p>
+                            <p>📅 Today, 20:00</p>
+                            <br/>
+                            <p>🏠 Arsenal</p>
+                            <p>🚀 Man City</p>
+                            <br/>
+                            <p>🎯 Target: OVER 2.5</p>
+                            <p class="font-bold italic text-slate-500 dark:text-slate-400">! Odds dropped 10% in 60m</p>
+                            <p class="font-bold">💎 Side: YES @ <span class="text-[var(--primary)]">1.98</span></p>
+                        </div>
+                        <div class="mt-2 text-[10px] text-slate-400 text-right font-bold uppercase">Live @ Pinnacle</div>
+                    </div>
+                    <button class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">bolt</span>
+                        BET ON PINNACLE NOW
                     </button>
-</div>
-</div>
-</div>
+                </div>
+            </div>
+        </div>
 
-<aside class="lg:col-span-3 space-y-6">
-<div class="bg-slate-800/50 rounded-2xl p-6 border border-slate-800 shadow-sm" id="statistics">
-<h4 class="text-xs font-bold text-slate-500 uppercase mb-4 tracking-tighter">Performance Tracking</h4>
-<div class="flex items-center gap-4 mb-6">
-<div class="flex-1">
-<p class="text-2xl font-black text-white">+142%</p>
-<p class="text-[10px] text-slate-400 font-medium">ROI Yearly</p>
-</div>
-<div class="flex-1 border-l border-slate-700 pl-4">
-<p class="text-2xl font-black text-white">12.4k</p>
-<p class="text-[10px] text-slate-400 font-medium">Units</p>
-</div>
-</div>
-<div class="h-20 flex items-end justify-between gap-1">
-<div class="w-full bg-cyan-900/20 rounded-t-sm h-[30%]"></div>
-<div class="w-full bg-cyan-900/40 rounded-t-sm h-[45%]"></div>
-<div class="w-full bg-[var(--primary)] rounded-t-sm h-[95%]"></div>
-</div>
-</div>
-</aside>
-</div>
+        <aside class="lg:col-span-3 space-y-6">
+            <div class="bg-[var(--card-bg)] rounded-2xl p-6 border border-[var(--border-color)] shadow-sm" id="statistics">
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-tighter">Live Tracker</h4>
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="flex-1">
+                        <p class="text-2xl font-black">+142%</p>
+                        <p class="text-[10px] text-slate-500 font-medium">ROI Yearly</p>
+                    </div>
+                    <div class="flex-1 border-l border-[var(--border-color)] pl-4">
+                        <p class="text-2xl font-black">12.4k</p>
+                        <p class="text-[10px] text-slate-500 font-medium">Profit</p>
+                    </div>
+                </div>
+                <div class="h-16 flex items-end justify-between gap-1">
+                    <div class="w-full bg-emerald-500/10 rounded-t-sm h-[30%]"></div>
+                    <div class="w-full bg-emerald-500/20 rounded-t-sm h-[60%]"></div>
+                    <div class="w-full bg-[var(--primary)] rounded-t-sm h-[95%]"></div>
+                </div>
+            </div>
+        </aside>
+    </div>
 </main>
-</body></html>
+
+<footer class="bg-[var(--card-bg)] border-t border-[var(--border-color)] py-12 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
+        <div>
+            <span class="text-xl font-black text-[var(--primary)] italic mb-2 block uppercase">Pinnacolada.</span>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Elite Analytics © 2026</p>
+        </div>
+        <div class="flex gap-8 text-xs font-bold text-slate-500">
+            <a href="#" class="hover:text-[var(--primary)]">Privacy</a>
+            <a href="#" class="hover:text-[var(--primary)]">Terms</a>
+            <a href="#" class="hover:text-[var(--primary)]">Support</a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
