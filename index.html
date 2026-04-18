@@ -1,231 +1,276 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
-<head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Pinnacolada | Elite Soccer Analytics</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <style type="text/tailwindcss">
-        @layer base {
-            :root {
-                --primary: #10b981;
-                --primary-dark: #059669;
-                --bg-main: #f8fafc;
-                --bg-card: #ffffff;
-                --text-main: #0f172a;
-                --text-muted: #64748b;
-                --border: #f1f5f9;
-            }
-            .dark {
-                --bg-main: #020617;
-                --bg-card: #0f172a;
-                --text-main: #f8fafc;
-                --text-muted: #94a3b8;
-                --border: #1e293b;
-            }
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Precision Bets | Elite Soccer Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+    @layer base {
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --border: #f1f5f9;
+            --tg-bubble: #ffffff;
+        }
+        .dark {
+            --bg-main: #020617;
+            --bg-card: #0f172a;
+            --text-main: #f1f5f9;
+            --border: #1e293b;
+            --tg-bubble: #0f172a;
         }
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-main);
+            background-color: var(--bg-main); 
             color: var(--text-main);
+            @apply transition-colors duration-200;
         }
-        .tg-bubble {
-            background: var(--bg-card);
-            border-radius: 12px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-            position: relative;
-            border: 1px solid var(--border);
-        }
-        /* Эффект нового сигнала (1 минута) */
-        .new-signal-glow {
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
-            transition: box-shadow 1s ease;
-        }
-    </style>
+    }
+    .material-symbols-outlined { 
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; 
+    }
+    .tg-bubble {
+        background: var(--tg-bubble);
+        border-radius: 12px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        position: relative;
+        border: 1px solid var(--border);
+    }
+    .tg-bubble::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 12px;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 8px 10px 0;
+        border-color: transparent var(--border) transparent transparent;
+    }
+    /* Эффект нового сигнала на 1 минуту */
+    .new-signal-glow {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+        border-color: var(--primary) !important;
+        transition: all 1s ease;
+    }
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+</style>
 </head>
-<body class="text-slate-900 overflow-x-hidden transition-colors duration-200">
-
+<body class="text-slate-900 overflow-x-hidden">
 <nav class="fixed top-0 w-full z-50 bg-[var(--bg-card)] border-b border-[var(--border)]">
-    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <div class="flex items-center gap-8">
-            <span class="text-xl font-black tracking-tight text-[#10b981] uppercase italic">Pinnacolada</span>
-            <div class="hidden md:flex items-center gap-6">
-                <button onclick="nav('predictions')" id="nav-predictions" class="text-sm font-bold border-b-2 border-[#10b981] pb-1">Predictions</button>
-                <button onclick="nav('statistics')" id="nav-statistics" class="text-sm font-semibold text-slate-500 hover:text-[#10b981]">Statistics</button>
-                <button onclick="nav('subscription')" id="nav-subscription" class="text-sm font-semibold text-slate-500 hover:text-[#10b981]">Subscription</button>
-            </div>
-        </div>
-        <div class="flex items-center gap-4">
-            <button onclick="toggleTheme()" class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-[#10b981]">dark_mode</button>
-            <span class="material-symbols-outlined text-slate-400 cursor-pointer">notifications</span>
-            <div class="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                <span class="material-symbols-outlined text-slate-500 text-sm">person</span>
-            </div>
-        </div>
-    </div>
+<div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black tracking-tight text-[var(--primary)]">PRECISION.</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="nav-link text-sm font-bold border-b-2 border-[var(--primary)] text-[var(--text-main)] pb-1" href="javascript:void(0)" onclick="showPage('predictions', this)">Predictions</a>
+<a class="nav-link text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors" href="javascript:void(0)" onclick="showPage('statistics', this)">Statistics</a>
+<a class="nav-link text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors" href="javascript:void(0)" onclick="showPage('subscription', this)">Subscription</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button onclick="toggleTheme()" class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-[var(--primary)]">contrast</button>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer">notifications</span>
+<div class="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-500 text-sm">person</span>
+</div>
+</div>
+</div>
 </nav>
 
 <main class="pt-24 pb-12 px-4 max-w-7xl mx-auto">
-    <div id="page-predictions" class="grid grid-cols-1 lg:grid-cols-12 gap-8 active-page">
+
+<div id="predictions-page" class="page-section active">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <aside class="hidden lg:block lg:col-span-3 space-y-6">
             <div class="bg-[var(--bg-card)] p-6 rounded-2xl shadow-sm border border-[var(--border)]">
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Stats</h3>
                 <div class="space-y-4">
                     <div class="flex justify-between items-end">
-                        <span class="text-sm text-[var(--text-muted)]">Monthly ROI</span>
-                        <span class="text-lg font-black text-[#10b981]">+24.8%</span>
+                        <span class="text-sm text-slate-600">Monthly ROI</span>
+                        <span class="text-lg font-black text-[var(--primary)]">+24.8%</span>
                     </div>
                     <div class="flex justify-between items-end">
-                        <span class="text-sm text-[var(--text-muted)]">Win Rate</span>
-                        <span class="text-lg font-black">72%</span>
+                        <span class="text-sm text-slate-600">Win Rate</span>
+                        <span class="text-lg font-black text-[var(--text-main)]">72%</span>
                     </div>
                 </div>
             </div>
             <div class="relative rounded-2xl overflow-hidden aspect-[3/4] bg-slate-900 shadow-xl group cursor-pointer">
-                <img alt="Ad" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" src="https://images.unsplash.com/photo-1518152006812-edab29b069ac?q=80&w=500&auto=format&fit=crop"/>
+                <img alt="Ad" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=500&auto=format&fit=crop"/>
                 <div class="absolute inset-0 p-6 flex flex-col justify-end">
-                    <p class="text-[10px] text-[#10b981] font-bold uppercase mb-2">Pinnacle Exclusive</p>
-                    <h4 class="text-xl font-bold text-white mb-4">Dropping Odds Strategy</h4>
-                    <button class="bg-[#10b981] text-white text-xs font-bold py-3 rounded-xl uppercase tracking-widest">Learn More</button>
+                    <p class="text-[10px] text-[var(--primary)] font-bold uppercase mb-2">Partner Offer</p>
+                    <h4 class="text-xl font-bold text-white mb-4">Get 100% Welcome Bonus</h4>
+                    <button class="bg-[var(--primary)] text-white text-xs font-bold py-3 rounded-xl uppercase tracking-widest hover:bg-[var(--primary-dark)] transition-colors">Claim Now</button>
                 </div>
             </div>
         </aside>
-
+        
         <div class="lg:col-span-6 space-y-8">
             <div class="flex items-center justify-between mb-4 px-2">
                 <h2 class="text-lg font-extrabold flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span>
+                    <span class="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse"></span>
                     Live Predictions
                 </h2>
                 <span class="text-xs font-medium text-slate-400">142 users online</span>
             </div>
-
+            
             <div class="flex gap-3">
-                <div class="w-10 h-10 rounded-full bg-[#10b981] flex-shrink-0 flex items-center justify-center">
+                <div class="w-10 h-10 rounded-full bg-[var(--primary)] flex-shrink-0 flex items-center justify-center">
                     <span class="material-symbols-outlined text-white text-xl">analytics</span>
                 </div>
                 <div class="flex-1 space-y-2 max-w-[90%]">
-                    <div id="hot-signal" class="tg-bubble p-5 new-signal-glow">
+                    <div id="new-signal" class="tg-bubble p-5 new-signal-glow">
                         <div class="flex items-center gap-1 mb-3">
-                            <span class="text-xs font-bold text-[#10b981]">Hot Drop Scanner</span>
-                            <span class="material-symbols-outlined text-[#10b981] text-sm fill-current" style="font-variation-settings: 'FILL' 1;">verified</span>
+                            <span class="text-xs font-bold text-[var(--primary)]">Precision Analyst</span>
+                            <span class="material-symbols-outlined text-[var(--primary)] text-sm fill-current" style="font-variation-settings: 'FILL' 1;">verified</span>
                         </div>
-                        <div class="font-mono text-sm leading-relaxed space-y-1 text-[var(--text-main)] opacity-90">
-                            <p>🏆 England: Premier League</p>
-                            <p>📅 Today, 20:00</p>
+                        <div class="font-mono text-sm leading-relaxed space-y-1 text-slate-700 dark:text-slate-300">
+                            <p>🏆 Honduras: Liga Nacional</p>
+                            <p>📅 Start: 2026-04-17 01:30:00</p>
                             <br/>
-                            <p>🏠 Arsenal</p>
-                            <p>🚀 Man City</p>
+                            <p>🏠 Victoria</p>
+                            <p>🚀 Motagua</p>
                             <br/>
-                            <p>🎯 Target: OVER 2.5</p>
-                            <p class="italic text-slate-400">! Odds dropped 10% in 60m</p>
-                            <p class="font-bold">💎 Side: YES @ <span class="text-[#059669]">1.98</span></p>
+                            <p>🎯 Target Line: 2.75</p>
+                            <p class="font-bold">💎 Side: OVER @ <span class="text-[var(--primary-dark)]">1.93</span></p>
                         </div>
-                        <div class="mt-2 text-[10px] text-slate-400 text-right">LIVE @ PINNACLE</div>
+                        <div class="mt-2 text-[10px] text-slate-400 text-right">09:15</div>
                     </div>
-                    <button class="w-full bg-[#10b981] hover:bg-[#059669] text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined">bolt</span>
-                        BET ON PINNACLE NOW
+                    <button class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">payments</span>
+                        BET AT BEST ODDS & GET BONUS
                     </button>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="page-statistics" class="hidden space-y-8">
-        <div class="flex justify-between items-center">
-            <h2 class="text-2xl font-black italic uppercase text-[#10b981]">Statistics</h2>
-            <div class="flex gap-2 bg-[var(--bg-card)] p-1 rounded-lg border border-[var(--border)]">
-                <button class="px-3 py-1 text-xs font-bold bg-[#10b981] text-white rounded">Week</button>
-                <button class="px-3 py-1 text-xs font-bold text-slate-400">Month</button>
+        <aside class="lg:col-span-3 space-y-6">
+            <div class="bg-[var(--bg-card)] rounded-2xl p-6 border border-[var(--border)] shadow-sm">
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-tighter">Performance</h4>
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="flex-1">
+                        <p class="text-2xl font-black text-[var(--text-main)]">+142%</p>
+                        <p class="text-[10px] text-slate-500 font-medium">ROI Yearly</p>
+                    </div>
+                </div>
+                <div class="h-20 flex items-end justify-between gap-1">
+                    <div class="w-full bg-emerald-50 dark:bg-emerald-900/20 rounded-t-sm h-[30%]"></div>
+                    <div class="w-full bg-emerald-100 dark:bg-emerald-800/20 rounded-t-sm h-[45%]"></div>
+                    <div class="w-full bg-[var(--primary)] rounded-t-sm h-[80%]"></div>
+                </div>
             </div>
-        </div>
+        </aside>
+    </div>
+</div>
+
+<div id="statistics-page" class="page-section">
+    <div class="max-w-4xl mx-auto space-y-8">
+        <h2 class="text-3xl font-black mb-8">Detailed Statistics</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-                <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Yearly ROI</p>
-                <p class="text-3xl font-black">+142%</p>
+            <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)] shadow-sm">
+                <p class="text-xs font-bold text-slate-400 uppercase mb-2">Total ROI</p>
+                <p class="text-4xl font-black text-[var(--primary)]">+142%</p>
             </div>
-            <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-                <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Profit Units</p>
-                <p class="text-3xl font-black">12.4k</p>
+            <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)] shadow-sm">
+                <p class="text-xs font-bold text-slate-400 uppercase mb-2">Win Rate</p>
+                <p class="text-4xl font-black">72%</p>
             </div>
-            <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-                <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Win Rate</p>
-                <p class="text-3xl font-black">72%</p>
+            <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)] shadow-sm">
+                <p class="text-xs font-bold text-slate-400 uppercase mb-2">Profit Units</p>
+                <p class="text-4xl font-black">12.4k</p>
             </div>
         </div>
-        <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-            <h4 class="text-xs font-bold text-slate-400 uppercase mb-8">Performance Tracking</h4>
-            <div class="h-48 flex items-end justify-between gap-1">
-                <div class="w-full bg-[#10b981]/10 h-[30%]"></div>
-                <div class="w-full bg-[#10b981]/20 h-[45%]"></div>
-                <div class="w-full bg-[#10b981]/40 h-[60%]"></div>
-                <div class="w-full bg-[#10b981]/60 h-[55%]"></div>
-                <div class="w-full bg-[#10b981]/80 h-[80%]"></div>
-                <div class="w-full bg-[#10b981] h-[95%]"></div>
+        <div class="bg-[var(--bg-card)] p-10 rounded-3xl border border-[var(--border)] shadow-sm">
+            <div class="flex justify-between items-center mb-10">
+                <h4 class="font-bold">Growth Overview</h4>
+                <div class="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                    <button class="px-4 py-1 text-xs font-bold bg-[var(--primary)] text-white rounded-md">Week</button>
+                    <button class="px-4 py-1 text-xs font-bold text-slate-500">Month</button>
+                </div>
+            </div>
+            <div class="h-64 flex items-end justify-between gap-2">
+                <div class="w-full bg-emerald-100 dark:bg-emerald-900/30 rounded-t-lg h-[20%]"></div>
+                <div class="w-full bg-emerald-200 dark:bg-emerald-800/30 rounded-t-lg h-[40%]"></div>
+                <div class="w-full bg-emerald-300 dark:bg-emerald-700/30 rounded-t-lg h-[60%]"></div>
+                <div class="w-full bg-[var(--primary)] rounded-t-lg h-[90%]"></div>
             </div>
         </div>
     </div>
+</div>
 
-    <div id="page-subscription" class="hidden max-w-4xl mx-auto space-y-12">
-        <div class="text-center">
-            <h2 class="text-3xl font-black mb-4">Unlock Premium</h2>
-            <p class="text-slate-500">Full access to the "Hot Drop" scanner and private signals.</p>
+<div id="subscription-page" class="page-section">
+    <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-black mb-4">Upgrade to Premium</h2>
+            <p class="text-slate-500">Get 100% of our high-value mathematical signals.</p>
         </div>
-        <div class="bg-[var(--bg-card)] p-8 rounded-3xl border-2 border-[#10b981] shadow-2xl shadow-emerald-500/10">
-            <div class="flex flex-col md:flex-row justify-between gap-8">
-                <div class="flex-1 space-y-6">
-                    <h3 class="text-xl font-bold">Premium Analyst Plan</h3>
+        <div class="bg-[var(--bg-card)] p-10 rounded-[40px] border-2 border-[var(--primary)] shadow-2xl shadow-emerald-100 dark:shadow-none relative overflow-hidden">
+            <div class="grid md:grid-cols-2 gap-12">
+                <div class="space-y-6">
+                    <h3 class="text-2xl font-bold">Premium Analyst</h3>
                     <div class="text-5xl font-black">$49.99<span class="text-sm font-medium text-slate-400">/mo</span></div>
                     <ul class="space-y-4">
-                        <li class="flex items-center gap-3 text-sm font-semibold"><span class="material-symbols-outlined text-[#10b981]">verified_user</span> ALL signals without exception</li>
-                        <li class="flex items-center gap-3 text-sm font-semibold"><span class="material-symbols-outlined text-[#10b981]">verified_user</span> Direct Line to Analysts</li>
-                        <li class="flex items-center gap-3 text-sm font-semibold"><span class="material-symbols-outlined text-[#10b981]">verified_user</span> Bankroll Management Bot</li>
+                        <li class="flex items-center gap-3 text-sm font-semibold"><span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> ALL signals without exception</li>
+                        <li class="flex items-center gap-3 text-sm font-semibold"><span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> 100% Ad-Free experience</li>
                     </ul>
                 </div>
-                <div class="flex-1 flex flex-col gap-3 justify-center">
-                    <a href="https://t.me/yourchannel" class="w-full py-4 bg-[#0088cc] text-white rounded-2xl font-bold flex items-center justify-center gap-2">Buy via Telegram</a>
-                    <a href="https://wa.me/yournumber" class="w-full py-4 bg-[#25D366] text-white rounded-2xl font-bold flex items-center justify-center gap-2">Contact via WhatsApp</a>
+                <div class="flex flex-col gap-4 justify-center">
+                    <a class="w-full py-5 bg-[#0088cc] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90" href="#">Buy via Telegram</a>
+                    <a class="w-full py-5 bg-[#25D366] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90" href="#">Contact via WhatsApp</a>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
 </main>
+
+<footer class="bg-[var(--bg-card)] border-t border-[var(--border)] py-12 mt-20">
+<div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
+<div>
+<span class="text-xl font-black text-[var(--primary)] mb-2 block">PRECISION.</span>
+<p class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Elite Soccer Forecasts © 2026</p>
+</div>
+<div class="flex flex-wrap justify-center gap-x-8 gap-y-4">
+<a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Privacy Policy</a>
+<a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Affiliate Terms</a>
+</div>
+</div>
+</footer>
 
 <script>
     function toggleTheme() {
         document.documentElement.classList.toggle('dark');
     }
 
-    function nav(page) {
+    function showPage(pageId, element) {
         // Скрыть все страницы
-        document.getElementById('page-predictions').classList.add('hidden');
-        document.getElementById('page-statistics').classList.add('hidden');
-        document.getElementById('page-subscription').classList.add('hidden');
-        
+        document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
         // Показать нужную
-        document.getElementById('page-' + page).classList.remove('hidden');
-
-        // Сброс стилей кнопок
-        document.querySelectorAll('nav button').forEach(btn => {
-            btn.classList.remove('text-sm', 'font-bold', 'border-b-2', 'border-[#10b981]', 'pb-1');
-            btn.classList.add('text-sm', 'font-semibold', 'text-slate-500');
+        document.getElementById(pageId + '-page').classList.add('active');
+        
+        // Сбросить стили ссылок в навигации
+        document.querySelectorAll('.nav-link').forEach(l => {
+            l.classList.remove('font-bold', 'border-b-2', 'border-[var(--primary)]', 'text-[var(--text-main)]', 'pb-1');
+            l.classList.add('font-semibold', 'text-slate-500');
         });
-
-        // Активная кнопка
-        const activeBtn = document.getElementById('nav-' + page);
-        activeBtn.classList.remove('text-slate-500', 'font-semibold');
-        activeBtn.classList.add('font-bold', 'border-b-2', 'border-[#10b981]', 'pb-1');
+        
+        // Подсветить активную
+        element.classList.remove('font-semibold', 'text-slate-500');
+        element.classList.add('font-bold', 'border-b-2', 'border-[var(--primary)]', 'text-[var(--text-main)]', 'pb-1');
     }
 
-    // Удаление hover-эффекта через 60 секунд
+    // Удаление эффекта через 60 секунд
     setTimeout(() => {
-        const signal = document.getElementById('hot-signal');
-        if(signal) signal.classList.remove('new-signal-glow');
+        const signal = document.getElementById('new-signal');
+        if (signal) signal.classList.remove('new-signal-glow');
     }, 60000);
 </script>
 
-</body>
-</html>
+</body></html>
