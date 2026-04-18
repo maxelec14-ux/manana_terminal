@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Pinnacolada | Elite Soccer Analytics & Betting Signals</title>
-    <meta name="description" content="Pinnacolada provides high-precision soccer betting analytics, dropping odds signals, and mathematical forecasts for professional bettors. Boost your ROI with our live predictions.">
-    <meta name="keywords" content="soccer analytics, betting signals, dropping odds, football predictions, ROI betting, Pinnacolada, sports data">
+    <title>Pinnacolada | Elite Soccer Analytics & Value Betting Predictions</title>
+    <meta name="description" content="Get professional soccer analytics, high-value betting signals, and dropping odds alerts. Join Pinnacolada for elite sports forecasting and consistent ROI.">
+    <meta name="keywords" content="soccer analytics, betting signals, dropping odds, value betting, football predictions, sports ROI">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -17,6 +17,7 @@
                 --bg-main: #f8fafc;
                 --bg-card: #ffffff;
                 --text-main: #0f172a;
+                --text-muted: #64748b;
                 --border: #f1f5f9;
                 --tg-bubble: #ffffff;
             }
@@ -24,6 +25,7 @@
                 --bg-main: #020617;
                 --bg-card: #0f172a;
                 --text-main: #f8fafc;
+                --text-muted: #94a3b8;
                 --border: #1e293b;
                 --tg-bubble: #1e293b;
             }
@@ -55,13 +57,14 @@
             border-width: 0 8px 10px 0;
             border-color: transparent var(--tg-bubble) transparent transparent;
         }
-        .new-signal {
+        .new-signal-glow {
             box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
-            border: 1px solid var(--primary);
+            border-color: var(--primary) !important;
         }
         .page-section { display: none; }
         .page-section.active { display: block; }
-        .fav-active { font-variation-settings: 'FILL' 1 !important; color: #f59e0b !important; }
+        .nav-link-active { @apply font-bold border-b-2 border-[var(--primary)] text-[var(--text-main)] pb-1; }
+        .nav-link-inactive { @apply font-semibold text-slate-500 hover:text-[var(--primary)]; }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -70,18 +73,16 @@
     <nav class="fixed top-0 w-full z-50 bg-[var(--bg-card)] border-b border-[var(--border)]">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-8">
-                <span class="text-xl font-black tracking-tight text-[var(--primary)] uppercase italic cursor-pointer" onclick="switchPage('predictions')">Pinnacolada</span>
+                <span class="text-xl font-black tracking-tight text-[var(--primary)] uppercase italic cursor-pointer" onclick="showPage('predictions')">Pinnacolada</span>
                 <div class="hidden md:flex items-center gap-6">
-                    <a class="nav-link text-sm font-bold border-b-2 border-[var(--primary)] text-[var(--text-main)] pb-1" href="javascript:void(0)" onclick="switchPage('predictions', this)">Predictions</a>
-                    <a class="nav-link text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors" href="javascript:void(0)" onclick="switchPage('statistics', this)">Statistics</a>
-                    <a class="nav-link text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors" href="javascript:void(0)" onclick="switchPage('subscription', this)">Subscription</a>
-                    <a class="nav-link text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors flex items-center gap-1" href="javascript:void(0)" onclick="switchPage('favourites', this)">
-                        Favourites
-                    </a>
+                    <button class="nav-link nav-link-active text-sm transition-colors" onclick="showPage('predictions', this)">Predictions</button>
+                    <button class="nav-link nav-link-inactive text-sm transition-colors" onclick="showPage('statistics', this)">Statistics</button>
+                    <button class="nav-link nav-link-inactive text-sm transition-colors" onclick="showPage('favourites', this)">Favourites</button>
+                    <button class="nav-link nav-link-inactive text-sm transition-colors" onclick="showPage('subscription', this)">Subscription</button>
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-[var(--primary)]" onclick="toggleTheme()">contrast</span>
+                <button onclick="document.documentElement.classList.toggle('dark')" class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-[var(--primary)]">contrast</button>
                 <span class="material-symbols-outlined text-slate-400 cursor-pointer">notifications</span>
                 <div class="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                     <span class="material-symbols-outlined text-slate-500 text-sm">person</span>
@@ -92,35 +93,25 @@
 </header>
 
 <main class="pt-24 pb-12 px-4 max-w-7xl mx-auto">
+
     <div id="predictions-page" class="page-section active">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <aside class="hidden lg:block lg:col-span-3 space-y-6">
-                <div class="bg-[var(--bg-card)] p-6 rounded-2xl shadow-sm border border-[var(--border)]">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Stats</h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-end">
-                            <span class="text-sm text-slate-500">Monthly ROI</span>
-                            <span class="text-lg font-black text-[var(--primary)]">+24.8%</span>
-                        </div>
-                        <div class="flex justify-between items-end">
-                            <span class="text-sm text-slate-500">Win Rate</span>
-                            <span class="text-lg font-black">72%</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="relative rounded-2xl overflow-hidden aspect-[3/4] bg-slate-900 shadow-xl group cursor-pointer">
-                    <img alt="Premium Betting Offer" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYjkmVCx9oOUKXhgOoV3rnhFwJS7gb1dPZ4XgViYD1R0Tp0DSSPUfrirBMqHgdoX0Op_ON0DayzqkeGRc9dTRaVrNNRpMraB9ac4TwSzyHqqt7dvgBgMqHUzf1U7O0JDsYeXEhw_R3-TzXWZVz85_6eTFkg5pxrPo0N7Yun7qbBcEzGRV1GyYCB4k826Ql7sooX7OY0T0XthtinGPHhMXgeiGoIOlK-CVMWTUt35CglNfHH5KGcOHuLqRq_D6AuSiWv7rJk4YvGPSO"/>
-                    <div class="absolute inset-0 p-6 flex flex-col justify-end">
-                        <p class="text-[10px] text-[var(--primary)] font-bold uppercase mb-2">Partner Offer</p>
-                        <h4 class="text-xl font-bold text-white mb-4">Get 100% Welcome Bonus</h4>
-                        <button class="bg-[var(--primary)] text-white text-xs font-bold py-3 rounded-xl uppercase tracking-widest hover:bg-[var(--primary-dark)] transition-colors">Claim Now</button>
+                <div class="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-4 text-center min-h-[400px] flex flex-col justify-center border-dashed">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-4">Advertisement</p>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl h-full flex items-center justify-center">
+                        <span class="text-xs text-slate-400 font-medium italic">Your Banner Here</span>
                     </div>
                 </div>
             </aside>
 
             <div class="lg:col-span-6 space-y-8">
-                <h1 class="sr-only">Soccer Betting Predictions and Analytics</h1>
-                <div class="flex items-center justify-between mb-4 px-2">
+                <div class="px-2">
+                    <h1 class="text-2xl font-black mb-2 italic uppercase">Soccer Analytics Hub</h1>
+                    <p class="text-sm text-[var(--text-muted)] leading-relaxed">Pinnacolada provides professional dropping odds signals and mathematical soccer forecasts with high precision.</p>
+                </div>
+
+                <div class="flex items-center justify-between px-2">
                     <h2 class="text-lg font-extrabold flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse"></span>
                         Live Predictions
@@ -128,20 +119,20 @@
                     <span class="text-xs font-medium text-slate-400">142 users online</span>
                 </div>
 
-                <article class="flex gap-3 signal-item">
+                <div class="flex gap-3 signal-card" data-id="1">
                     <div class="w-10 h-10 rounded-full bg-[var(--primary)] flex-shrink-0 flex items-center justify-center">
                         <span class="material-symbols-outlined text-white text-xl">analytics</span>
                     </div>
                     <div class="flex-1 space-y-2 max-w-[90%]">
-                        <div id="new-signal-target" class="tg-bubble p-5 new-signal transition-all duration-1000">
+                        <div id="new-signal-flag" class="tg-bubble p-5 new-signal-glow">
                             <div class="flex items-center justify-between mb-3">
                                 <div class="flex items-center gap-1">
                                     <span class="text-xs font-bold text-[var(--primary)]">Math Signal</span>
                                     <span class="material-symbols-outlined text-[var(--primary)] text-sm fill-current" style="font-variation-settings: 'FILL' 1;">verified</span>
                                 </div>
-                                <button onclick="toggleFav(this)" class="material-symbols-outlined text-slate-300 hover:text-amber-500 transition-colors text-xl">star</button>
+                                <button onclick="toggleFavourite(1)" class="fav-btn material-symbols-outlined text-slate-300 hover:text-yellow-400 transition-colors">star</button>
                             </div>
-                            <div class="font-mono text-sm leading-relaxed space-y-1 text-[var(--text-main)] opacity-90">
+                            <div class="font-mono text-sm leading-relaxed space-y-1 text-[var(--text-main)]">
                                 <p>🏆 Honduras: Liga Nacional</p>
                                 <p>📅 Start: 2026-04-17 01:30:00</p>
                                 <br/>
@@ -153,36 +144,58 @@
                             </div>
                             <div class="mt-2 text-[10px] text-slate-400 text-right">09:15</div>
                         </div>
-                        <button class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <button class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
                             <span class="material-symbols-outlined">payments</span>
                             BET AT BEST ODDS & GET BONUS
                         </button>
                     </div>
-                </article>
+                </div>
 
-                <div class="bg-[var(--bg-card)] border-2 border-dashed border-emerald-100 dark:border-emerald-900/30 rounded-2xl p-6 text-center">
-                    <p class="text-xs font-bold text-slate-400 uppercase mb-2">Advertisement</p>
-                    <img alt="Bookmaker Bonus" class="mx-auto h-12 mb-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrG9Er8AeYzw2EWhopBn4zm0P7looynEmZtInAuHTA0eAM7pqi7i6Y4DpH0hY5FDTL60iKn3kNeHIbAYUV6xdCwnqhtAE313pzWyybrcy8Kc13nG-ucxamoZAAGU0wapGp3uwyr0XpYIxWFSTshF3JhRt65MJ6d8_Ct1NwCqzgImqV-dGMX7HpwTpQnzp0G2Dccx55ZXGRBXhB4XAn4g_DjKhlALlLpc7HwJ0QeC6EuYWD6RhkVhziV3IxzT5J7i6BlX9KY6Iqw-jS"/>
-                    <h4 class="text-lg font-bold mb-3">Claim Your $500 Free Bet Today!</h4>
-                    <a class="inline-block bg-slate-900 text-white px-8 py-3 rounded-xl font-bold text-sm" href="#">Register & Play</a>
+                <div class="flex gap-3 signal-card" data-id="2">
+                    <div class="w-10 h-10 rounded-full bg-[var(--primary)] flex-shrink-0 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-white text-xl">analytics</span>
+                    </div>
+                    <div class="flex-1 space-y-2 max-w-[90%]">
+                        <div class="tg-bubble p-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-xs font-bold text-[var(--primary)]">Precision Analyst</span>
+                                    <span class="material-symbols-outlined text-[var(--primary)] text-sm fill-current" style="font-variation-settings: 'FILL' 1;">verified</span>
+                                </div>
+                                <button onclick="toggleFavourite(2)" class="fav-btn material-symbols-outlined text-slate-300 hover:text-yellow-400 transition-colors">star</button>
+                            </div>
+                            <div class="font-mono text-sm leading-relaxed space-y-1 text-[var(--text-main)]">
+                                <p>🏆 England: Premier League</p>
+                                <p>📅 Start: 2026-04-17 19:45:00</p>
+                                <br/>
+                                <p>🏠 Arsenal</p>
+                                <p>🚀 Man City</p>
+                                <br/>
+                                <p>🎯 Target Line: Both Teams to Score</p>
+                                <p class="font-bold">💎 Side: YES @ <span class="text-[var(--primary-dark)]">1.85</span></p>
+                            </div>
+                            <div class="mt-2 text-[10px] text-slate-400 text-right">08:42</div>
+                        </div>
+                        <button class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">ads_click</span>
+                            BET NOW: EXCLUSIVE 2.0x MULTIPLIER
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <aside class="lg:col-span-3 space-y-6">
-                <div class="bg-[var(--bg-card)] rounded-2xl p-6 border border-[var(--border)] shadow-sm">
-                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-tighter">Performance Tracking</h4>
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="flex-1">
-                            <p class="text-2xl font-black text-[var(--text-main)]">+142%</p>
-                            <p class="text-[10px] text-slate-500 font-medium">ROI Yearly</p>
-                        </div>
+                <div class="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-4 text-center min-h-[300px] flex flex-col justify-center border-dashed">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-tighter">Partner Content</p>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl h-full flex items-center justify-center">
+                        <span class="text-xs text-slate-400 font-medium italic">Advertisement Space</span>
                     </div>
-                    <div class="h-20 flex items-end justify-between gap-1">
-                        <div class="w-full bg-emerald-50 dark:bg-emerald-900/20 rounded-t-sm h-[30%]"></div>
-                        <div class="w-full bg-emerald-100 dark:bg-emerald-900/40 rounded-t-sm h-[45%]"></div>
-                        <div class="w-full bg-emerald-200 dark:bg-emerald-800/60 rounded-t-sm h-[60%]"></div>
-                        <div class="w-full bg-[var(--primary)] rounded-t-sm h-[80%]"></div>
-                    </div>
+                </div>
+                <div class="bg-slate-900 rounded-2xl p-6 text-white text-center">
+                    <span class="material-symbols-outlined text-4xl text-[var(--primary)] mb-4">smartphone</span>
+                    <h5 class="font-bold mb-2">Mobile Alerts</h5>
+                    <p class="text-xs text-slate-400 mb-4 leading-relaxed">Join our private Telegram bot for instant value bet notifications.</p>
+                    <button class="w-full py-3 bg-white text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest">Connect Bot</button>
                 </div>
             </aside>
         </div>
@@ -190,130 +203,152 @@
 
     <div id="statistics-page" class="page-section">
         <div class="max-w-4xl mx-auto space-y-8">
-            <div class="flex justify-between items-center">
-                <h2 class="text-3xl font-black italic uppercase">Analytics</h2>
+            <div class="flex justify-between items-center px-2">
+                <h2 class="text-2xl font-black uppercase italic">Performance Statistics</h2>
                 <div class="flex gap-2 bg-[var(--bg-card)] p-1 rounded-xl border border-[var(--border)]">
-                    <button class="px-4 py-1 text-xs font-bold bg-[var(--primary)] text-white rounded-lg">Month</button>
-                    <button class="px-4 py-1 text-xs font-bold text-slate-500">Year</button>
+                    <button class="px-4 py-1.5 text-xs font-bold bg-[var(--primary)] text-white rounded-lg">Week</button>
+                    <button class="px-4 py-1.5 text-xs font-bold text-slate-400">Month</button>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-                    <p class="text-xs font-bold text-slate-400 uppercase mb-1">Total ROI</p>
+                <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)] shadow-sm">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total ROI</p>
                     <p class="text-3xl font-black text-[var(--primary)]">+142.4%</p>
                 </div>
-                <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-                    <p class="text-xs font-bold text-slate-400 uppercase mb-1">Winrate</p>
-                    <p class="text-3xl font-black">68.2%</p>
+                <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)] shadow-sm">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Win Rate</p>
+                    <p class="text-3xl font-black">72.1%</p>
                 </div>
-                <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-                    <p class="text-xs font-bold text-slate-400 uppercase mb-1">Avg Odds</p>
-                    <p class="text-3xl font-black">1.92</p>
+                <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)] shadow-sm">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Avg. Odds</p>
+                    <p class="text-3xl font-black">1.94</p>
                 </div>
             </div>
 
-            <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)]">
-                <h3 class="font-bold mb-6 italic uppercase text-sm">Equity Growth Curve</h3>
-                <div class="h-64 w-full relative">
-                    <svg class="w-full h-full" viewBox="0 0 1000 100" preserveAspectRatio="none">
-                        <path d="M0,80 L200,70 L400,75 L600,40 L800,45 L1000,10" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round"/>
-                        <path d="M0,80 L200,70 L400,75 L600,40 L800,45 L1000,10 L1000,100 L0,100 Z" fill="url(#grad)" opacity="0.1"/>
+            <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)] shadow-sm">
+                <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-8">Success Curve (Equity)</h3>
+                <div class="relative h-48 w-full">
+                    <svg class="w-full h-full" viewBox="0 0 100 40" preserveAspectRatio="none">
+                        <path d="M0 35 L10 32 L25 34 L40 25 L60 28 L75 15 L90 18 L100 5" fill="none" stroke="var(--primary)" stroke-width="2" />
+                        <path d="M0 35 L10 32 L25 34 L40 25 L60 28 L75 15 L90 18 L100 5 V40 H0 Z" fill="url(#grad)" opacity="0.1" />
                         <defs>
                             <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:#10b981;stop-opacity:0" />
+                                <stop offset="0%" style="stop-color:var(--primary);stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:var(--primary);stop-opacity:0" />
                             </linearGradient>
                         </defs>
                     </svg>
                 </div>
             </div>
 
-            <div class="bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] overflow-hidden">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-50 dark:bg-slate-800/50">
-                        <tr>
-                            <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Event</th>
-                            <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Pick</th>
-                            <th class="p-4 font-bold uppercase text-[10px] text-slate-400">Odds</th>
-                            <th class="p-4 font-bold uppercase text-[10px] text-slate-400 text-right">Result</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-[var(--border)]">
-                        <tr>
-                            <td class="p-4 font-medium italic">Arsenal vs Man City</td>
-                            <td class="p-4 opacity-70 font-mono">BTTS: YES</td>
-                            <td class="p-4 font-bold">1.85</td>
-                            <td class="p-4 text-right"><span class="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-3 py-1 rounded-full text-[10px] font-black uppercase">Win</span></td>
-                        </tr>
-                        <tr>
-                            <td class="p-4 font-medium italic">Victoria vs Motagua</td>
-                            <td class="p-4 opacity-70 font-mono">Over 2.75</td>
-                            <td class="p-4 font-bold">1.93</td>
-                            <td class="p-4 text-right"><span class="bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 px-3 py-1 rounded-full text-[10px] font-black uppercase">Push</span></td>
-                        </tr>
-                        <tr>
-                            <td class="p-4 font-medium italic">Real Madrid vs Barca</td>
-                            <td class="p-4 opacity-70 font-mono">Home -0.5</td>
-                            <td class="p-4 font-bold">2.10</td>
-                            <td class="p-4 text-right"><span class="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-3 py-1 rounded-full text-[10px] font-black uppercase">Loss</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="subscription-page" class="page-section">
-        <div class="max-w-4xl mx-auto">
-            <section class="text-center mb-16">
-                <h2 class="text-4xl font-black italic mb-4 uppercase">Upgrade to Premium</h2>
-                <p class="text-slate-500 max-w-xl mx-auto">Gain a competitive edge with our most accurate analytical engine and instant telegram notifications.</p>
-            </section>
-            
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="bg-[var(--bg-card)] p-10 rounded-3xl border border-[var(--border)] shadow-sm">
-                    <h3 class="text-xl font-bold mb-4 uppercase italic">Standard</h3>
-                    <div class="text-4xl font-black mb-6">Free</div>
-                    <ul class="space-y-4 mb-8 text-slate-500 text-sm">
-                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-[var(--primary)] text-sm">check</span> 3-5 signals daily</li>
-                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-[var(--primary)] text-sm">check</span> Limited stats access</li>
-                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-slate-300 text-sm">close</span> No direct support</li>
-                    </ul>
-                    <button class="w-full py-4 border border-[var(--border)] rounded-2xl font-bold opacity-50 cursor-not-allowed">Active Plan</button>
+            <div class="space-y-4">
+                <h3 class="text-lg font-black uppercase italic">Recent History</h3>
+                <div class="overflow-hidden bg-[var(--bg-card)] rounded-2xl border border-[var(--border)]">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 dark:bg-slate-800/50 border-b border-[var(--border)] text-[10px] uppercase font-bold text-slate-400">
+                            <tr>
+                                <th class="p-4">Match</th>
+                                <th class="p-4">Market</th>
+                                <th class="p-4">Odds</th>
+                                <th class="p-4 text-right">Result</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[var(--border)]">
+                            <tr>
+                                <td class="p-4 font-semibold">Real Madrid vs Barca</td>
+                                <td class="p-4 font-mono text-xs">Over 2.5</td>
+                                <td class="p-4 font-bold">1.88</td>
+                                <td class="p-4 text-right"><span class="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-1 rounded text-[10px] font-black uppercase">Win</span></td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold">Liverpool vs Chelsea</td>
+                                <td class="p-4 font-mono text-xs">BTTS - Yes</td>
+                                <td class="p-4 font-bold">1.75</td>
+                                <td class="p-4 text-right"><span class="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded text-[10px] font-black uppercase">Loss</span></td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold">Bayern vs Dortmund</td>
+                                <td class="p-4 font-mono text-xs">Handicap -1</td>
+                                <td class="p-4 font-bold">2.10</td>
+                                <td class="p-4 text-right"><span class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 px-2 py-1 rounded text-[10px] font-black uppercase">Push</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="bg-[var(--bg-card)] p-10 rounded-3xl border-2 border-[var(--primary)] shadow-2xl shadow-emerald-500/10 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 bg-[var(--primary)] text-white text-[10px] font-bold px-4 py-1 rounded-bl-xl uppercase">Best Value</div>
-                    <h3 class="text-xl font-bold mb-4 uppercase italic">Premium Pro</h3>
-                    <div class="text-4xl font-black mb-6">$49.99<span class="text-sm font-medium opacity-40">/mo</span></div>
-                    <ul class="space-y-4 mb-8 text-sm">
-                        <li class="flex items-center gap-2 font-bold"><span class="material-symbols-outlined text-[var(--primary)] text-sm">verified_user</span> 15-20 verified signals daily</li>
-                        <li class="flex items-center gap-2 font-bold"><span class="material-symbols-outlined text-[var(--primary)] text-sm">verified_user</span> Real-time Dropping Odds</li>
-                        <li class="flex items-center gap-2 font-bold"><span class="material-symbols-outlined text-[var(--primary)] text-sm">verified_user</span> Private Telegram Bot Access</li>
-                    </ul>
-                    <div class="space-y-3">
-                        <a href="https://t.me/yourchannel" class="w-full py-4 bg-[#0088cc] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity uppercase text-xs">
-                             Buy via Telegram
-                        </a>
-                        <a href="https://wa.me/yournumber" class="w-full py-4 bg-[#25D366] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity uppercase text-xs">
-                             WhatsApp Support
-                        </a>
-                    </div>
+                <div class="flex justify-center gap-2 mt-4">
+                    <button class="px-3 py-1 bg-[var(--bg-card)] border border-[var(--border)] rounded font-bold text-xs">1</button>
+                    <button class="px-3 py-1 text-slate-400 font-bold text-xs hover:text-[var(--primary)]">2</button>
+                    <button class="px-3 py-1 text-slate-400 font-bold text-xs hover:text-[var(--primary)]">3</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="favourites-page" class="page-section">
-        <div class="max-w-2xl mx-auto">
-            <h2 class="text-2xl font-black mb-8 italic uppercase flex items-center gap-2">
-                <span class="material-symbols-outlined text-amber-500">star</span> Your Saved Signals
-            </h2>
-            <div id="fav-container" class="space-y-6">
-                <p class="text-slate-400 text-center py-12 italic">No signals saved yet. Click the star on any prediction to save it here.</p>
+        <div class="max-w-4xl mx-auto space-y-8">
+            <h2 class="text-2xl font-black uppercase italic px-2">Starred Predictions</h2>
+            <div id="fav-list" class="space-y-6">
+                <div class="text-center py-20 bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] border-dashed">
+                    <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">star_border</span>
+                    <p class="text-slate-400 font-medium">No signals added to favourites yet.</p>
+                </div>
             </div>
         </div>
     </div>
+
+    <div id="subscription-page" class="page-section">
+        <section id="premium-offer" class="max-w-4xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-black mb-4 uppercase italic">Unlock Professional Insights</h2>
+                <p class="text-[var(--text-muted)] font-medium">Join our elite community and access the full mathematical suite with 90% accuracy signals.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)] shadow-sm flex flex-col">
+                    <h3 class="text-xl font-bold mb-2 uppercase">Standard Access</h3>
+                    <p class="text-slate-400 text-sm mb-6">Basic soccer predictions with ads</p>
+                    <div class="text-4xl font-black mb-8">Free</div>
+                    <ul class="space-y-4 mb-10 flex-1">
+                        <li class="flex items-center gap-3 text-sm text-[var(--text-main)]">
+                            <span class="material-symbols-outlined text-[var(--primary)]">check_circle</span> 3 Daily Live Signals
+                        </li>
+                        <li class="flex items-center gap-3 text-sm text-[var(--text-main)]">
+                            <span class="material-symbols-outlined text-[var(--primary)]">check_circle</span> Public Statistics
+                        </li>
+                    </ul>
+                    <button class="w-full py-4 border-2 border-[var(--border)] text-[var(--text-main)] rounded-2xl font-bold">Current Plan</button>
+                </div>
+                
+                <div class="bg-[var(--bg-card)] p-8 rounded-3xl border-2 border-[var(--primary)] shadow-2xl shadow-emerald-500/10 relative overflow-hidden flex flex-col">
+                    <div class="absolute top-0 right-0 bg-[var(--primary)] text-white text-[10px] font-bold px-4 py-1 rounded-bl-xl uppercase">Most Popular</div>
+                    <h3 class="text-xl font-bold mb-2 uppercase">Premium Analyst</h3>
+                    <p class="text-slate-400 text-sm mb-6">Direct access to the elite team</p>
+                    <div class="text-4xl font-black mb-8">$49.99<span class="text-sm font-medium text-slate-400">/mo</span></div>
+                    <ul class="space-y-4 mb-10 flex-1">
+                        <li class="flex items-center gap-3 text-sm font-semibold">
+                            <span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> ALL signals & alerts
+                        </li>
+                        <li class="flex items-center gap-3 text-sm font-semibold">
+                            <span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> 100% Ad-Free
+                        </li>
+                        <li class="flex items-center gap-3 text-sm font-semibold">
+                            <span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> Private Bot Access
+                        </li>
+                    </ul>
+                    <div class="space-y-3">
+                        <a href="https://t.me/yourchannel" class="w-full py-4 bg-[#0088cc] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity uppercase text-xs tracking-widest">
+                            Buy via Telegram
+                        </a>
+                        <a href="https://wa.me/yournumber" class="w-full py-4 bg-[#25D366] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity uppercase text-xs tracking-widest">
+                            Contact WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
 </main>
 
 <footer class="bg-[var(--bg-card)] border-t border-[var(--border)] py-12 mt-20">
@@ -322,54 +357,68 @@
             <span class="text-xl font-black text-[var(--primary)] mb-2 block uppercase italic">Pinnacolada</span>
             <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Elite Soccer Forecasts © 2026</p>
         </div>
-        <div class="flex flex-wrap justify-center gap-x-8 gap-y-4">
+        <nav class="flex flex-wrap justify-center gap-x-8 gap-y-4">
             <a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Privacy Policy</a>
             <a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Affiliate Terms</a>
             <a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Contact Support</a>
             <a class="text-xs font-bold text-slate-500 hover:text-[var(--primary)]" href="#">Responsible Gambling</a>
-        </div>
+        </nav>
     </div>
 </footer>
 
 <script>
-    function toggleTheme() {
-        document.documentElement.classList.toggle('dark');
-    }
-
-    function switchPage(pageId, element) {
+    // Navigation Logic
+    function showPage(pageId, btn) {
         document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
         document.getElementById(pageId + '-page').classList.add('active');
         
         document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('font-bold', 'border-b-2', 'border-[var(--primary)]', 'text-[var(--text-main)]', 'pb-1');
-            link.classList.add('font-semibold', 'text-slate-500');
+            link.classList.remove('nav-link-active');
+            link.classList.add('nav-link-inactive');
         });
-        
-        if(element) {
-            element.classList.remove('font-semibold', 'text-slate-500');
-            element.classList.add('font-bold', 'border-b-2', 'border-[var(--primary)]', 'text-[var(--text-main)]', 'pb-1');
-        }
-        window.scrollTo(0, 0);
-    }
-
-    function toggleFav(btn) {
-        btn.classList.toggle('fav-active');
-        const card = btn.closest('.signal-item').cloneNode(true);
-        const container = document.getElementById('fav-container');
-        
-        if(btn.classList.contains('fav-active')) {
-            if(container.querySelector('p')) container.innerHTML = '';
-            container.appendChild(card);
-        } else {
-            // Logic to remove from list could be added here
+        if(btn) {
+            btn.classList.add('nav-link-active');
+            btn.classList.remove('nav-link-inactive');
         }
     }
 
-    // Effect removal after 60 seconds
+    // New Signal Effect
     setTimeout(() => {
-        const newSignal = document.getElementById('new-signal-target');
-        if(newSignal) newSignal.classList.remove('new-signal');
+        const flag = document.getElementById('new-signal-flag');
+        if(flag) flag.classList.remove('new-signal-glow');
     }, 60000);
+
+    // Favourites Logic (Mock)
+    let favs = [];
+    function toggleFavourite(id) {
+        const btn = document.querySelector(`.signal-card[data-id="${id}"] .fav-btn`);
+        if(favs.includes(id)) {
+            favs = favs.filter(i => i !== id);
+            btn.style.fontVariationSettings = "'FILL' 0";
+            btn.classList.remove('text-yellow-400');
+        } else {
+            favs.push(id);
+            btn.style.fontVariationSettings = "'FILL' 1";
+            btn.classList.add('text-yellow-400');
+        }
+        updateFavsUI();
+    }
+
+    function updateFavsUI() {
+        const container = document.getElementById('fav-list');
+        if(favs.length === 0) {
+            container.innerHTML = `<div class="text-center py-20 bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] border-dashed"><p class="text-slate-400">No signals added to favourites yet.</p></div>`;
+            return;
+        }
+        container.innerHTML = "";
+        favs.forEach(id => {
+            const original = document.querySelector(`.signal-card[data-id="${id}"]`);
+            if(original) {
+                const clone = original.cloneNode(true);
+                container.appendChild(clone);
+            }
+        });
+    }
 </script>
 
 </body>
