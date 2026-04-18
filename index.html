@@ -16,7 +16,8 @@
                 --primary-dark: #059669;
                 --bg-main: #f8fafc;
                 --bg-card: #ffffff;
-                --text-main: #0f172a;
+                --text-main: #000000; /* Чистый черный для светлой темы */
+                --text-muted: #475569;
                 --border: #f1f5f9;
                 --tg-bubble: #ffffff;
             }
@@ -24,6 +25,7 @@
                 --bg-main: #020617;
                 --bg-card: #0f172a;
                 --text-main: #f8fafc;
+                --text-muted: #94a3b8;
                 --border: #1e293b;
                 --tg-bubble: #1e293b;
             }
@@ -34,6 +36,16 @@
                 @apply transition-colors duration-200 antialiased;
             }
         }
+        
+        /* Стили статистики */
+        .row-win { @apply bg-emerald-50/50 dark:bg-emerald-900/10 border-l-4 border-emerald-500; }
+        .row-loss { @apply bg-rose-50/50 dark:bg-rose-900/10 border-l-4 border-rose-500; }
+        .row-push { @apply bg-amber-50/50 dark:bg-amber-900/10 border-l-4 border-amber-500; }
+
+        .badge-win { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-500 dark:text-white px-3 py-1 rounded-md font-bold text-[10px] uppercase; }
+        .badge-loss { @apply bg-rose-100 text-rose-700 dark:bg-rose-500 dark:text-white px-3 py-1 rounded-md font-bold text-[10px] uppercase; }
+        .badge-push { @apply bg-amber-100 text-amber-700 dark:bg-amber-500 dark:text-white px-3 py-1 rounded-md font-bold text-[10px] uppercase; }
+
         .tg-bubble {
             background: var(--tg-bubble);
             border-radius: 12px;
@@ -50,16 +62,6 @@
         .page-section.active { display: block; }
         .chart-line { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 2s forwards ease-out; }
         @keyframes draw { to { stroke-dashoffset: 0; } }
-
-        /* Стили для строк результатов в статистике */
-        .row-win { @apply bg-emerald-50/40 dark:bg-emerald-900/10 border-l-4 border-emerald-500; }
-        .row-loss { @apply bg-rose-50/40 dark:bg-rose-900/10 border-l-4 border-rose-500; }
-        .row-push { @apply bg-amber-50/40 dark:bg-amber-900/10 border-l-4 border-amber-500; }
-
-        /* Кастомные бейджи статусов */
-        .badge-win { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-500 dark:text-white px-3 py-1 rounded-md font-bold text-[10px] uppercase tracking-wider; }
-        .badge-loss { @apply bg-rose-100 text-rose-700 dark:bg-rose-500 dark:text-white px-3 py-1 rounded-md font-bold text-[10px] uppercase tracking-wider; }
-        .badge-push { @apply bg-amber-100 text-amber-700 dark:bg-amber-500 dark:text-white px-3 py-1 rounded-md font-bold text-[10px] uppercase tracking-wider; }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -91,7 +93,7 @@
                 <div class="bg-[var(--bg-card)] border-2 border-dashed border-[var(--border)] aspect-[3/4] rounded-2xl flex items-center justify-center p-4 text-center">
                     <div>
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Advertisement</p>
-                        <h4 class="text-lg font-bold mb-4">Secure Your 100% Bonus</h4>
+                        <h4 class="text-lg font-bold mb-4 text-[var(--text-main)]">Secure Your 100% Bonus</h4>
                         <button class="w-full py-3 bg-[var(--primary)] text-white font-bold rounded-xl text-xs uppercase">Claim Now</button>
                     </div>
                 </div>
@@ -99,7 +101,7 @@
 
             <div class="lg:col-span-6 space-y-8">
                 <header class="mb-8">
-                    <h1 class="text-2xl font-black italic mb-2">High-Value Betting Signals</h1>
+                    <h1 class="text-2xl font-black italic mb-2 text-[var(--text-main)] uppercase">High-Value Betting Signals</h1>
                     <p class="text-sm text-slate-500">Real-time professional soccer analytics for elite bettors.</p>
                 </header>
 
@@ -137,8 +139,8 @@
                 <div class="bg-[var(--bg-card)] border-2 border-dashed border-[var(--border)] rounded-2xl p-6 text-center">
                     <p class="text-xs font-bold text-slate-400 uppercase mb-4">Partner Slot</p>
                     <img alt="Pinnacle Bookmaker" class="mx-auto h-12 mb-4 grayscale dark:invert" src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Placeholder_logo.svg"/>
-                    <h4 class="font-bold mb-4">Exclusive Pinnacle Bonus Access</h4>
-                    <button class="w-full py-3 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-xl font-bold text-xs uppercase">Join Now</button>
+                    <h4 class="font-bold mb-4 text-[var(--text-main)]">Exclusive Pinnacle Bonus Access</h4>
+                    <button class="w-full py-3 bg-black text-white dark:bg-white dark:text-slate-900 rounded-xl font-bold text-xs uppercase">Join Now</button>
                 </div>
             </aside>
         </div>
@@ -151,37 +153,37 @@
                     <h2 class="text-3xl font-black italic uppercase text-[var(--primary)]">Analytics Archive</h2>
                     <p class="text-sm text-slate-500 font-medium">Verified historical performance and signal accuracy.</p>
                 </div>
-                <div class="flex gap-2 bg-[var(--bg-card)] p-1.5 rounded-2xl border border-[var(--border)] shadow-sm">
-                    <button class="px-6 py-2 text-xs font-bold bg-[var(--primary)] text-white rounded-xl shadow-lg shadow-emerald-500/20">Week</button>
-                    <button class="px-6 py-2 text-xs font-bold text-slate-500 hover:text-[var(--primary)] transition-colors">Month</button>
-                    <button class="px-6 py-2 text-xs font-bold text-slate-500 hover:text-[var(--primary)] transition-colors">All Time</button>
+                <div class="flex gap-2 bg-white dark:bg-slate-800 p-1.5 rounded-2xl border border-[var(--border)] shadow-sm">
+                    <button class="px-6 py-2 text-xs font-bold bg-[var(--primary)] text-white rounded-xl shadow-lg">Week</button>
+                    <button class="px-6 py-2 text-xs font-bold text-slate-500">Month</button>
+                    <button class="px-6 py-2 text-xs font-bold text-slate-500">All Time</button>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-sm">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[var(--border)] shadow-sm">
                     <span class="material-symbols-outlined text-[var(--primary)] mb-2">trending_up</span>
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total ROI</p>
                     <p class="text-2xl font-black text-[var(--text-main)]">+142.4%</p>
                 </div>
-                <div class="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-sm">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[var(--border)] shadow-sm">
                     <span class="material-symbols-outlined text-blue-500 mb-2">verified</span>
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Win Rate</p>
                     <p class="text-2xl font-black text-[var(--text-main)]">74.8%</p>
                 </div>
-                <div class="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-sm">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[var(--border)] shadow-sm">
                     <span class="material-symbols-outlined text-amber-500 mb-2">account_balance_wallet</span>
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Profit Units</p>
                     <p class="text-2xl font-black text-[var(--text-main)]">+12.4k</p>
                 </div>
-                <div class="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-sm">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-[var(--border)] shadow-sm">
                     <span class="material-symbols-outlined text-purple-500 mb-2">monitoring</span>
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Odds</p>
                     <p class="text-2xl font-black text-[var(--text-main)]">1.92</p>
                 </div>
             </div>
 
-            <div class="bg-[var(--bg-card)] rounded-[32px] border border-[var(--border)] shadow-xl overflow-hidden">
+            <div class="bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border)] shadow-xl overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -196,7 +198,7 @@
                             <tr class="row-win transition-colors">
                                 <td class="p-6">
                                     <div class="font-bold text-[var(--text-main)]">Arsenal vs Man City</div>
-                                    <div class="text-[10px] text-slate-500 font-semibold uppercase tracking-tighter">England: Premier League</div>
+                                    <div class="text-[10px] text-slate-500 font-semibold uppercase">England: Premier League</div>
                                 </td>
                                 <td class="p-6 text-center font-black text-lg text-[var(--text-main)]">2 : 2</td>
                                 <td class="p-6 italic font-medium text-slate-600 dark:text-slate-400">BTTS - YES @ 1.85</td>
@@ -205,7 +207,7 @@
                             <tr class="row-loss transition-colors">
                                 <td class="p-6">
                                     <div class="font-bold text-[var(--text-main)]">Real Madrid vs Barcelona</div>
-                                    <div class="text-[10px] text-slate-500 font-semibold uppercase tracking-tighter">Spain: La Liga</div>
+                                    <div class="text-[10px] text-slate-500 font-semibold uppercase">Spain: La Liga</div>
                                 </td>
                                 <td class="p-6 text-center font-black text-lg text-[var(--text-main)]">0 : 1</td>
                                 <td class="p-6 italic font-medium text-slate-600 dark:text-slate-400">Over 2.5 @ 1.98</td>
@@ -214,7 +216,7 @@
                             <tr class="row-push transition-colors">
                                 <td class="p-6">
                                     <div class="font-bold text-[var(--text-main)]">Bayern vs Dortmund</div>
-                                    <div class="text-[10px] text-slate-500 font-semibold uppercase tracking-tighter">Germany: Bundesliga</div>
+                                    <div class="text-[10px] text-slate-500 font-semibold uppercase">Germany: Bundesliga</div>
                                 </td>
                                 <td class="p-6 text-center font-black text-lg text-[var(--text-main)]">2 : 0</td>
                                 <td class="p-6 italic font-medium text-slate-600 dark:text-slate-400">Asian Total 2.0 @ 1.90</td>
@@ -224,17 +226,13 @@
                     </table>
                 </div>
                 
-                <div class="p-6 bg-slate-50/30 dark:bg-slate-800/30 border-t border-[var(--border)] flex justify-between items-center">
-                    <button class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[var(--primary)] flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm">arrow_back_ios</span> Prev
-                    </button>
-                    <div class="flex gap-3">
-                        <span class="w-8 h-8 flex items-center justify-center bg-[var(--primary)] text-white text-xs font-black rounded-xl shadow-md shadow-emerald-500/20 cursor-pointer">1</span>
-                        <span class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-[var(--primary)] text-xs font-black rounded-xl border border-[var(--border)] cursor-pointer transition-colors">2</span>
+                <div class="p-6 border-t border-[var(--border)] flex justify-between items-center bg-slate-50/30 dark:bg-slate-800/30">
+                    <button class="text-[10px] font-black uppercase text-slate-400 hover:text-[var(--primary)]">Prev</button>
+                    <div class="flex gap-2">
+                        <span class="w-8 h-8 flex items-center justify-center bg-[var(--primary)] text-white text-xs font-black rounded-xl">1</span>
+                        <span class="w-8 h-8 flex items-center justify-center text-slate-400 text-xs font-black rounded-xl border border-[var(--border)]">2</span>
                     </div>
-                    <button class="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-[var(--primary)] flex items-center gap-2">
-                        Next <span class="material-symbols-outlined text-sm">arrow_forward_ios</span>
-                    </button>
+                    <button class="text-[10px] font-black uppercase text-slate-400 hover:text-[var(--primary)]">Next</button>
                 </div>
             </div>
         </div>
@@ -243,7 +241,7 @@
     <div id="subscription-page" class="page-section">
         <div class="max-w-4xl mx-auto space-y-12">
             <div class="text-center">
-                <h2 class="text-4xl font-black mb-4 italic uppercase">Unlock Premium Analytics</h2>
+                <h2 class="text-4xl font-black mb-4 italic uppercase text-[var(--text-main)]">Unlock Premium Analytics</h2>
                 <p class="text-slate-500 max-w-xl mx-auto">Gain a professional edge with our private analytical feed, advanced bankroll tracking, and high-frequency signal alerts.</p>
             </div>
             
@@ -252,25 +250,25 @@
                 <div class="grid md:grid-cols-2 gap-12">
                     <div class="space-y-8">
                         <div>
-                            <h3 class="text-2xl font-black italic uppercase mb-2">Premium Analyst</h3>
+                            <h3 class="text-2xl font-black italic uppercase mb-2 text-[var(--text-main)]">Premium Analyst</h3>
                             <p class="text-slate-400 text-sm">Everything you need for consistent growth.</p>
                         </div>
-                        <ul class="space-y-4">
+                        <ul class="space-y-4 text-[var(--text-main)]">
                             <li class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> 100% Ad-Free Feed</li>
                             <li class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> 15-20 Pro Signals Weekly</li>
                             <li class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> Advanced Value Detection</li>
                             <li class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> WhatsApp/Telegram Priority</li>
                         </ul>
-                        <div class="text-5xl font-black">$49.99<span class="text-sm font-medium text-slate-400 italic">/mo</span></div>
+                        <div class="text-5xl font-black text-[var(--text-main)]">$49.99<span class="text-sm font-medium text-slate-400 italic">/mo</span></div>
                     </div>
                     <div class="flex flex-col gap-4 justify-center">
-                        <a href="https://t.me/yourchannel" class="w-full py-5 bg-[#0088cc] text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:scale-[1.02] transition-all">
+                        <a href="https://t.me/yourchannel" class="w-full py-5 bg-[#0088cc] text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:scale-[1.02] transition-all uppercase tracking-tight">
                             <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.46 3.62-.51.35-.98.52-1.4.51-.46-.01-1.35-.26-2.01-.48-.81-.27-1.45-.42-1.39-.88.03-.24.38-.49 1.05-.75 4.12-1.79 6.87-2.97 8.25-3.54 3.92-1.62 4.73-1.9 5.26-1.91.12 0 .38.03.55.17.14.12.18.28.2.44-.01.07.01.21.01.21z"></path></svg>
-                            BUY VIA TELEGRAM
+                            Buy via Telegram
                         </a>
-                        <a href="https://wa.me/yournumber" class="w-full py-5 bg-[#25D366] text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:scale-[1.02] transition-all">
+                        <a href="https://wa.me/yournumber" class="w-full py-5 bg-[#25D366] text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:scale-[1.02] transition-all uppercase tracking-tight">
                             <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"></path></svg>
-                            WHATSAPP SUPPORT
+                            WhatsApp Support
                         </a>
                     </div>
                 </div>
@@ -301,11 +299,9 @@
     }
 
     function showPage(pageId, element) {
-        // Switch Sections
         document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
         document.getElementById(pageId + '-page').classList.add('active');
         
-        // Update Nav Active State
         document.querySelectorAll('.nav-link').forEach(l => {
             l.classList.remove('font-bold', 'border-b-2', 'border-[var(--primary)]', 'text-[var(--text-main)]', 'pb-1');
             l.classList.add('font-semibold', 'text-slate-500');
@@ -318,7 +314,6 @@
         window.scrollTo(0,0);
     }
 
-    // New Signal Effect Timeout
     setTimeout(() => {
         const signal = document.getElementById('new-signal');
         if (signal) signal.classList.remove('new-signal-glow');
