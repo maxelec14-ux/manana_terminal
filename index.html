@@ -1,291 +1,158 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Pinnacle Elite | Final Stable</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
-        body { background: #F8FAFC; font-family: 'Inter', sans-serif; color: #1E293B; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .match-card { background: white; border-radius: 20px; border: 1px solid #E2E8F0; margin-bottom: 1.5rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .is-fav { border-left: 6px solid #F59E0B !important; }
-        .market-box { background: #F1F5F9; border-radius: 12px; padding: 12px; border: 1px solid #E2E8F0; flex: 1; }
-        .label-u { font-size: 10px; color: #64748B; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; display: block; }
-        .odds-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.15rem; color: #0F172A; }
-        .chart-container { height: 150px; width: 100%; position: relative; padding: 10px; }
-        .btn-active { background: #2563EB !important; color: white !important; }
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pinnacolada | Elite Soccer Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        :root {
+            --primary: #06b6d4;
+            --primary-dark: #0891b2;
+            --bg-main: #0f172a;
+            --card-bg: #1e293b;
+            --telegram-bg: #1e293b;
+            --gradient-cta: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-main); 
+        }
+        .material-symbols-outlined { 
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; 
+        }
+        .tg-bubble {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            position: relative;
+        }
+        .tg-bubble::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 12px;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 8px 10px 0;
+            border-color: transparent var(--card-bg) transparent transparent;
+        }
+        .gradient-btn { background: var(--gradient-cta); }
+        .verified-badge {
+            background: var(--gradient-cta);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="text-slate-100 overflow-x-hidden">
+<nav class="fixed top-0 w-full z-50 bg-[#0f172a]/80 backdrop-blur-md border-b border-slate-800">
+<div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black tracking-tight text-[var(--primary)] uppercase">Pinnacolada.</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-sm font-bold border-b-2 border-[var(--primary)] text-white pb-1" href="#predictions">Predictions</a>
+<a class="text-sm font-semibold text-slate-400 hover:text-[var(--primary)] transition-colors" href="#statistics">Statistics</a>
+<a class="text-sm font-semibold text-slate-400 hover:text-[var(--primary)] transition-colors" href="#subscription">Subscription</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-[var(--primary)]">notifications</span>
+<div class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+<span class="material-symbols-outlined text-slate-400 text-sm">person</span>
+</div>
+</div>
+</div>
+</nav>
 
-    <div class="max-w-[1600px] mx-auto">
-        <header class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 mb-8">
-            <div class="flex flex-wrap justify-between items-center gap-6 mb-8">
-                <div>
-                    <h1 class="text-3xl font-black tracking-tighter italic text-slate-900">PINNACLE<span class="text-blue-600">ELITE</span></h1>
-                    <div id="api-status" class="text-[11px] font-bold text-slate-400 uppercase mt-1 tracking-widest italic">System Ready</div>
-                </div>
-                <div class="flex gap-3">
-                    <button onclick="fullSync()" id="scan-btn" class="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold text-sm uppercase hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">Full 24h Sync ⚡</button>
-                    <button onclick="toggleFavMode()" id="fav-toggle" class="bg-white border border-slate-200 px-8 py-3 rounded-2xl font-bold text-sm uppercase hover:bg-amber-50 transition-all">Favorites ⭐</button>
-                </div>
-            </div>
+<main class="pt-24 pb-12 px-4 max-w-7xl mx-auto">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<aside class="hidden lg:block lg:col-span-3 space-y-6">
+<div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-800">
+<h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Market Health</h3>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-sm text-slate-400">Monthly ROI</span>
+<span class="text-lg font-black text-[var(--primary)]">+24.8%</span>
+</div>
+<div class="flex justify-between items-end">
+<span class="text-sm text-slate-400">Win Rate</span>
+<span class="text-lg font-black text-white">72%</span>
+</div>
+</div>
+</div>
+<div class="relative rounded-2xl overflow-hidden aspect-[3/4] bg-slate-900 shadow-xl border border-slate-800 group cursor-pointer">
+<div class="absolute inset-0 p-6 flex flex-col justify-end bg-gradient-to-t from-slate-900 to-transparent">
+<p class="text-[10px] text-[var(--primary)] font-bold uppercase mb-2">Pinnacle Exclusive</p>
+<h4 class="text-xl font-bold text-white mb-4">Master the Dropping Odds Strategy</h4>
+<button class="gradient-btn text-white text-xs font-bold py-3 rounded-xl uppercase tracking-widest">Learn More</button>
+</div>
+</div>
+</aside>
 
-            <div class="flex flex-wrap items-center gap-4 border-t pt-8">
-                <div class="flex bg-slate-100 p-1.5 rounded-2xl">
-                    <button onclick="setSport('all')" class="sport-btn px-6 py-2.5 text-xs font-bold uppercase rounded-xl btn-active" data-sport="all">All</button>
-                    <button onclick="setSport('1')" class="sport-btn px-6 py-2.5 text-xs font-bold uppercase rounded-xl" data-sport="1">Soccer</button>
-                    <button onclick="setSport('4')" class="sport-btn px-6 py-2.5 text-xs font-bold uppercase rounded-xl" data-sport="4">Hockey</button>
-                    <button onclick="setSport('3')" class="sport-btn px-6 py-2.5 text-xs font-bold uppercase rounded-xl" data-sport="3">Basketball</button>
-                </div>
-                <input type="text" id="search" oninput="render()" placeholder="Search team or league..." class="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none flex-grow">
-                
-                <button onclick="handleSort('time')" class="sort-btn bg-slate-50 border border-slate-200 px-6 py-3 rounded-2xl text-xs font-bold uppercase hover:bg-slate-100 transition-all">Time ↕</button>
-                <button onclick="handleSort('total')" class="sort-btn bg-slate-50 border border-slate-200 px-6 py-3 rounded-2xl text-xs font-bold uppercase hover:bg-slate-100 transition-all">Total ↕</button>
-                <button onclick="handleSort('spread')" class="sort-btn bg-slate-50 border border-slate-200 px-6 py-3 rounded-2xl text-xs font-bold uppercase hover:bg-slate-100 transition-all">Handicap ↕</button>
-            </div>
-        </header>
+<div class="lg:col-span-6 space-y-8" id="predictions">
+<div class="flex items-center justify-between mb-4 px-2">
+<h2 class="text-lg font-extrabold flex items-center gap-2 text-white">
+<span class="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse shadow-[0_0_8px_var(--primary)]"></span>
+                    Live Predictions
+                </h2>
+<span class="text-xs font-medium text-slate-500">142 users online</span>
+</div>
 
-        <div id="scanner-feed"></div>
-    </div>
+<div class="flex gap-3">
+<div class="w-10 h-10 rounded-full gradient-btn flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-xl">analytics</span>
+</div>
+<div class="flex-1 space-y-2 max-w-[90%]">
+<div class="tg-bubble p-5 border border-slate-700/50">
+<div class="flex items-center gap-1 mb-3">
+<span class="text-xs font-bold text-[var(--primary)]">Hot Drop Scanner</span>
+<span class="material-symbols-outlined text-sm fill-current verified-badge" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="font-mono text-sm leading-relaxed space-y-1 text-slate-300">
+<p>🏆 England: Premier League</p>
+<p>📅 Start: Today, 20:00</p>
+<br/>
+<p>🏠 Arsenal</p>
+<p>🚀 Man City</p>
+<br/>
+<p>🎯 Target: OVER 2.5</p>
+<p class="font-bold">💎 Side: YES @ <span class="text-[var(--primary)]">1.98</span></p>
+<br/>
+<p class="text-[10px] text-slate-500 italic">! Drop 10% detected in 60 min window</p>
+</div>
+<div class="mt-2 text-[10px] text-slate-500 text-right">09:15</div>
+</div>
+<button class="w-full gradient-btn text-white font-bold py-4 rounded-xl shadow-lg shadow-cyan-900/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">payments</span>
+                        BET AT PINNACLE
+                    </button>
+</div>
+</div>
+</div>
 
-    <script>
-        const API_KEY = "fd36bdc679msh21fa7b256e2dda5p13662cjsnbdbf4c2ed8c6";
-        const API_HOST = "odds-feed.p.rapidapi.com";
-        
-        let db = JSON.parse(localStorage.getItem('pin_db_final')) || {};
-        let favorites = JSON.parse(localStorage.getItem('pin_favs_final')) || [];
-        let currentSport = 'all';
-        let favMode = false;
-        let sortField = 'time';
-        let sortOrder = 'asc';
-        let charts = {};
-
-        async function fetchRapid(endpoint) {
-            const res = await fetch(`https://${API_HOST}${endpoint}`, {
-                headers: { "x-rapidapi-key": API_KEY, "x-rapidapi-host": API_HOST }
-            });
-            return await res.json();
-        }
-
-        async function fullSync() {
-            const btn = document.getElementById('scan-btn');
-            const status = document.getElementById('api-status');
-            btn.disabled = true;
-            try {
-                const now = new Date();
-                const dMin = now.toISOString().split('T')[0] + " 00:00:00";
-                status.innerText = "Syncing Events...";
-                const eventsRes = await fetchRapid(`/api/v1/events?status=SCHEDULED&start_at_min=${dMin}`);
-                
-                if (eventsRes && eventsRes.data) {
-                    for (let event of eventsRes.data) {
-                        // ФИЛЬТР: ТОЛЬКО ФУТБОЛ (1), ХОККЕЙ (4), БАСКЕТБОЛ (3)
-                        if (![1, 3, 4].includes(event.sport.id)) continue;
-
-                        status.innerText = `Loading Odds: ${event.team_home.name}`;
-                        const marketsRes = await fetchRapid(`/api/v1/events/markets?event_id=${event.id}`);
-                        if (marketsRes && marketsRes.data) {
-                            processData(event, marketsRes.data);
-                        }
-                        await new Promise(r => setTimeout(r, 150));
-                    }
-                    localStorage.setItem('pin_db_final', JSON.stringify(db));
-                    render();
-                    status.innerText = "Sync Complete";
-                }
-            } catch (e) { status.innerText = "Error: " + e.message; }
-            finally { btn.disabled = false; }
-        }
-
-        function processData(event, markets) {
-            const now = Date.now();
-            if (!db[event.id]) {
-                db[event.id] = {
-                    id: String(event.id), // Принудительно в строку для избранного
-                    home: event.team_home.name,
-                    away: event.team_away.name,
-                    // ИСПРАВЛЕНИЕ ЛИГ: Берем tournament.name (часто используется в этом API)
-                    league: event.tournament?.name || event.league?.name || event.league_name || "Unknown League",
-                    sport_id: event.sport.id,
-                    start: event.start_at,
-                    history: { h2h: [], spr: [], tot: [] },
-                    lastUpdate: now
-                };
-            }
-            
-            const pinMarkets = markets.filter(m => m.market_books.some(b => b.book === 'PINNACLE'));
-            pinMarkets.forEach(m => {
-                const book = m.market_books.find(b => b.book === 'PINNACLE');
-                const val = m.value || 0;
-                
-                // ИСПРАВЛЕНИЕ ИСХОДОВ 1X2 (Учитываем ключи API: outcome_1, outcome_X, outcome_2)
-                if (m.market_name === '1X2') {
-                    const v1 = book.outcome_1 || book.outcome_0;
-                    const vx = book.outcome_X || book.outcome_x || book.outcome_draw || '-';
-                    const v2 = book.outcome_2 || book.outcome_1;
-                    db[event.id].history.h2h.push({ t: now, v1: v1, vx: vx, v2: v2 });
-                }
-                
-                if (m.market_name === 'ASIAN_HANDICAP') {
-                    // ИСПРАВЛЕНИЕ ГАНДИКАПА (outcome_1=Home, outcome_2=Away)
-                    const h = book.outcome_1 || book.outcome_0;
-                    const a = book.outcome_2 || book.outcome_1;
-                    db[event.id].history.spr.push({ t: now, h: h, a: a, n: val });
-                }
-                
-                if (m.market_name === 'OVER_UNDER') {
-                    // ИСПРАВЛЕНИЕ ТОТАЛА (outcome_1=Over, outcome_2=Under)
-                    const o = book.outcome_1 || book.outcome_0;
-                    const u = book.outcome_2 || book.outcome_1;
-                    db[event.id].history.tot.push({ t: now, o: o, u: u, n: val });
-                }
-            });
-            db[event.id].lastUpdate = now;
-        }
-
-        function handleSort(field) {
-            if (sortField === field) {
-                sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortField = field;
-                sortOrder = 'desc'; // По умолчанию от большего к меньшему при первом клике
-            }
-            render();
-        }
-
-        function render() {
-            const feed = document.getElementById('scanner-feed');
-            const searchStr = document.getElementById('search').value.toLowerCase();
-            const now = Date.now();
-
-            let list = Object.values(db).filter(m => {
-                if (new Date(m.start).getTime() < now - 3600000) return false;
-                if (currentSport !== 'all' && m.sport_id.toString() !== currentSport) return false;
-                if (favMode && !favorites.includes(String(m.id))) return false;
-                const matchName = (m.home + m.away + m.league).toLowerCase();
-                return searchStr ? matchName.includes(searchStr) : true;
-            });
-
-            // ЛОГИКА СОРТИРОВКИ (в обе стороны)
-            list.sort((a, b) => {
-                let res = 0;
-                if (sortField === 'time') {
-                    res = new Date(a.start) - new Date(b.start);
-                } else if (sortField === 'total') {
-                    const tA = a.history.tot.slice(-1)[0]?.n || 0;
-                    const tB = b.history.tot.slice(-1)[0]?.n || 0;
-                    res = tA - tB;
-                } else if (sortField === 'spread') {
-                    const sA = Math.abs(a.history.spr.slice(-1)[0]?.n || 0);
-                    const sB = Math.abs(b.history.spr.slice(-1)[0]?.n || 0);
-                    res = sA - sB;
-                }
-                return sortOrder === 'asc' ? res : -res;
-            });
-
-            feed.innerHTML = list.map(m => {
-                const h = m.history.h2h.slice(-1)[0] || {};
-                const s = m.history.spr.slice(-1)[0] || {};
-                const t = m.history.tot.slice(-1)[0] || {};
-                const isFav = favorites.includes(String(m.id));
-
-                return `
-                <div class="match-card ${isFav ? 'is-fav' : ''}">
-                    <div class="p-8 grid grid-cols-12 gap-8 items-center">
-                        <div class="col-span-4">
-                            <div class="text-[11px] font-black text-blue-600 uppercase mb-2 tracking-widest">${m.league}</div>
-                            <div class="text-xl font-black text-slate-900 leading-tight uppercase">${m.home}</div>
-                            <div class="text-xl font-black text-slate-400 leading-tight uppercase mb-4">${m.away}</div>
-                            <div class="flex gap-4">
-                                <button onclick="toggleFav('${m.id}')" class="text-[11px] font-bold uppercase px-4 py-1.5 rounded-lg border ${isFav ? 'bg-amber-400 border-amber-400 text-white' : 'border-slate-200 text-slate-400 hover:bg-slate-50'} transition-all">
-                                    ${isFav ? '★ Favorited' : '☆ Favorite'}
-                                </button>
-                                <span class="text-[11px] font-bold text-slate-400 py-1.5 mono italic uppercase">Update: ${Math.floor((now - m.lastUpdate)/1000)}s ago</span>
-                            </div>
-                        </div>
-                        <div class="col-span-8 flex gap-4">
-                            <div class="market-box"><span class="label-u">1X2 Odds</span>
-                                <div class="flex text-center"><div class="flex-1">1<div class="odds-val">${h.v1 || '-'}</div></div><div class="flex-1">X<div class="odds-val">${h.vx || '-'}</div></div><div class="flex-1">2<div class="odds-val">${h.v2 || '-'}</div></div></div>
-                            </div>
-                            <div class="market-box"><span class="label-u">Handicap (${s.n || 0})</span>
-                                <div class="flex text-center"><div class="flex-1">Home<div class="odds-val text-blue-600">${s.h || '-'}</div></div><div class="flex-1">Away<div class="odds-val text-blue-600">${s.a || '-'}</div></div></div>
-                            </div>
-                            <div class="market-box"><span class="label-u">Total (${t.n || 0})</span>
-                                <div class="flex text-center"><div class="flex-1">Over<div class="odds-val text-orange-600">${t.o || '-'}</div></div><div class="flex-1">Under<div class="odds-val text-emerald-600">${t.u || '-'}</div></div></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-8 p-6 bg-slate-50/50 border-t border-slate-100">
-                        <div class="chart-container"><canvas id="ch-h-${m.id}"></canvas></div>
-                        <div class="chart-container"><canvas id="ch-s-${m.id}"></canvas></div>
-                        <div class="chart-container"><canvas id="ch-t-${m.id}"></canvas></div>
-                    </div>
-                </div>`;
-            }).join('');
-            
-            list.forEach(m => updateCharts(m));
-        }
-
-        function updateCharts(m) {
-            const sets = [
-                { id: `ch-h-${m.id}`, data: [{ d: m.history.h2h.map(x=>x.v1), c: '#2563EB' }, { d: m.history.h2h.map(x=>x.vx), c: '#94A3B8' }, { d: m.history.h2h.map(x=>x.v2), c: '#F43F5E' }] },
-                { id: `ch-s-${m.id}`, data: [{ d: m.history.spr.map(x=>x.h), c: '#2563EB' }, { d: m.history.spr.map(x=>x.a), c: '#60A5FA' }] },
-                { id: `ch-t-${m.id}`, data: [{ d: m.history.tot.map(x=>x.o), c: '#F59E0B' }, { d: m.history.tot.map(x=>x.u), c: '#10B981' }] }
-            ];
-
-            sets.forEach(s => {
-                const ctx = document.getElementById(s.id);
-                if (!ctx) return;
-                
-                // Фильтруем пустые значения (тире) чтобы графики не ломались
-                const validDatasets = s.data.map(ds => ({
-                    data: ds.d.map(val => val === '-' ? null : parseFloat(val)),
-                    borderColor: ds.c,
-                    borderWidth: 2.5,
-                    pointRadius: 0,
-                    tension: 0.4,
-                    spanGaps: true // Соединять линию, если есть пустые точки
-                }));
-
-                if (charts[s.id]) charts[s.id].destroy();
-                charts[s.id] = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: s.data[0].d.map(() => ''),
-                        datasets: validDatasets
-                    },
-                    options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { ticks: { font: { size: 9, weight: 'bold' } }, grid: { color: '#E2E8F0' } } } }
-                });
-            });
-        }
-
-        function toggleFav(id) {
-            const strId = String(id);
-            const idx = favorites.indexOf(strId);
-            if (idx > -1) favorites.splice(idx, 1);
-            else favorites.push(strId);
-            localStorage.setItem('pin_favs_final', JSON.stringify(favorites));
-            render();
-        }
-
-        function setSport(id) {
-            currentSport = id;
-            document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('btn-active'));
-            document.querySelector(`[data-sport="${id}"]`).classList.add('btn-active');
-            render();
-        }
-
-        function toggleFavMode() {
-            favMode = !favMode;
-            document.getElementById('fav-toggle').classList.toggle('btn-active', favMode);
-            render();
-        }
-
-        setInterval(render, 30000);
-        render();
-    </script>
-</body>
-</html>
+<aside class="lg:col-span-3 space-y-6">
+<div class="bg-slate-800/50 rounded-2xl p-6 border border-slate-800 shadow-sm" id="statistics">
+<h4 class="text-xs font-bold text-slate-500 uppercase mb-4 tracking-tighter">Performance Tracking</h4>
+<div class="flex items-center gap-4 mb-6">
+<div class="flex-1">
+<p class="text-2xl font-black text-white">+142%</p>
+<p class="text-[10px] text-slate-400 font-medium">ROI Yearly</p>
+</div>
+<div class="flex-1 border-l border-slate-700 pl-4">
+<p class="text-2xl font-black text-white">12.4k</p>
+<p class="text-[10px] text-slate-400 font-medium">Units</p>
+</div>
+</div>
+<div class="h-20 flex items-end justify-between gap-1">
+<div class="w-full bg-cyan-900/20 rounded-t-sm h-[30%]"></div>
+<div class="w-full bg-cyan-900/40 rounded-t-sm h-[45%]"></div>
+<div class="w-full bg-[var(--primary)] rounded-t-sm h-[95%]"></div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</body></html>
