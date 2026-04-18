@@ -2,169 +2,227 @@
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Precision Bets | Elite Soccer Analytics</title>
+<title>Pinnacolada | Elite Soccer Analytics</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style type="text/tailwindcss">
-    @layer base {
-        :root {
-            --primary: #10b981;
-            --primary-dark: #059669;
-            --bg-main: #f8fafc;
-            --bg-card: #ffffff;
-            --text-main: #0f172a; /* Глубокий темный для светлой темы */
-            --border: #f1f5f9;
-            --tg-bubble: #ffffff;
-        }
-        .dark {
-            --bg-main: #020617;
-            --bg-card: #0f172a;
-            --text-main: #ffffff; /* Чистый белый для темной темы */
-            --border: #1e293b;
-            --tg-bubble: #1e293b;
+        @layer base {
+            :root {
+                --primary: #10b981;
+                --primary-dark: #059669;
+                --bg-main: #f8fafc;
+                --bg-card: #ffffff;
+                --text-main: #0f172a;
+                --border: #f1f5f9;
+                --tg-bubble: #ffffff;
+            }
+            .dark {
+                --bg-main: #020617;
+                --bg-card: #0f172a;
+                --text-main: #f8fafc;
+                --border: #1e293b;
+                --tg-bubble: #1e293b;
+            }
         }
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg-main); 
             color: var(--text-main);
-            @apply transition-colors duration-200 antialiased;
+            @apply transition-colors duration-200;
         }
-    }
-    .tg-bubble {
-        background: var(--tg-bubble);
-        border-radius: 12px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        position: relative;
-        border: 1px solid var(--border);
-    }
-    .new-signal-glow {
-        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-        border-color: var(--primary) !important;
-    }
-    .page-section { display: none; }
-    .page-section.active { display: block; }
-</style>
+        .material-symbols-outlined { 
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; 
+        }
+        .tg-bubble {
+            background: var(--tg-bubble);
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+            position: relative;
+            border: 1px solid var(--border);
+        }
+        .tg-bubble::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 12px;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 8px 10px 0;
+            border-color: transparent var(--tg-bubble) transparent transparent;
+        }
+        /* Эффект нового сигнала на 1 минуту */
+        .new-signal-pulse {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+            border-color: var(--primary);
+            transition: all 1s ease;
+        }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+    </style>
 </head>
 <body class="overflow-x-hidden">
 
 <nav class="fixed top-0 w-full z-50 bg-[var(--bg-card)] border-b border-[var(--border)]">
-    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <div class="flex items-center gap-8">
-            <span class="text-xl font-black tracking-tight text-[var(--primary)]">PRECISION.</span>
-            <div class="hidden md:flex items-center gap-6">
-                <a class="nav-link text-sm font-bold border-b-2 border-[var(--primary)] text-[var(--text-main)] pb-1" href="javascript:void(0)" onclick="showPage('predictions', this)">Predictions</a>
-                <a class="nav-link text-sm font-semibold text-slate-500 hover:text-[var(--primary)]" href="javascript:void(0)" onclick="showPage('statistics', this)">Statistics</a>
-                <a class="nav-link text-sm font-semibold text-slate-500 hover:text-[var(--primary)]" href="javascript:void(0)" onclick="showPage('subscription', this)">Subscription</a>
-            </div>
-        </div>
-        <div class="flex items-center gap-4">
-            <button onclick="toggleTheme()" class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-[var(--primary)]">contrast</button>
-            <div class="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                <span class="material-symbols-outlined text-slate-500 text-sm">person</span>
-            </div>
-        </div>
-    </div>
+<div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black tracking-tight text-[var(--primary)] uppercase italic">Pinnacolada</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="nav-btn text-sm font-bold border-b-2 border-[var(--primary)] pb-1" href="javascript:void(0)" onclick="switchPage('predictions', this)">Predictions</a>
+<a class="nav-btn text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors" href="javascript:void(0)" onclick="switchPage('statistics', this)">Statistics</a>
+<a class="nav-btn text-sm font-semibold text-slate-500 hover:text-[var(--primary)] transition-colors" href="javascript:void(0)" onclick="switchPage('subscription', this)">Subscription</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button onclick="toggleTheme()" class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-[var(--primary)]">contrast</button>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer">notifications</span>
+<div class="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-500 text-sm">person</span>
+</div>
+</div>
+</div>
 </nav>
 
 <main class="pt-24 pb-12 px-4 max-w-7xl mx-auto">
 
-    <div id="predictions-page" class="page-section active">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <aside class="hidden lg:block lg:col-span-3 space-y-6">
-                <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Stats</h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-end">
-                            <span class="text-sm text-slate-500">Monthly ROI</span>
-                            <span class="text-lg font-black text-[var(--primary)]">+24.8%</span>
-                        </div>
-                        <div class="flex justify-between items-end">
-                            <span class="text-sm text-slate-500">Win Rate</span>
-                            <span class="text-lg font-black">72%</span>
-                        </div>
+<div id="predictions-page" class="page-section active">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <aside class="hidden lg:block lg:col-span-3 space-y-6">
+            <div class="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Stats</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-end">
+                        <span class="text-sm text-slate-500">Monthly ROI</span>
+                        <span class="text-lg font-black text-[var(--primary)]">+24.8%</span>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <span class="text-sm text-slate-500">Win Rate</span>
+                        <span class="text-lg font-black">72%</span>
                     </div>
                 </div>
-            </aside>
+            </div>
+        </aside>
+
+        <div class="lg:col-span-6 space-y-8">
+            <div class="flex items-center justify-between mb-4 px-2">
+                <h2 class="text-lg font-extrabold flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse"></span>
+                    Live Predictions
+                </h2>
+                <span class="text-xs font-medium text-slate-400">142 users online</span>
+            </div>
             
-            <div class="lg:col-span-6 space-y-8">
-                <div class="flex items-center justify-between mb-4 px-2">
-                    <h2 class="text-lg font-extrabold flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse"></span>
-                        Live Predictions
-                    </h2>
+            <div class="flex gap-3">
+                <div class="w-10 h-10 rounded-full bg-[var(--primary)] flex-shrink-0 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-white text-xl">analytics</span>
                 </div>
-                
-                <div class="flex gap-3">
-                    <div class="w-10 h-10 rounded-full bg-[var(--primary)] flex-shrink-0 flex items-center justify-center text-white">
-                        <span class="material-symbols-outlined">analytics</span>
-                    </div>
-                    <div class="flex-1 space-y-2 max-w-[90%]">
-                        <div id="new-signal" class="tg-bubble p-5 new-signal-glow">
-                            <div class="flex items-center gap-1 mb-3 border-b border-[var(--border)] pb-2">
-                                <span class="text-xs font-bold text-[var(--primary)]">Precision Analyst</span>
-                                <span class="material-symbols-outlined text-[var(--primary)] text-sm fill-current">verified</span>
-                            </div>
-                            <div class="font-mono text-sm leading-relaxed space-y-1 text-[var(--text-main)]">
-                                <p>🏆 Honduras: Liga Nacional</p>
-                                <p>📅 Start: 2026-04-17 01:30:00</p>
-                                <br/>
-                                <p>🏠 Victoria</p>
-                                <p>🚀 Motagua</p>
-                                <br/>
-                                <p>🎯 Target Line: 2.75</p>
-                                <p class="font-bold">💎 Side: <span class="text-[var(--primary)]">OVER @ 1.93</span></p>
-                            </div>
-                            <div class="mt-4 text-[10px] text-slate-400 text-right">09:15</div>
+                <div class="flex-1 space-y-2 max-w-[90%]">
+                    <div id="latest-signal" class="tg-bubble p-5 new-signal-pulse">
+                        <div class="flex items-center gap-1 mb-3">
+                            <span class="text-xs font-bold text-[var(--primary)]">Math Signal</span>
+                            <span class="material-symbols-outlined text-[var(--primary)] text-sm fill-current">verified</span>
                         </div>
-                        <button class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
-                            BET NOW @ PINNACLE
-                        </button>
+                        <div class="font-mono text-sm leading-relaxed space-y-1 text-[var(--text-main)] opacity-90">
+                            <p>🏆 Honduras: Liga Nacional</p>
+                            <p>📅 Start: 2026-04-17 01:30:00</p>
+                            <br/>
+                            <p>🏠 Victoria</p>
+                            <p>🚀 Motagua</p>
+                            <br/>
+                            <p>🎯 Target Line: 2.75</p>
+                            <p class="font-bold">💎 Side: OVER @ <span class="text-[var(--primary-dark)]">1.93</span></p>
+                        </div>
+                        <div class="mt-2 text-[10px] text-slate-400 text-right">09:15</div>
                     </div>
-                </div>
-            </div>
-
-            <aside class="lg:col-span-3 space-y-6">
-                <div class="bg-[var(--bg-card)] rounded-2xl p-6 border border-[var(--border)]">
-                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-4">Performance</h4>
-                    <div class="h-20 flex items-end justify-between gap-1">
-                        <div class="w-full bg-[var(--primary)]/20 rounded-t-sm h-[40%]"></div>
-                        <div class="w-full bg-[var(--primary)]/40 rounded-t-sm h-[60%]"></div>
-                        <div class="w-full bg-[var(--primary)] rounded-t-sm h-[90%]"></div>
-                    </div>
-                </div>
-            </aside>
-        </div>
-    </div>
-
-    <div id="statistics-page" class="page-section">
-        <div class="max-w-4xl mx-auto space-y-6">
-            <h2 class="text-2xl font-black italic text-[var(--primary)]">STATISTICS</h2>
-            <div class="bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)]">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                    <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Yield</p>
-                        <p class="text-2xl font-black">+14.2%</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Avg Odds</p>
-                        <p class="text-2xl font-black">1.94</p>
-                    </div>
+                    <button class="w-full bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 uppercase tracking-tight">
+                        <span class="material-symbols-outlined">payments</span>
+                        Bet at Pinnacle now
+                    </button>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="subscription-page" class="page-section">
-        <div class="max-w-2xl mx-auto bg-[var(--bg-card)] p-10 rounded-3xl border-2 border-[var(--primary)]">
-            <h2 class="text-3xl font-black mb-6">Premium Access</h2>
-            <div class="space-y-4 mb-8">
-                <p class="font-bold flex items-center gap-2"><span class="material-symbols-outlined text-[var(--primary)]">check_circle</span> All Pro Signals</p>
-                <p class="font-bold flex items-center gap-2"><span class="material-symbols-outlined text-[var(--primary)]">check_circle</span> 24/7 Priority Support</p>
+        <aside class="lg:col-span-3 space-y-6">
+            <div class="bg-[var(--bg-card)] rounded-2xl p-6 border border-[var(--border)] shadow-sm">
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-tighter">Performance Tracking</h4>
+                <div class="h-20 flex items-end justify-between gap-1">
+                    <div class="w-full bg-emerald-100 dark:bg-emerald-900/30 rounded-t-sm h-[45%]"></div>
+                    <div class="w-full bg-[var(--primary)] rounded-t-sm h-[95%]"></div>
+                </div>
             </div>
-            <button class="w-full py-4 bg-[#0088cc] text-white rounded-xl font-bold uppercase tracking-widest">Upgrade via Telegram</button>
+        </aside>
+    </div>
+</div>
+
+<div id="statistics-page" class="page-section">
+    <div class="max-w-4xl mx-auto space-y-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h2 class="text-3xl font-black italic uppercase">Analytics Dashboard</h2>
+            <div class="flex gap-2 bg-[var(--bg-card)] p-1 rounded-xl border border-[var(--border)]">
+                <button class="px-4 py-1.5 text-xs font-bold bg-[var(--primary)] text-white rounded-lg">Week</button>
+                <button class="px-4 py-1.5 text-xs font-bold text-slate-500">Month</button>
+                <button class="px-4 py-1.5 text-xs font-bold text-slate-500">All Time</button>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)] shadow-sm">
+                <p class="text-xs font-bold text-slate-400 uppercase mb-2">Yearly ROI</p>
+                <p class="text-4xl font-black text-[var(--primary)]">+142%</p>
+            </div>
+            <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)] shadow-sm">
+                <p class="text-xs font-bold text-slate-400 uppercase mb-2">Win Rate</p>
+                <p class="text-4xl font-black">72%</p>
+            </div>
+            <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)] shadow-sm">
+                <p class="text-xs font-bold text-slate-400 uppercase mb-2">Profit Units</p>
+                <p class="text-4xl font-black">12.4k</p>
+            </div>
+        </div>
+
+        <div class="bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)] shadow-sm">
+            <h4 class="font-bold mb-8">Performance Curve</h4>
+            <div class="h-64 flex items-end justify-between gap-2">
+                <div class="w-full bg-[var(--primary)]/10 rounded-t-lg h-[20%]"></div>
+                <div class="w-full bg-[var(--primary)]/20 rounded-t-lg h-[45%]"></div>
+                <div class="w-full bg-[var(--primary)]/40 rounded-t-lg h-[35%]"></div>
+                <div class="w-full bg-[var(--primary)]/60 rounded-t-lg h-[75%]"></div>
+                <div class="w-full bg-[var(--primary)] rounded-t-lg h-[95%]"></div>
+            </div>
         </div>
     </div>
+</div>
+
+<div id="subscription-page" class="page-section">
+    <div class="max-w-4xl mx-auto space-y-12">
+        <div class="text-center">
+            <h2 class="text-4xl font-black mb-4 italic">PREMIUM ACCESS</h2>
+            <p class="text-slate-500 max-w-lg mx-auto">Get full access to the most precise football analytics and dropping odds scanner.</p>
+        </div>
+        <div class="bg-[var(--bg-card)] p-10 rounded-[40px] border-2 border-[var(--primary)] shadow-2xl shadow-emerald-500/5 relative overflow-hidden">
+            <div class="grid md:grid-cols-2 gap-12">
+                <div class="space-y-6">
+                    <h3 class="text-2xl font-bold italic uppercase">Pro Analyst Plan</h3>
+                    <div class="text-5xl font-black">$49.99<span class="text-sm font-medium text-slate-400">/mo</span></div>
+                    <ul class="space-y-4">
+                        <li class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> 100% Ad-Free signals</li>
+                        <li class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> Direct Line to Pro team</li>
+                        <li class="flex items-center gap-3 font-semibold"><span class="material-symbols-outlined text-[var(--primary)]">verified_user</span> Bankroll Management Bot</li>
+                    </ul>
+                </div>
+                <div class="flex flex-col gap-4 justify-center">
+                    <a href="https://t.me/yourchannel" class="w-full py-5 bg-[#0088cc] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all uppercase tracking-tight">
+                        <span class="material-symbols-outlined">send</span> Buy via Telegram
+                    </a>
+                    <a href="https://wa.me/yournumber" class="w-full py-5 bg-[#25D366] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all uppercase tracking-tight">
+                        <span class="material-symbols-outlined">chat_bubble</span> Contact via WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 </main>
 
@@ -173,22 +231,25 @@
         document.documentElement.classList.toggle('dark');
     }
 
-    function showPage(pageId, element) {
-        document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    function switchPage(pageId, element) {
+        // Скрыть все страницы
+        document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+        // Показать выбранную
         document.getElementById(pageId + '-page').classList.add('active');
         
-        document.querySelectorAll('.nav-link').forEach(l => {
-            l.classList.remove('font-bold', 'border-b-2', 'border-[var(--primary)]', 'text-[var(--text-main)]', 'pb-1');
-            l.classList.add('font-semibold', 'text-slate-500');
+        // Обновить навигацию
+        document.querySelectorAll('.nav-btn').forEach(b => {
+            b.classList.remove('font-bold', 'border-b-2', 'border-[var(--primary)]', 'text-slate-900', 'pb-1');
+            b.classList.add('font-semibold', 'text-slate-500');
         });
-        
-        element.classList.remove('font-semibold', 'text-slate-500');
-        element.classList.add('font-bold', 'border-b-2', 'border-[var(--primary)]', 'text-[var(--text-main)]', 'pb-1');
+        element.classList.remove('text-slate-500', 'font-semibold');
+        element.classList.add('font-bold', 'border-b-2', 'border-[var(--primary)]', 'pb-1');
     }
 
+    // Удаление эффекта "нового сигнала" через 60 сек
     setTimeout(() => {
-        const signal = document.getElementById('new-signal');
-        if (signal) signal.classList.remove('new-signal-glow');
+        const signal = document.getElementById('latest-signal');
+        if (signal) signal.classList.remove('new-signal-pulse');
     }, 60000);
 </script>
 
